@@ -1,0 +1,70 @@
+<script>
+function renderUsers(users) {
+  closeConfigsMenu();
+  container.innerHTML = users.map((user, idx) => {
+    const isUnlimited = user.traffic_limit === 0;
+    // تغییر ۱: نمایش حجم برای بی‌نهایت
+    let trafficStr = isUnlimited ? `${user.traffic_usage} GB / ∞` : `${user.traffic_usage} / ${user.traffic_limit} GB`;
+    let pctClass = isUnlimited ? 'pill-unlimited' : (user.traffic_percent > 80 ? 'pill-bad' : (user.traffic_percent > 60 ? 'pill-warn' : ''));
+
+    let nodeFlagChips = '';
+    // تغییر ۲: دکمه مولتی کانکشن و سینگل‌ها
+    const configLinks = [{ label: 'مولتی لوکیشن هوشمند', flag: '<i class="fa fa-bolt" style="color:var(--warn)"></i>', href: `{{ panel_path }}/users/download/${user.username}` }];
+    if(user.nodes_list && user.nodes_list.length > 0) {
+        user.nodes_list.forEach(n => {
+            configLinks.push({ label: n.name, flag: getFlag(n.country), href: `{{ panel_path }}/users/download/${user.username}?node_id=${n.id}` });
+            nodeFlagChips += `<span class="node-flag-chip">${getFlag(n.country)} ${n.name}</span>`;
+        });
+    } else {
+        nodeFlagChips = `<span class="node-flag-chip node-flag-chip-empty"><i class="fa fa-ban"></i> بدون سرور</span>`;
+    }
+
+    return `
+      <div class="user-row glass-surface" style="animation-delay:${Math.min(idx * 35, 350)}ms" data-config-links='${JSON.stringify(configLinks).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}'>
+        <div class="user-header" onclick="toggleRow(this)">
+          <div class="avatar ${user.online_status === 'online' ? 'avatar-online' : ''}">${user.username.charAt(0).toUpperCase()}</div>
+          <div class="user-name-block">
+            <h3>${user.username}</h3>
+            <div class="user-pills">
+              ${user.online_status === 'online' ? '<span class="pill pill-online"><i class="fa fa-circle"></i> Online</span>' : ''}
+              <span class="pill ${pctClass}"><i class="fa fa-database"></i> <span class="mono-val">${trafficStr}</span></span>
+              <span class="pill"><i class="fa fa-clock"></i> ${compactDays(user.days_left_text)}</span>
+            </div>
+          </div>
+          <button class="expand-btn"><i class="fa fa-chevron-down"></i></button>
+        </div>
+        <div class="user-details">
+          <div class="details-inner">
+            <div class="details-grid">
+              <div class="detail-card"><span>Status</span><strong>${user.status}</strong></div>
+              <div class="detail-card"><span>Protocol</span><strong>${user.protocol.toUpperCase()}</strong></div>
+              <div class="detail-card"><span>Devices</span><strong>${user.current_devices}/${user.max_devices}</strong></div>
+              <div class="detail-card"><span>Days Left</span><strong>${compactDays(user.days_left_text)}</strong></div>
+            </div>
+
+            <div class="nodes-section">
+              <span class="nodes-section-label">سرورهای مجاز</span>
+              <div class="node-flags-row">${nodeFlagChips}</div>
+            </div>
+
+            <div class="traffic-section">
+              <div class="traffic-label-row"><span>ترافیک مصرفی</span><strong>${trafficStr} ${!isUnlimited ? `· ${user.traffic_percent}%` : ''}</strong></div>
+              <div class="progress-track"><div class="progress-fill ${isUnlimited ? 'unlimited' : (user.traffic_percent > 80 ? 'warn' : '')}" style="width: ${isUnlimited ? 100 : Math.min(user.traffic_percent, 100)}%"></div></div>
+            </div>
+
+            <div class="action-row">
+              <button onclick="openEdit(${user.id}, '${user.username}', '${user.protocol}', ${user.max_devices}, ${user.traffic_limit}, '${user.expire_days_val}', '${user.status}')" class="glass-btn"><i class="fa fa-pen"></i> <span class="btn-label">ویرایش سریع</span></button>
+              
+              <button type="button" class="glass-btn configs-trigger" onclick="toggleConfigsMenu(this)" style="background: linear-gradient(135deg, rgba(60,212,255,0.2), rgba(60,212,255,0.05)); border-color:rgba(60,212,255,0.5); color:#fff; box-shadow: 0 4px 15px rgba(60,212,255,0.15);">
+                <i class="fa fa-cloud-arrow-down"></i> <span class="btn-label">دانلود کانفیگ</span> <i class="fa fa-chevron-down" style="font-size:9px; margin-left:4px;"></i>
+              </button>
+
+              <a href="{{ panel_path }}/users/reset_traffic/${user.id}" class="glass-btn icon-only" onclick="return confirm('ترافیک ریست شود؟')" style="margin-left:auto;" title="Reset traffic"><i class="fa fa-rotate-left"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+</script>

@@ -1,0 +1,547 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<div class="settings-v3">
+
+<!-- HERO -->
+<section class="hero-panel">
+    <div class="hero-bg"></div>
+    <div class="hero-left">
+        <div class="hero-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            BEENY PANEL ENTERPRISE
+        </div>
+        <h1>System Control Center</h1>
+        <p>Real-time monitoring, OpenVPN management, server health, security configuration and backup operations.</p>
+    </div>
+    <div class="hero-right">
+        <div class="hero-stat">
+            <span>OpenVPN</span>
+            <strong id="vpn-status">ONLINE</strong>
+        </div>
+        <div class="hero-stat">
+            <span>Users</span>
+            <strong>{{ total_users }}</strong>
+        </div>
+        <div class="hero-stat">
+            <span>Traffic</span>
+            <strong>{{ total_traffic }} GB</strong>
+        </div>
+    </div>
+</section>
+
+<!-- RESOURCE GRID -->
+<section class="resource-grid">
+    <div class="resource-card cpu">
+        <div class="resource-icon"><i class="fa-solid fa-microchip"></i></div>
+        <div class="resource-value" id="cpu-value">0%</div>
+        <div class="resource-label">CPU Usage</div>
+        <div class="progress-line"><div id="cpu-bar"></div></div>
+    </div>
+    <div class="resource-card ram">
+        <div class="resource-icon"><i class="fa-solid fa-memory"></i></div>
+        <div class="resource-value" id="ram-value">0%</div>
+        <div class="resource-label">RAM Usage</div>
+        <div class="progress-line"><div id="ram-bar"></div></div>
+    </div>
+    <div class="resource-card disk">
+        <div class="resource-icon"><i class="fa-solid fa-hard-drive"></i></div>
+        <div class="resource-value" id="disk-value">0%</div>
+        <div class="resource-label">Disk Usage</div>
+        <div class="progress-line"><div id="disk-bar"></div></div>
+    </div>
+    <div class="resource-card network">
+        <div class="resource-icon"><i class="fa-solid fa-network-wired"></i></div>
+        <div class="resource-value" id="network-value">0</div>
+        <div class="resource-label">Network (MB/s)</div>
+        <div class="progress-line"><div id="network-bar"></div></div>
+    </div>
+</section>
+
+<!-- LIVE CHARTS -->
+<section class="chart-grid">
+    <div class="chart-card">
+        <h3><i class="fa-solid fa-chart-line"></i> Resource History</h3>
+        <canvas id="resourceChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3><i class="fa-solid fa-wave-square"></i> Network Activity</h3>
+        <canvas id="networkChart"></canvas>
+    </div>
+</section>
+
+<!-- MANAGEMENT -->
+<section class="management-grid">
+    <div class="glass-card">
+        <div class="card-header"><i class="fa-solid fa-database"></i> Database Management</div>
+        <div class="stats-grid">
+            <div><span>Database Size</span><strong>{{ db_size }} MB</strong></div>
+            <div><span>Total Users</span><strong>{{ total_users }}</strong></div>
+            <div><span>Online Users</span><strong>{{ online_users }}</strong></div>
+            <div><span>Active Users</span><strong>{{ active_users }}</strong></div>
+        </div>
+        <div class="action-row">
+            <button class="action-btn blue" onclick="backupDatabase()"><i class="fa-solid fa-download"></i> Backup</button>
+            <button class="action-btn orange" onclick="resetPanelStats()"><i class="fa-solid fa-rotate-left"></i> Reset Stats</button>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="card-header"><i class="fa-solid fa-shield-halved"></i> VPN Service</div>
+        <div class="stats-grid">
+            <div><span>Status</span><strong id="vpn-status-text">Running</strong></div>
+            <div><span>Traffic</span><strong>{{ total_traffic }} GB</strong></div>
+            <div><span>Online</span><strong>{{ online_users }}</strong></div>
+            <div><span>Users</span><strong>{{ total_users }}</strong></div>
+        </div>
+        <div class="action-row">
+            <button class="action-btn blue" onclick="restartVPN()"><i class="fa-solid fa-rotate-right"></i> Restart VPN</button>
+            <button class="action-btn red" onclick="resetVPNConfig()"><i class="fa-solid fa-broom"></i> Reset Config</button>
+        </div>
+    </div>
+</section>
+
+<!-- QUICK ACTIONS -->
+<section class="quick-grid">
+    <div class="quick-card" onclick="restartPanel()"><i class="fa-solid fa-rotate"></i> Restart Panel</div>
+    <div class="quick-card" onclick="clearCache()"><i class="fa-solid fa-broom"></i> Clear Cache</div>
+    <div class="quick-card" onclick="exportUsers()"><i class="fa-solid fa-users"></i> Export Users</div>
+    <div class="quick-card" onclick="alert('Coming soon')"><i class="fa-solid fa-upload"></i> Restore Backup</div>
+    <div class="quick-card" onclick="viewLogs()"><i class="fa-solid fa-file-lines"></i> Logs</div>
+    <div class="quick-card" onclick="rebootVPS()"><i class="fa-solid fa-power-off"></i> Reboot VPS</div>
+</section>
+
+</div>
+
+<style>
+.settings-v3{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+}
+
+.hero-panel{
+    position:relative;
+    overflow:hidden;
+    border-radius:32px;
+    padding:40px;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);
+}
+
+.hero-bg{
+    position:absolute;
+    inset:0;
+    backdrop-filter:blur(40px);
+}
+
+.hero-left,
+.hero-right{
+    position:relative;
+    z-index:2;
+}
+
+.hero-panel{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:30px;
+}
+
+.hero-badge{
+    display:inline-flex;
+    gap:10px;
+    padding:10px 18px;
+    border-radius:999px;
+    background:rgba(255,255,255,.15);
+    color:white;
+    margin-bottom:20px;
+}
+
+.hero-panel h1{
+    color:white;
+    font-size:42px;
+    font-weight:800;
+}
+
+.hero-panel p{
+    color:rgba(255,255,255,.8);
+    max-width:600px;
+}
+
+.hero-right{
+    display:flex;
+    gap:15px;
+}
+
+.hero-stat{
+    min-width:130px;
+    padding:18px;
+    border-radius:20px;
+    background:rgba(255,255,255,.12);
+    text-align:center;
+}
+
+.hero-stat span{
+    display:block;
+    color:rgba(255,255,255,.7);
+}
+
+.hero-stat strong{
+    color:white;
+    font-size:22px;
+}
+
+.resource-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+}
+
+.resource-card,
+.glass-card,
+.chart-card,
+.quick-card{
+    background:rgba(255,255,255,.05);
+    backdrop-filter:blur(24px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:28px;
+}
+
+.resource-card{
+    padding:25px;
+}
+
+.resource-icon{
+    font-size:28px;
+    color:#8b5cf6;
+}
+
+.resource-value{
+    font-size:42px;
+    font-weight:800;
+    color:white;
+    margin-top:15px;
+}
+
+.resource-label{
+    color:#a8b3cf;
+}
+
+.progress-line{
+    margin-top:18px;
+    height:8px;
+    background:rgba(255,255,255,.06);
+    border-radius:999px;
+}
+
+.progress-line div{
+    height:100%;
+    width:0;
+    border-radius:999px;
+    background:linear-gradient(90deg,#6366f1,#06b6d4);
+    transition:width 0.3s ease;
+}
+
+.chart-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.chart-card{
+    padding:25px;
+}
+
+.chart-card h3{
+    color:white;
+    margin-bottom:20px;
+}
+
+.chart-card canvas{
+    max-height:250px;
+}
+
+.management-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.glass-card{
+    padding:25px;
+}
+
+.card-header{
+    color:white;
+    font-size:20px;
+    margin-bottom:25px;
+}
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.stats-grid span{
+    color:#94a3b8;
+    display:block;
+}
+
+.stats-grid strong{
+    color:white;
+    font-size:24px;
+}
+
+.action-row{
+    margin-top:25px;
+    display:flex;
+    gap:12px;
+}
+
+.action-btn{
+    border:none;
+    border-radius:14px;
+    padding:12px 18px;
+    color:white;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.action-btn:hover{
+    transform:translateY(-2px);
+}
+
+.blue{
+    background:#6366f1;
+}
+
+.red{
+    background:#ef4444;
+}
+
+.orange{
+    background:#f59e0b;
+}
+
+.quick-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+}
+
+.quick-card{
+    padding:28px;
+    text-align:center;
+    color:white;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.quick-card i{
+    display:block;
+    font-size:32px;
+    margin-bottom:15px;
+    color:#8b5cf6;
+}
+
+.quick-card:hover{
+    transform:translateY(-6px);
+    background:rgba(255,255,255,.1);
+}
+
+@media(max-width:1000px){
+    .resource-grid,
+    .chart-grid,
+    .management-grid,
+    .quick-grid{
+        grid-template-columns:1fr;
+    }
+    .hero-panel{
+        flex-direction:column;
+    }
+    .hero-right{
+        width:100%;
+        flex-wrap:wrap;
+    }
+}
+</style>
+
+<script>
+const panelPath = '{{ panel_path|default("") }}';
+
+function getApiUrl(endpoint) {
+    return panelPath + '/api/' + endpoint;
+}
+
+// آپدیت لحظه‌ای منابع
+function updateStats() {
+    fetch(getApiUrl('system/stats'))
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('cpu-value').innerHTML = data.cpu + '%';
+            document.getElementById('ram-value').innerHTML = data.ram + '%';
+            document.getElementById('disk-value').innerHTML = data.disk + '%';
+            document.getElementById('network-value').innerHTML = data.network;
+            document.getElementById('cpu-bar').style.width = data.cpu + '%';
+            document.getElementById('ram-bar').style.width = data.ram + '%';
+            document.getElementById('disk-bar').style.width = data.disk + '%';
+            let netPercent = Math.min(data.network * 2, 100);
+            document.getElementById('network-bar').style.width = netPercent + '%';
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function backupDatabase() {
+    if(confirm('Download database backup?')) {
+        window.location.href = panelPath + '/settings/backup';
+    }
+}
+
+function resetPanelStats() {
+    if(confirm('WARNING: This will reset all traffic statistics. Continue?')) {
+        fetch(getApiUrl('reset/panel'), { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if(data.success) location.reload();
+            });
+    }
+}
+
+function restartVPN() {
+    if(confirm('Restart OpenVPN service?')) {
+        fetch(getApiUrl('vpn/restart'), { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if(data.success) location.reload();
+            });
+    }
+}
+
+function resetVPNConfig() {
+    if(confirm('WARNING: This will reset OpenVPN configuration. Continue?')) {
+        fetch(getApiUrl('vpn/reset'), { method: 'POST' })
+            .then(response => response.json())
+            .then(data => alert(data.message));
+    }
+}
+
+function restartPanel() {
+    if(confirm('Restart panel service?')) {
+        fetch(getApiUrl('panel/restart'), { method: 'POST' })
+            .then(response => response.json())
+            .then(data => alert(data.message));
+    }
+}
+
+function clearCache() {
+    if(confirm('Clear panel cache?')) {
+        fetch(getApiUrl('panel/clear-cache'), { method: 'POST' })
+            .then(response => response.json())
+            .then(data => alert(data.message));
+    }
+}
+
+function exportUsers() {
+    window.location.href = panelPath + '/api/export/users';
+}
+
+function viewLogs() {
+    window.open(panelPath + '/api/panel/logs', '_blank');
+}
+
+function rebootVPS() {
+    if(confirm('WARNING: This will reboot the entire server. Continue?')) {
+        if(confirm('ARE YOU ABSOLUTELY SURE?')) {
+            fetch(getApiUrl('system/reboot'), { method: 'POST' })
+                .then(response => response.json())
+                .then(data => alert(data.message));
+        }
+    }
+}
+
+// چارت‌ها
+let resourceChart, networkChart;
+let historyData = [];
+
+function initCharts() {
+    const ctx1 = document.getElementById('resourceChart').getContext('2d');
+    const ctx2 = document.getElementById('networkChart').getContext('2d');
+    
+    resourceChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: Array(20).fill(''),
+            datasets: [{
+                label: 'CPU %',
+                data: Array(20).fill(0),
+                borderColor: '#6366f1',
+                backgroundColor: 'transparent',
+                tension: 0.4
+            }, {
+                label: 'RAM %',
+                data: Array(20).fill(0),
+                borderColor: '#8b5cf6',
+                backgroundColor: 'transparent',
+                tension: 0.4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: true }
+    });
+    
+    networkChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: Array(20).fill(''),
+            datasets: [{
+                label: 'Network MB/s',
+                data: Array(20).fill(0),
+                borderColor: '#06b6d4',
+                backgroundColor: 'transparent',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: true }
+    });
+}
+
+function updateCharts() {
+    fetch(getApiUrl('system/stats'))
+        .then(response => response.json())
+        .then(data => {
+            historyData.push({
+                cpu: data.cpu,
+                ram: data.ram,
+                network: data.network
+            });
+            if (historyData.length > 20) historyData.shift();
+            
+            if (resourceChart) {
+                resourceChart.data.datasets[0].data = historyData.map(d => d.cpu);
+                resourceChart.data.datasets[1].data = historyData.map(d => d.ram);
+                resourceChart.update();
+            }
+            
+            if (networkChart) {
+                networkChart.data.datasets[0].data = historyData.map(d => d.network);
+                networkChart.update();
+            }
+        });
+}
+
+// آپدیت هر 3 ثانیه
+setInterval(() => {
+    updateStats();
+    updateCharts();
+}, 3000);
+
+updateStats();
+initCharts();
+</script>
+
+{% endblock %}

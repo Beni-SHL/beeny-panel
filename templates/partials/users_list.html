@@ -1,0 +1,115 @@
+{% for user in users.items %}
+{% set used = user.traffic_usage|default(0)|float %}
+{% if user.traffic_limit|int > 0 %}
+  {% set percent = (used * 100 / user.traffic_limit)|round(1) %}
+{% else %}
+  {% set percent = 0 %}
+{% endif %}
+{% if percent > 100 %}{% set percent = 100 %}{% endif %}
+
+<div class="user-row" data-expire="{{ user.expire_date }}">
+  <div class="user-header" onclick="toggleRow(this)">
+    <div class="avatar {% if user.online_status == 'online' %}avatar-online{% endif %}">
+      {{ user.username[0]|upper }}
+    </div>
+    <div class="user-name-block">
+      <h3>{{ user.username }}</h3>
+      <div class="user-pills">
+        {% if user.online_status == "online" %}
+        <span class="pill pill-online"><span class="pill-dot"></span>Online</span>
+        {% else %}
+        <span class="pill pill-offline"><span class="pill-dot"></span>Offline</span>
+        {% endif %}
+        <span class="pill">
+          <i class="fa fa-database"></i>
+          {% if user.traffic_limit == 0 %}
+            {{ used|round(1) }} GB / ∞
+          {% else %}
+            {{ used|round(1) }}/{{ user.traffic_limit }} GB ({{ percent }}%)
+          {% endif %}
+        </span>
+        <span class="pill days-badge">
+          {% if user.days_left is defined and user.days_left != '-' %}
+            {% if user.days_left < 0 %}
+              Expired ({{ user.days_left|abs }}d)
+            {% elif user.days_left <= 7 %}
+              {{ user.days_left }} day{% if user.days_left != 1 %}s{% endif %} left
+            {% else %}
+              {{ user.days_left }} days
+            {% endif %}
+          {% else %}
+            —
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    <button class="expand-btn" onclick="event.stopPropagation()" aria-label="Toggle details">
+      <i class="fa fa-chevron-down"></i>
+    </button>
+  </div>
+  <div class="user-details">
+    <div class="details-inner">
+      <div class="details-sep"></div>
+      <div class="details-grid">
+        <div class="detail-card">
+          <span>Status</span>
+          {% if user.status == "active" %}
+          <strong class="green"><i class="fa fa-check-circle"></i> Active</strong>
+          {% else %}
+          <strong class="red"><i class="fa fa-times-circle"></i> Disabled</strong>
+          {% endif %}
+        </div>
+        <div class="detail-card">
+          <span>Protocol</span>
+          <strong>{{ user.protocol|upper }}</strong>
+        </div>
+        <div class="detail-card">
+          <span>Devices</span>
+          <strong>{{ user.current_devices }}/{{ user.max_devices }}</strong>
+        </div>
+        <div class="detail-card">
+          <span>Expire</span>
+          <strong>{{ user.expire_date }}</strong>
+        </div>
+        <!-- کارت جدید Nodes -->
+        <div class="detail-card">
+          <span>Nodes</span>
+          <strong>
+            {% if node_map %}
+              {{ node_map.get(user.id, '-') }}
+            {% else %}
+              -
+            {% endif %}
+          </strong>
+        </div>
+      </div>
+      <div class="traffic-section">
+        <div class="traffic-label-row">
+          <span>Traffic consumption</span>
+          <strong>
+            {% if user.traffic_limit == 0 %}Unlimited
+            {% else %}{{ used|round(1) }} / {{ user.traffic_limit }} GB ({{ percent }}%)
+            {% endif %}
+          </strong>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill {% if percent > 80 %}warn{% endif %}" style="width:{{ percent }}%"></div>
+        </div>
+      </div>
+      <div class="action-row">
+        <a href="{{ panel_path }}/users/view/{{ user.id }}" class="glass-btn"><i class="fa fa-user"></i> Profile</a>
+        <a href="{{ panel_path }}/users/edit/{{ user.id }}" class="glass-btn"><i class="fa fa-pen"></i> Edit</a>
+        <a href="{{ panel_path }}/users/download/{{ user.username }}" class="glass-btn"><i class="fa fa-download"></i> Config</a>
+        <a href="{{ panel_path }}/users/reset_traffic/{{ user.id }}" class="glass-btn"
+           onclick="return confirm('Reset traffic for {{ user.username }}?')">
+           <i class="fa fa-rotate-left"></i> Reset
+        </a>
+        <a href="{{ panel_path }}/users/delete/{{ user.id }}" class="glass-btn danger"
+           onclick="return confirm('Delete {{ user.username }}?')">
+           <i class="fa fa-trash"></i> Delete
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}

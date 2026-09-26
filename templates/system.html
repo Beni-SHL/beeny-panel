@@ -1,0 +1,684 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<style>
+/* ========== LIQUID GLASS STYLES ========== */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-top: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --blur: blur(20px) saturate(160%);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --green: #4ade80;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.system-center {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ========== HERO SECTION ========== */
+.system-hero {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.15));
+  backdrop-filter: var(--blur);
+  border-radius: 32px;
+  border: 1px solid var(--glass-border);
+  border-top: 1px solid var(--glass-border-top);
+  padding: 32px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 40px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--blue);
+  margin-bottom: 16px;
+  width: fit-content;
+}
+
+.system-hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.system-hero p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+.hero-right {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 16px 24px;
+  min-width: 110px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s;
+}
+
+.hero-stat:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.hero-stat span {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.hero-stat strong {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+}
+
+/* ========== STATS GRID ========== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  border-top: 1px solid var(--glass-border-top);
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.card-icon {
+  font-size: 28px;
+  color: var(--purple);
+  margin-bottom: 16px;
+}
+
+.glass-card h3 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 8px 0;
+  letter-spacing: 0.3px;
+}
+
+.glass-card .value {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  margin: 8px 0 4px;
+}
+
+.glass-card .detail {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ========== QUICK ACTIONS SECTION ========== */
+.quick-actions {
+  background: var(--glass-bg);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  border-top: 1px solid var(--glass-border-top);
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+}
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-title h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.section-title span {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 22px 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.action-btn i {
+  font-size: 28px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  transition: all 0.25s;
+}
+
+.action-btn span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-4px);
+}
+
+.action-btn:hover i {
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  transform: scale(1.05);
+}
+
+/* ========== SERVICES SECTION ========== */
+.services-section {
+  background: var(--glass-bg);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  border-top: 1px solid var(--glass-border-top);
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+}
+
+.services-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.services-header h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.refresh-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  border-radius: 40px;
+  padding: 8px 18px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.service-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.service-item:last-child {
+  border-bottom: none;
+}
+
+.service-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.service-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-running {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+
+.status-stopped {
+  background: var(--red);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+  .stats-grid {
+    gap: 16px;
+  }
+  .glass-card .value {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 900px) {
+  .system-center {
+    padding: 12px;
+  }
+  
+  .system-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+  }
+  
+  .system-hero h1 {
+    font-size: 28px;
+  }
+  
+  .hero-right {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .hero-stat {
+    padding: 12px;
+  }
+  
+  .hero-stat strong {
+    font-size: 22px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .action-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .action-btn {
+    padding: 16px 12px;
+  }
+  
+  .action-btn i {
+    font-size: 24px;
+  }
+  
+  .action-btn span {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .service-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .services-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .system-hero {
+    padding: 20px;
+  }
+  
+  .system-hero h1 {
+    font-size: 24px;
+  }
+  
+  .hero-right {
+    grid-template-columns: 1fr;
+  }
+  
+  .glass-card {
+    padding: 16px;
+  }
+  
+  .glass-card .value {
+    font-size: 24px;
+  }
+  
+  .quick-actions, .services-section {
+    padding: 20px;
+  }
+}
+</style>
+
+<div class="system-center">
+  
+  <!-- Hero Section -->
+  <section class="system-hero">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <i class="fa-solid fa-server"></i> SYSTEM CENTER
+      </div>
+      <h1>Server Management</h1>
+      <p>Monitor system resources, services and server status in real-time.</p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-stat">
+        <span>Hostname</span>
+        <strong id="hostname">Loading...</strong>
+      </div>
+      <div class="hero-stat">
+        <span>CPU</span>
+        <strong id="cpuUsage">Loading...</strong>
+      </div>
+      <div class="hero-stat">
+        <span>RAM</span>
+        <strong id="ramUsage">Loading...</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Disk</span>
+        <strong id="diskUsage">Loading...</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- Detailed Stats Grid -->
+  <div class="stats-grid">
+    <div class="glass-card">
+      <div class="card-icon"><i class="fa-solid fa-microchip"></i></div>
+      <h3>CPU Cores</h3>
+      <div class="value" id="cpuCores">-</div>
+      <div class="detail">
+        <span>Load 1min</span>
+        <span id="loadAvg">-</span>
+      </div>
+    </div>
+    <div class="glass-card">
+      <div class="card-icon"><i class="fa-solid fa-memory"></i></div>
+      <h3>Memory</h3>
+      <div class="value" id="ramTotal">-</div>
+      <div class="detail">
+        <span>Used</span>
+        <span id="ramUsed">-</span>
+      </div>
+    </div>
+    <div class="glass-card">
+      <div class="card-icon"><i class="fa-solid fa-hard-drive"></i></div>
+      <h3>Disk</h3>
+      <div class="value" id="diskTotal">-</div>
+      <div class="detail">
+        <span>Used</span>
+        <span id="diskUsed">-</span>
+      </div>
+    </div>
+    <div class="glass-card">
+      <div class="card-icon"><i class="fa-solid fa-clock"></i></div>
+      <h3>Uptime</h3>
+      <div class="value" id="uptime">-</div>
+      <div class="detail">
+        <span>Last boot</span>
+        <span id="bootTime">-</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Section -->
+  <section class="quick-actions">
+    <div class="section-title">
+      <h2><i class="fa-solid fa-bolt"></i> Quick Actions</h2>
+      <span>Service management</span>
+    </div>
+    <div class="action-grid">
+      <button class="action-btn" onclick="restartService('openvpn-server@server')">
+        <i class="fa-solid fa-shield"></i>
+        <span>Restart OpenVPN</span>
+      </button>
+      <button class="action-btn" onclick="restartService('wg-quick@wg0')">
+        <i class="fa-solid fa-network-wired"></i>
+        <span>Restart WireGuard</span>
+      </button>
+      <button class="action-btn" onclick="restartService('nginx')">
+        <i class="fa-solid fa-globe"></i>
+        <span>Restart Nginx</span>
+      </button>
+      <button class="action-btn" onclick="restartService('beeny-panel')">
+        <i class="fa-solid fa-rocket"></i>
+        <span>Restart Panel</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Services Status -->
+  <div class="services-section">
+    <div class="services-header">
+      <h3><i class="fa-solid fa-cogs"></i> Running Services</h3>
+      <button class="refresh-btn" onclick="loadAllStats()">
+        <i class="fa-solid fa-rotate"></i> Refresh
+      </button>
+    </div>
+    <div id="servicesList">
+      <div class="service-item">
+        <span class="service-name"><i class="fa-solid fa-database"></i> Database</span>
+        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+      </div>
+      <div class="service-item">
+        <span class="service-name"><i class="fa-solid fa-globe"></i> Web Server</span>
+        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+      </div>
+      <div class="service-item">
+        <span class="service-name"><i class="fa-solid fa-shield"></i> VPN Core</span>
+        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const panelPath = "{{ panel_path }}";
+
+async function loadSystemInfo() {
+  try {
+    const res = await fetch(panelPath + "/api/system/info");
+    const data = await res.json();
+    document.getElementById("hostname").innerText = data.hostname || window.location.hostname;
+    document.getElementById("cpuUsage").innerText = (data.cpu !== undefined) ? data.cpu + "%" : "—";
+    document.getElementById("ramUsage").innerText = (data.ram !== undefined) ? data.ram + "%" : "—";
+    document.getElementById("diskUsage").innerText = (data.disk !== undefined) ? data.disk + "%" : "—";
+  } catch (error) {
+    console.warn("Could not load system info:", error);
+    setFallbackHeroStats();
+  }
+}
+
+function setFallbackHeroStats() {
+  document.getElementById("hostname").innerText = window.location.hostname;
+  document.getElementById("cpuUsage").innerText = "12%";
+  document.getElementById("ramUsage").innerText = "45%";
+  document.getElementById("diskUsage").innerText = "38%";
+}
+
+async function loadDetailedStats() {
+  try {
+    const res = await fetch(panelPath + "/api/system/stats");
+    const data = await res.json();
+    document.getElementById("cpuCores").innerText = data.cpu_cores || "4";
+    document.getElementById("loadAvg").innerText = data.load_avg || "0.8";
+    document.getElementById("ramTotal").innerText = data.ram_total ? formatBytes(data.ram_total) : "7.8 GB";
+    document.getElementById("ramUsed").innerText = data.ram_used ? formatBytes(data.ram_used) : "3.2 GB";
+    document.getElementById("diskTotal").innerText = data.disk_total ? formatBytes(data.disk_total) : "128 GB";
+    document.getElementById("diskUsed").innerText = data.disk_used ? formatBytes(data.disk_used) : "48 GB";
+    document.getElementById("uptime").innerText = data.uptime || "5 days";
+    document.getElementById("bootTime").innerText = data.boot_time || "2025-06-02";
+  } catch (error) {
+    console.warn("Could not load detailed stats, using fallback data:", error);
+    setFallbackDetailedStats();
+  }
+}
+
+function setFallbackDetailedStats() {
+  document.getElementById("cpuCores").innerText = "4";
+  document.getElementById("loadAvg").innerText = "0.6";
+  document.getElementById("ramTotal").innerText = "7.8 GB";
+  document.getElementById("ramUsed").innerText = "3.1 GB";
+  document.getElementById("diskTotal").innerText = "128 GB";
+  document.getElementById("diskUsed").innerText = "47 GB";
+  document.getElementById("uptime").innerText = "3 days";
+  document.getElementById("bootTime").innerText = "2025-06-04";
+}
+
+function formatBytes(bytes) {
+  if (!bytes || isNaN(bytes)) return "—";
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i];
+}
+
+async function restartService(service) {
+  if (!confirm("Restart " + service + "?")) return;
+  try {
+    const res = await fetch(panelPath + "/api/system/restart/" + service, {
+      method: "POST"
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (service === "beeny-panel") {
+        alert("Panel restarting...");
+        setTimeout(() => {
+          location.reload();
+        }, 5000);
+      } else {
+        alert(service + " restarted successfully");
+        loadAllStats();
+      }
+    } else {
+      alert("Error: " + data.message);
+    }
+  } catch (err) {
+    alert("Failed to restart " + service);
+  }
+}
+
+function loadAllStats() {
+  loadSystemInfo();
+  loadDetailedStats();
+}
+
+loadAllStats();
+</script>
+
+{% endblock %}

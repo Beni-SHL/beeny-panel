@@ -1,0 +1,923 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap');
+
+:root{
+  --blur:blur(22px) saturate(165%);
+  --green:#4ade80; --green-dim:rgba(74,222,128,0.13);
+  --blue:#60a5fa;  --blue-dim:rgba(96,165,250,0.13);
+  --amber:#fbbf24; --amber-dim:rgba(251,191,36,0.13);
+  --red:#f87171;   --red-dim:rgba(248,113,113,0.13);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.13);
+  --cyan:#22d3ee;  --cyan-dim:rgba(34,211,238,0.13);
+}
+*{box-sizing:border-box}
+
+.dashboard{display:flex;flex-direction:column;gap:18px;font-family:'Geist',sans-serif;position:relative;z-index:1}
+
+/* glass card — UNCHANGED core */
+.gc{
+  background:rgba(0,0,0,0.30);
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+  border:1px solid rgba(255,255,255,0.1);
+  border-top:1px solid rgba(255,255,255,0.22);
+  border-radius:22px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.14),0 8px 32px rgba(0,0,0,0.22);
+  position:relative;
+}
+
+/* interactive sheen + tilt layer, additive to .gc, never replaces it */
+.gc-int{overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}
+.gc-int::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 45%,transparent 60%);
+  transform:translateX(-120%);transition:transform .7s ease;
+}
+.gc-int:hover::after{transform:translateX(120%)}
+.gc-int:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,0.18),0 16px 40px rgba(0,0,0,0.32)}
+
+/* ─── HEADER ─── */
+.dash-header{padding:20px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.dash-header-left h1{font-family:'Geist',sans-serif;font-size:24px;font-weight:800;color:#fff;letter-spacing:-.3px;background:linear-gradient(90deg,#fff,rgba(255,255,255,.65));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.dash-header-left p{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:.5px;margin-top:3px;font-weight:500}
+.dash-header-right{display:flex;align-items:center;gap:10px}
+.server-badge{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:30px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.22);font-size:12px;font-weight:600;color:var(--green)}
+.server-badge-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+.refresh-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-top:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;text-decoration:none;transition:all .22s}
+.refresh-btn:hover{background:rgba(255,255,255,.13);color:#fff;transform:rotate(90deg)}
+.refresh-btn.spinning i{animation:spin .7s linear}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── LIFETIME TRAFFIC HERO ─── */
+.hero-traffic{
+  padding:26px 30px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+  animation:cardIn .5s ease both;
+}
+.hero-traffic-left{flex:1;min-width:220px}
+.hero-eyebrow{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--cyan);font-weight:700;margin-bottom:10px}
+.hero-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:pulse 2.4s ease-in-out infinite}
+.hero-value{font-family:'Geist',sans-serif;font-weight:800;font-size:56px;line-height:1;letter-spacing:-1.5px;
+  background:linear-gradient(120deg,#fff 0%,var(--cyan) 55%,var(--blue) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-caption{margin-top:12px;font-size:12px;line-height:1.6;color:rgba(255,255,255,.4);max-width:420px}
+.hero-caption b{color:rgba(255,255,255,.65);font-weight:600}
+.hero-chips{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.hero-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:11px;font-weight:600;color:rgba(255,255,255,.6)}
+.hero-chip .sq{width:7px;height:7px;border-radius:2px}
+
+.hero-traffic-right{flex:1.3;min-width:260px;height:150px;position:relative}
+#lifetimeCanvas{width:100%;height:100%;display:block}
+
+/* ─── STATS ─── */
+.stat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.stat-card{
+  padding:18px 20px;border-radius:20px;
+  display:flex;flex-direction:column;gap:10px;
+  cursor:pointer;
+  transition:transform .25s,box-shadow .25s;
+  animation:cardIn .4s ease both;
+  position:relative;overflow:hidden;
+}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent)}
+.stat-card:hover{transform:translateY(-5px)}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.stat-card:nth-child(1){animation-delay:.05s}.stat-card:nth-child(2){animation-delay:.10s}
+.stat-card:nth-child(3){animation-delay:.15s}.stat-card:nth-child(4){animation-delay:.20s}
+.stat-card:nth-child(5){animation-delay:.25s}.stat-card:nth-child(6){animation-delay:.30s}
+
+.stat-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.stat-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.sc-blue  .stat-icon{background:var(--blue-dim);color:var(--blue)}
+.sc-green .stat-icon{background:var(--green-dim);color:var(--green)}
+.sc-amber .stat-icon{background:var(--amber-dim);color:var(--amber)}
+.sc-purple.stat-icon{background:var(--purple-dim);color:var(--purple)}
+
+.stat-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:600}
+.stat-value{font-family:'Geist',sans-serif;font-size:30px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px}
+.stat-sub{font-size:10px;color:rgba(255,255,255,.28);margin-top:2px}
+.stat-spark{width:100%;height:30px;display:block;margin-top:2px;opacity:.9}
+
+/* ─── ROW 2: traffic + donut — EQUAL HEIGHT ─── */
+.row-2{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:stretch}
+.traffic-card{padding:22px 24px;display:flex;flex-direction:column;min-height:280px}
+.section-title{font-family:'Geist',sans-serif;font-size:14px;font-weight:700;color:#fff;margin-bottom:2px}
+.section-sub{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:.4px;margin-bottom:14px}
+
+/* Canvas bar chart */
+.bar-chart-wrap{flex:1;position:relative;min-height:130px}
+#barCanvas{width:100%;height:100%;display:block;cursor:crosshair}
+.chart-tooltip{
+  position:absolute;pointer-events:none;padding:6px 10px;border-radius:10px;
+  background:rgba(10,12,16,.92);border:1px solid rgba(255,255,255,.14);
+  font-size:11px;font-weight:600;color:#fff;transform:translate(-50%,-115%);
+  opacity:0;transition:opacity .15s;white-space:nowrap;z-index:5;
+  box-shadow:0 6px 18px rgba(0,0,0,.4);
+}
+.chart-tooltip.show{opacity:1}
+.chart-tooltip span{color:rgba(255,255,255,.4);font-weight:500;margin-right:4px}
+
+.traffic-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.tsummary-item{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);transition:background .2s,border-color .2s}
+.tsummary-item:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14)}
+.tsummary-item span{font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.tsummary-item strong{display:block;font-size:15px;font-weight:700;color:#fff;margin-top:3px}
+
+/* Donut — stretches same height as traffic card */
+.proto-card{padding:22px 20px;display:flex;flex-direction:column}
+.donut-wrap{position:relative;width:140px;height:140px;margin:0 auto 16px;flex-shrink:0}
+.donut-wrap svg{transform:rotate(-90deg);display:block}
+.donut-wrap circle{transition:stroke-width .25s}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.donut-center .dc-val{font-family:'Geist',sans-serif;font-size:22px;font-weight:800;color:#fff;display:block}
+.donut-center .dc-label{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.8px}
+.proto-list{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.proto-row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);cursor:pointer;transition:background .2s,border-color .2s}
+.proto-row:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
+.proto-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.proto-name{flex:1;font-size:12px;font-weight:500;color:rgba(255,255,255,.85)}
+.proto-count{font-family:'Geist',sans-serif;font-size:13px;font-weight:700;color:#fff}
+.proto-bar-track{flex:1;height:3px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+.proto-bar-fill{height:100%;border-radius:4px;transition:width .9s ease}
+
+/* ─── ROW 3: online + expiring ─── */
+.row-3{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.online-card,.expiring-card{padding:20px 22px;display:flex;flex-direction:column}
+
+.user-mini-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.user-mini-row{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 13px;border-radius:13px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  transition:background .2s,transform .2s;
+  animation:rowIn .3s ease both;
+}
+@keyframes rowIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+.user-mini-row:hover{background:rgba(255,255,255,.09);transform:translateX(2px)}
+.mini-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Geist',sans-serif;font-size:13px;font-weight:800;color:#fff;
+  flex-shrink:0;position:relative;
+}
+.mini-avatar.live::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--green);opacity:.6;animation:ringPulse 2s ease-out infinite}
+@keyframes ringPulse{0%{transform:scale(.9);opacity:.7}100%{transform:scale(1.35);opacity:0}}
+.mini-info{flex:1;min-width:0}
+.mini-name{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-sub{font-size:10px;color:rgba(255,255,255,.35)}
+.mini-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.badge-online{background:var(--green-dim);border:1px solid rgba(74,222,128,.22);color:var(--green)}
+.badge-expiring{background:var(--amber-dim);border:1px solid rgba(251,191,36,.22);color:var(--amber)}
+.badge-expired{background:var(--red-dim);border:1px solid rgba(248,113,113,.22);color:var(--red)}
+
+.empty-state{text-align:center;padding:30px 20px;color:rgba(255,255,255,.2);font-size:13px}
+.empty-state i{display:block;font-size:28px;margin-bottom:10px;opacity:.15}
+
+.view-all{display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;transition:color .2s,gap .2s}
+.view-all:hover{color:rgba(255,255,255,.7);gap:8px}
+
+/* ─── QUICK ACTIONS ─── */
+.quick-actions{padding:20px 22px;display:flex;flex-direction:column;gap:13px}
+.actions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.action-tile{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:15px 8px;border-radius:15px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-top:1px solid rgba(255,255,255,.14);
+  text-decoration:none;color:rgba(255,255,255,.6);
+  font-size:11px;font-weight:500;text-align:center;
+  transition:all .22s;cursor:pointer;position:relative;overflow:hidden;
+}
+.action-tile:hover{background:rgba(255,255,255,.11);border-top-color:rgba(255,255,255,.28);color:#fff;transform:translateY(-3px)}
+.action-tile-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.action-tile:hover .action-tile-icon{transform:scale(1.12) rotate(-6deg)}
+
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1200px){.stat-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:960px){
+  .stat-grid{grid-template-columns:repeat(3,1fr)}
+  .row-2{grid-template-columns:1fr}
+  .row-3{grid-template-columns:1fr}
+  .hero-traffic{flex-direction:column;align-items:stretch}
+  .hero-traffic-right{height:120px}
+}
+@media(max-width:640px){
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .dash-header{padding:16px 18px;order:1}
+  .stat-card{padding:14px 16px}
+  .stat-value{font-size:24px}
+  .actions-grid{grid-template-columns:repeat(2,1fr)}
+  .traffic-card,.proto-card,.online-card,.expiring-card,.quick-actions{padding:16px 18px}
+  .actions-grid{grid-template-columns:repeat(2,1fr)}
+
+  /* reorder: header, stats, traffic overview, then a smaller lifetime-traffic card, then rest */
+  .stat-grid{order:2}
+  .row-2{order:3}
+  .hero-traffic{order:4;margin-top:0}
+  .row-3{order:5}
+  .quick-actions{order:6}
+
+  /* compact lifetime traffic card on mobile */
+  .hero-traffic{padding:16px 18px;gap:14px}
+  .hero-eyebrow{font-size:9px;margin-bottom:6px}
+  .hero-value{font-size:26px;letter-spacing:-.5px}
+  .hero-caption{font-size:10.5px;margin-top:6px;max-width:100%}
+  .hero-chips{margin-top:8px;gap:6px}
+  .hero-chip{padding:4px 9px;font-size:9.5px}
+  .hero-traffic-right{height:64px;min-width:0;flex:1 1 100%}
+}
+@media(max-width:400px){
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .actions-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+
+<div class="dashboard">
+
+<!-- HEADER -->
+<div class="gc dash-header">
+  <div class="dash-header-left">
+    <h1>Dashboard</h1>
+    <p id="dashTime">Loading...</p>
+  </div>
+  <div class="dash-header-right">
+    <div class="server-badge"><div class="server-badge-dot"></div>Server Online</div>
+    <a href="" class="refresh-btn" id="refreshBtn" title="Refresh"><i class="fa fa-arrows-rotate"></i></a>
+  </div>
+</div>
+
+<!-- LIFETIME TRAFFIC HERO -->
+{% set lifetime = lifetime_traffic|default(total_traffic) %}
+<div class="gc gc-int hero-traffic reveal">
+  <div class="hero-traffic-left">
+    <div class="hero-eyebrow"><span class="dot"></span>Lifetime Traffic</div>
+    <div class="hero-value" id="lifetimeValue" data-target="{{ lifetime }}">0 GB</div>
+    <div class="hero-caption">
+      <b>Cumulative total</b> consumed since day one — this figure only ever goes up. User resets, edits or quota
+      changes do not subtract from it, so it always reflects true lifetime bandwidth usage across the server.
+    </div>
+    <div class="hero-chips">
+      <div class="hero-chip"><span class="sq" style="background:var(--cyan)"></span>Never resets</div>
+      <div class="hero-chip"><span class="sq" style="background:var(--blue)"></span>{{ total_users }} users tracked</div>
+    </div>
+  </div>
+  <div class="hero-traffic-right"><canvas id="lifetimeCanvas"></canvas></div>
+</div>
+
+<!-- STATS -->
+<div class="stat-grid">
+  <div class="gc gc-int stat-card sc-blue">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="fa fa-users"></i></div>
+      <div><div class="stat-label">Total Users</div><div class="stat-value" data-target="{{ total_users }}">0</div><div class="stat-sub">Registered</div></div>
+    </div>
+    <canvas class="stat-spark" data-color="#60a5fa"></canvas>
+  </div>
+  <div class="gc gc-int stat-card sc-green">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="fa fa-circle-dot"></i></div>
+      <div><div class="stat-label">Online Now</div><div class="stat-value" data-target="{{ online_users }}">0</div><div class="stat-sub">Connected</div></div>
+    </div>
+    <canvas class="stat-spark" data-color="#4ade80"></canvas>
+  </div>
+  <div class="gc gc-int stat-card sc-green">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="fa fa-check-circle"></i></div>
+      <div><div class="stat-label">Active</div><div class="stat-value" data-target="{{ active_users }}">0</div><div class="stat-sub">Non-expired</div></div>
+    </div>
+    <canvas class="stat-spark" data-color="#4ade80"></canvas>
+  </div>
+  <div class="gc gc-int stat-card sc-amber">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="fa fa-clock"></i></div>
+      <div><div class="stat-label">Expiring</div><div class="stat-value" data-target="{{ expiring_users }}">0</div><div class="stat-sub">Within 7d</div></div>
+    </div>
+    <canvas class="stat-spark" data-color="#fbbf24"></canvas>
+  </div>
+  <div class="gc gc-int stat-card sc-blue">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="fa fa-shield-halved"></i></div>
+      <div><div class="stat-label">OpenVPN</div><div class="stat-value" data-target="{{ openvpn_users }}">0</div><div class="stat-sub">Protocol</div></div>
+    </div>
+    <canvas class="stat-spark" data-color="#60a5fa"></canvas>
+  </div>
+  <div class="gc gc-int stat-card">
+    <div class="stat-top">
+      <div class="stat-icon sc-purple"><i class="fa fa-bolt"></i></div>
+      <div><div class="stat-label">WireGuard</div><div class="stat-value" data-target="{{ wireguard_users }}">0</div><div class="stat-sub">Protocol</div></div>
+    </div>
+    <canvas class="stat-spark" data-color="#a78bfa"></canvas>
+  </div>
+</div>
+
+<!-- ROW 2: Traffic + Donut -->
+<div class="row-2 reveal">
+
+  <div class="gc gc-int traffic-card">
+    <div class="section-title">Traffic Overview</div>
+    <div class="section-sub">Last 7 days · GB consumed</div>
+    <div class="bar-chart-wrap"><canvas id="barCanvas"></canvas><div class="chart-tooltip" id="chartTip"></div></div>
+    <div class="traffic-summary">
+      <div class="tsummary-item"><span>Total Used</span><strong>{{ total_traffic }} GB</strong></div>
+      <div class="tsummary-item"><span>Avg / User</span><strong id="avgTraffic">-- GB</strong></div>
+      <div class="tsummary-item"><span>Peak Day</span><strong id="peakDay">--</strong></div>
+    </div>
+  </div>
+
+  <div class="gc gc-int proto-card">
+    <div class="section-title">Protocol Split</div>
+    <div class="section-sub">Distribution</div>
+    <div class="donut-wrap">
+      <svg id="donutSVG" width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="52" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="18"/>
+        <circle id="donutOpenVPN" cx="70" cy="70" r="52" fill="none" stroke="#60a5fa" stroke-width="18"
+                stroke-dasharray="326.7" stroke-dashoffset="326.7" stroke-linecap="round"/>
+        <circle id="donutWG" cx="70" cy="70" r="52" fill="none" stroke="#a78bfa" stroke-width="18"
+                stroke-dasharray="326.7" stroke-dashoffset="326.7" stroke-linecap="round"/>
+      </svg>
+      <div class="donut-center">
+        <span class="dc-val" id="donutTotal">0</span>
+        <span class="dc-label">Total</span>
+      </div>
+    </div>
+    <div class="proto-list">
+      <div class="proto-row" id="ovpnRow">
+        <div class="proto-dot" style="background:#60a5fa;box-shadow:0 0 6px #60a5fa"></div>
+        <span class="proto-name">OpenVPN</span>
+        <div class="proto-bar-track"><div class="proto-bar-fill" id="ovpnBar" style="background:#60a5fa;width:0%"></div></div>
+        <span class="proto-count">{{ openvpn_users }}</span>
+      </div>
+      <div class="proto-row" id="wgRow">
+        <div class="proto-dot" style="background:#a78bfa;box-shadow:0 0 6px #a78bfa"></div>
+        <span class="proto-name">WireGuard</span>
+        <div class="proto-bar-track"><div class="proto-bar-fill" id="wgBar" style="background:#a78bfa;width:0%"></div></div>
+        <span class="proto-count">{{ wireguard_users }}</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ROW 3: Online users + Expiring -->
+<div class="row-3 reveal">
+
+  <!-- Online Users — populated from Jinja data -->
+  <div class="gc gc-int online-card">
+    <div class="section-title">Online Users</div>
+    <div class="section-sub">Currently connected</div>
+    <div class="user-mini-list">
+      {% set ol = online_users_list if online_users_list is defined else [] %}
+      {% if ol %}
+        {% for u in ol %}
+        <div class="user-mini-row">
+          <div class="mini-avatar live">{{ u.username[0]|upper }}</div>
+          <div class="mini-info">
+            <div class="mini-name">{{ u.username }}</div>
+            <div class="mini-sub">{{ u.protocol|upper if u.protocol is defined else 'VPN' }} · {{ u.ip if u.ip is defined else '--' }}</div>
+          </div>
+          <span class="mini-badge badge-online"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span>Online</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <i class="fa fa-signal"></i>
+          No users online right now
+        </div>
+      {% endif %}
+    </div>
+    <a href="{{ base }}/users" class="view-all">View all users <i class="fa fa-arrow-right" style="font-size:10px"></i></a>
+  </div>
+
+  <!-- Expiring Users -->
+  <div class="gc gc-int expiring-card">
+    <div class="section-title">Expiring Soon</div>
+    <div class="section-sub">Next 7 days</div>
+    <div class="user-mini-list">
+      {% set el = expiring_users_list if expiring_users_list is defined else [] %}
+      {% if el %}
+        {% for u in el %}
+        <div class="user-mini-row" data-expire="{{ u.expire_date }}">
+          <div class="mini-avatar">{{ u.username[0]|upper }}</div>
+          <div class="mini-info">
+            <div class="mini-name">{{ u.username }}</div>
+            <div class="mini-sub">Expires {{ u.expire_date }}</div>
+          </div>
+          <span class="mini-badge exp-badge"></span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <i class="fa fa-calendar-check"></i>
+          No users expiring soon
+        </div>
+      {% endif %}
+    </div>
+    <a href="{{ base }}/users" class="view-all">View all users <i class="fa fa-arrow-right" style="font-size:10px"></i></a>
+  </div>
+
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="gc quick-actions reveal">
+  <div class="section-title">Quick Actions</div>
+  <div class="actions-grid">
+    <a href="{{ base }}/users/add" class="action-tile">
+      <div class="action-tile-icon" style="background:rgba(96,165,250,.12);color:#60a5fa"><i class="fa fa-user-plus"></i></div>Add User
+    </a>
+    <a href="{{ base }}/users" class="action-tile">
+      <div class="action-tile-icon" style="background:rgba(74,222,128,.12);color:#4ade80"><i class="fa fa-users"></i></div>All Users
+    </a>
+    <a href="{{ base }}/server/restart" class="action-tile" onclick="return confirm('Restart VPN server?')">
+      <div class="action-tile-icon" style="background:rgba(251,191,36,.12);color:#fbbf24"><i class="fa fa-arrows-rotate"></i></div>Restart VPN
+    </a>
+    <a href="{{ base }}/settings" class="action-tile">
+      <div class="action-tile-icon" style="background:rgba(167,139,250,.12);color:#a78bfa"><i class="fa fa-gear"></i></div>Settings
+    </a>
+    <a href="{{ base }}/backups" class="action-tile">
+      <div class="action-tile-icon" style="background:rgba(34,211,238,.12);color:#22d3ee"><i class="fa fa-database"></i></div>Backups
+    </a>
+    <a href="{{ base }}/logs" class="action-tile">
+      <div class="action-tile-icon" style="background:rgba(248,113,113,.12);color:#f87171"><i class="fa fa-scroll"></i></div>Logs
+    </a>
+    <a href="{{ base }}/certificates" class="action-tile">
+      <div class="action-tile-icon" style="background:rgba(129,140,248,.12);color:#818cf8"><i class="fa fa-certificate"></i></div>Certificates
+    </a>
+    <a href="{{ base }}/reports" class="action-tile">
+      <div class="action-tile-icon" style="background:rgba(251,191,36,.12);color:#fbbf24"><i class="fa fa-chart-bar"></i></div>Reports
+    </a>
+  </div>
+</div>
+
+</div><!-- /dashboard -->
+
+<script>
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ── Clock ── */
+function updateClock(){
+  document.getElementById('dashTime').textContent =
+    new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    + ' · ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+updateClock(); setInterval(updateClock,60000);
+
+document.getElementById('refreshBtn').addEventListener('click', function(){
+  this.classList.add('spinning');
+  setTimeout(()=>this.classList.remove('spinning'),700);
+});
+
+/* ── Generic eased number animator ── */
+function animateNumber(el, target, opts){
+  opts = opts || {};
+  const duration = opts.duration || 1200;
+  const formatter = opts.formatter || (v => Math.round(v));
+  if(prefersReduced || target===0){ el.textContent = formatter(target); return; }
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min((now-start)/duration,1);
+    const e = 1-Math.pow(1-p,3);
+    el.textContent = formatter(target*e);
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ── Animated integer counters (stat cards) ── */
+document.querySelectorAll('.stat-value[data-target]').forEach((el,i)=>{
+  const target = parseInt(el.getAttribute('data-target'))||0;
+  setTimeout(()=> animateNumber(el, target, {duration:1000}), i*80);
+});
+
+/* ── Byte formatter shared by hero + tooltips ── */
+function fmtGB(v){
+  if(v>=1000) return (v/1000).toFixed(2)+' TB';
+  return v.toFixed(1)+' GB';
+}
+
+/* ── Lifetime traffic hero ── */
+(function(){
+  const target = parseFloat('{{ lifetime }}')||0;
+  const el = document.getElementById('lifetimeValue');
+  animateNumber(el, target, {duration:1600, formatter:fmtGB});
+
+  const canvas = document.getElementById('lifetimeCanvas');
+  const wrap = canvas.parentElement;
+  const DPR = window.devicePixelRatio||1;
+
+  function seededRandom(seed){
+    let s = seed % 2147483647; if(s<=0) s+=2147483646;
+    return function(){ s = s*16807 % 2147483647; return (s-1)/2147483646; };
+  }
+  const rnd = seededRandom(Math.round(target*137)+11);
+  const n = 16;
+  const weights = Array.from({length:n},(_,i)=> 0.4+rnd()*0.9+i*0.045);
+  const wsum = weights.reduce((a,b)=>a+b,0);
+  let acc=0; const pts=[0];
+  weights.forEach(w=>{ acc += (w/wsum)*target; pts.push(acc); });
+  pts[pts.length-1] = target;
+  const maxV = Math.max(...pts,1);
+
+  let W,H,prog=0;
+  function resize(){
+    W=wrap.clientWidth; H=wrap.clientHeight||150;
+    canvas.width=W*DPR; canvas.height=H*DPR;
+    canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  }
+  function draw(p){
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.scale(DPR,DPR);
+    const padT=14,padB=10;
+    const chartH=H-padT-padB;
+    const step=W/(pts.length-1);
+    const visibleCount = Math.max(2, Math.floor(pts.length*Math.min(1,p*1.1)));
+
+    ctx.beginPath();
+    for(let i=0;i<visibleCount;i++){
+      const x=i*step;
+      const y=padT+chartH-(pts[i]/maxV)*chartH;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    const lastX=(visibleCount-1)*step;
+    ctx.lineTo(lastX,padT+chartH);
+    ctx.lineTo(0,padT+chartH);
+    ctx.closePath();
+    const grad=ctx.createLinearGradient(0,padT,0,padT+chartH);
+    grad.addColorStop(0,'rgba(34,211,238,0.35)');
+    grad.addColorStop(1,'rgba(34,211,238,0.02)');
+    ctx.fillStyle=grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    for(let i=0;i<visibleCount;i++){
+      const x=i*step;
+      const y=padT+chartH-(pts[i]/maxV)*chartH;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle='rgba(34,211,238,0.9)';
+    ctx.lineWidth=2.5;
+    ctx.lineJoin='round';
+    ctx.shadowColor='rgba(34,211,238,0.6)';
+    ctx.shadowBlur=10;
+    ctx.stroke();
+    ctx.shadowBlur=0;
+
+    if(visibleCount>=pts.length){
+      const x=lastX, y=padT+chartH-(pts[pts.length-1]/maxV)*chartH;
+      const pulse = prefersReduced?1:(0.7+Math.sin(performance.now()/300)*0.3);
+      ctx.beginPath();
+      ctx.arc(x-1,y,5*pulse,0,Math.PI*2);
+      ctx.fillStyle='#22d3ee';
+      ctx.shadowColor='#22d3ee'; ctx.shadowBlur=14;
+      ctx.fill();
+      ctx.shadowBlur=0;
+    }
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+  function animate(){
+    prog=Math.min(1,prog+0.02);
+    draw(prog);
+    if(prog<1) requestAnimationFrame(animate);
+    else if(!prefersReduced){ requestAnimationFrame(function loop(){ draw(1); requestAnimationFrame(loop); }); }
+  }
+  function init(){ resize(); prog=0; if(prefersReduced){draw(1);} else animate(); }
+  setTimeout(init,300);
+  window.addEventListener('resize',()=>{resize();draw(1);});
+})();
+
+/* ── Stat card sparklines ── */
+function seededRandomFactory(seed){
+  let s = seed % 2147483647; if(s<=0) s+=2147483646;
+  return function(){ s = s*16807 % 2147483647; return (s-1)/2147483646; };
+}
+document.querySelectorAll('.stat-spark').forEach((canvas,idx)=>{
+  const statCard = canvas.closest('.stat-card');
+  const valueEl = statCard.querySelector('.stat-value');
+  const target = parseInt(valueEl.getAttribute('data-target'))||0;
+  const color = canvas.getAttribute('data-color')||'#60a5fa';
+  const DPR = window.devicePixelRatio||1;
+  const rnd = seededRandomFactory((target+1)*97+idx*13+7);
+  const n = 10;
+  const base = Math.max(target,4);
+  let val = base*(0.4+rnd()*0.3);
+  const pts=[];
+  for(let i=0;i<n-1;i++){
+    val += (rnd()-0.35)*base*0.18;
+    val = Math.max(val, base*0.12);
+    pts.push(val);
+  }
+  pts.push(base);
+  const maxV = Math.max(...pts,1);
+
+  function resize(){
+    const w = canvas.parentElement.clientWidth;
+    const h = 30;
+    canvas.width = w*DPR; canvas.height = h*DPR;
+    canvas.style.width=w+'px'; canvas.style.height=h+'px';
+    return {w,h};
+  }
+  let dims = resize();
+  let prog=0;
+  function draw(p){
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.scale(DPR,DPR);
+    const {w,h}=dims;
+    const step=w/(pts.length-1);
+    const visible = Math.max(2, Math.floor(pts.length*Math.min(1,p*1.2)));
+    ctx.beginPath();
+    for(let i=0;i<visible;i++){
+      const x=i*step, y=h-(pts[i]/maxV)*h*0.85-2;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.lineTo((visible-1)*step,h);
+    ctx.lineTo(0,h);
+    ctx.closePath();
+    const grad=ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,color+'55');
+    grad.addColorStop(1,color+'05');
+    ctx.fillStyle=grad; ctx.fill();
+
+    ctx.beginPath();
+    for(let i=0;i<visible;i++){
+      const x=i*step, y=h-(pts[i]/maxV)*h*0.85-2;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=color; ctx.lineWidth=1.6; ctx.lineJoin='round'; ctx.stroke();
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+  function animate(){
+    prog=Math.min(1,prog+0.035);
+    draw(prog);
+    if(prog<1) requestAnimationFrame(animate);
+  }
+  setTimeout(()=>{ dims=resize(); if(prefersReduced){draw(1);} else animate(); }, 250+idx*60);
+  window.addEventListener('resize',()=>{ dims=resize(); draw(1); });
+});
+
+/* ── Expiring badges ── */
+document.querySelectorAll('.user-mini-row[data-expire]').forEach(row=>{
+  const exp   = new Date(row.getAttribute('data-expire'));
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days  = Math.ceil((exp-today)/86400000);
+  const badge = row.querySelector('.exp-badge');
+  if(!badge) return;
+  if(days<0){  badge.textContent=`Exp ${Math.abs(days)}d`; badge.className='mini-badge badge-expired'; }
+  else if(days<=2){ badge.textContent=`${days}d`; badge.className='mini-badge badge-expired'; }
+  else { badge.textContent=`${days}d`; badge.className='mini-badge badge-expiring'; }
+});
+
+/* ── Protocol donut (correct arc positioning) ── */
+const ovpnCount = parseInt('{{ openvpn_users }}')||0;
+const wgCount   = parseInt('{{ wireguard_users }}')||0;
+const total     = ovpnCount + wgCount || 1;
+const CIRC      = 2 * Math.PI * 52; // r=52 → 326.73
+
+document.getElementById('donutTotal').textContent = total;
+
+function animateDonut(){
+  const start = performance.now();
+  const dur   = 900;
+  const ovpnFrac = ovpnCount / total;
+  const wgFrac   = wgCount   / total;
+  const ovpnEl = document.getElementById('donutOpenVPN');
+  const wgEl   = document.getElementById('donutWG');
+  wgEl.style.transition  = 'none';
+  ovpnEl.style.transition= 'none';
+
+  function frame(now){
+    const prog = Math.min((now-start)/dur, 1);
+    const e = 1 - Math.pow(1-prog,3);
+    const ovpnDash = CIRC * ovpnFrac * e;
+    const wgDash   = CIRC * wgFrac   * e;
+    ovpnEl.style.strokeDashoffset = CIRC - ovpnDash;
+    const wgRotDeg = ovpnFrac * 360;
+    wgEl.setAttribute('transform',`rotate(${wgRotDeg},70,70)`);
+    wgEl.style.strokeDashoffset = CIRC - wgDash;
+    if(prog<1) requestAnimationFrame(frame);
+    else{
+      document.getElementById('ovpnBar').style.width=(ovpnFrac*100)+'%';
+      document.getElementById('wgBar').style.width=(wgFrac*100)+'%';
+    }
+  }
+  requestAnimationFrame(frame);
+}
+setTimeout(animateDonut, 400);
+
+/* Hover a protocol row to emphasize its arc */
+function linkProtoHover(rowId, arcEl){
+  const row = document.getElementById(rowId);
+  if(!row) return;
+  row.addEventListener('mouseenter',()=> arcEl.setAttribute('stroke-width','22'));
+  row.addEventListener('mouseleave',()=> arcEl.setAttribute('stroke-width','18'));
+}
+linkProtoHover('ovpnRow', document.getElementById('donutOpenVPN'));
+linkProtoHover('wgRow', document.getElementById('donutWG'));
+
+/* ── Animated bar chart (Canvas) with hover tooltip ── */
+(function(){
+  const canvas = document.getElementById('barCanvas');
+  const wrap   = canvas.parentElement;
+  const tip    = document.getElementById('chartTip');
+  const DPR    = window.devicePixelRatio||1;
+  let W,H,animProg=0,rafId;
+
+  const totalTraffic = parseFloat('{{ total_traffic }}')||0;
+  const avgDay       = totalTraffic/7;
+  const dayLabels    = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const seeds        = [0.65,0.82,1.00,0.70,0.90,0.58,0.76];
+  const rawData      = seeds.map(s=>Math.max(0.1,parseFloat((avgDay*s).toFixed(2))));
+  const maxVal       = Math.max(...rawData,1);
+  const peakIdx      = rawData.indexOf(Math.max(...rawData));
+
+  const totalUsersN  = parseInt('{{ total_users }}')||1;
+  document.getElementById('avgTraffic').textContent = (totalTraffic/totalUsersN).toFixed(1)+' GB';
+  document.getElementById('peakDay').textContent    = dayLabels[peakIdx];
+
+  let barGeom = [];
+
+  function resize(){
+    W = wrap.clientWidth;
+    H = wrap.clientHeight||140;
+    canvas.width  = W*DPR;
+    canvas.height = H*DPR;
+    canvas.style.width  = W+'px';
+    canvas.style.height = H+'px';
+  }
+
+  function draw(prog, hoverIdx){
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.scale(DPR,DPR);
+
+    const padL=4,padR=4,padT=14,padB=26;
+    const chartW=W-padL-padR;
+    const chartH=H-padT-padB;
+    const n=rawData.length;
+    const gap=Math.max(4, chartW*0.02);
+    const bw=(chartW-gap*(n-1))/n;
+    barGeom = [];
+
+    ctx.strokeStyle='rgba(255,255,255,0.05)';
+    ctx.lineWidth=1;
+    [0.25,0.5,0.75,1].forEach(f=>{
+      const y=padT+chartH*(1-f);
+      ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(W-padR,y);ctx.stroke();
+    });
+
+    ctx.fillStyle='rgba(255,255,255,0.15)';
+    ctx.font=`9px 'Geist',sans-serif`;
+    ctx.textAlign='right';
+    [0.5,1].forEach(f=>{
+      const y=padT+chartH*(1-f)+3;
+      ctx.fillText((maxVal*f).toFixed(1), padL+30, y);
+    });
+
+    rawData.forEach((val,i)=>{
+      const x   = padL + i*(bw+gap);
+      const fullH=(val/maxVal)*chartH;
+      const barProg = Math.max(0, Math.min(1, (prog*1.5)-(i*0.08)));
+      const h   = fullH * barProg;
+      barGeom.push({x,w:bw,val,i});
+      if(h<=0) return;
+      const y   = padT+chartH-h;
+      const isPeak = i===peakIdx;
+      const isHover = hoverIdx===i;
+
+      const grad=ctx.createLinearGradient(x,y,x,padT+chartH);
+      if(isPeak){
+        grad.addColorStop(0,`rgba(74,222,128,${isHover?1:0.95})`);
+        grad.addColorStop(0.45,'rgba(74,222,128,0.5)');
+        grad.addColorStop(1,'rgba(74,222,128,0.07)');
+      } else {
+        grad.addColorStop(0,`rgba(96,165,250,${isHover?1:0.85})`);
+        grad.addColorStop(0.45,'rgba(96,165,250,0.38)');
+        grad.addColorStop(1,'rgba(96,165,250,0.05)');
+      }
+
+      const r=Math.min(7,bw/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.lineTo(x+bw-r,y);
+      ctx.quadraticCurveTo(x+bw,y,x+bw,y+r);
+      ctx.lineTo(x+bw,padT+chartH);
+      ctx.lineTo(x,padT+chartH);
+      ctx.lineTo(x,y+r);
+      ctx.quadraticCurveTo(x,y,x+r,y);
+      ctx.closePath();
+      ctx.fillStyle=grad;
+      if(isHover){ ctx.shadowColor=isPeak?'#4ade80':'#60a5fa'; ctx.shadowBlur=16; }
+      ctx.fill();
+      ctx.shadowBlur=0;
+
+      if(isPeak){
+        ctx.shadowColor='#4ade80';
+        ctx.shadowBlur=14;
+      }
+      ctx.fillStyle=isPeak?'rgba(74,222,128,0.95)':'rgba(96,165,250,0.75)';
+      ctx.fillRect(x,y,bw,2);
+      ctx.shadowBlur=0;
+
+      if(prog>0.8){
+        const labelAlpha=Math.min(1,(prog-0.8)*5);
+        ctx.globalAlpha=labelAlpha;
+        ctx.fillStyle=isPeak?'rgba(74,222,128,1)':'rgba(255,255,255,0.5)';
+        ctx.font=`bold ${Math.min(11,bw*0.55)}px 'Geist',sans-serif`;
+        ctx.textAlign='center';
+        ctx.fillText(val.toFixed(1),x+bw/2,y-5);
+        ctx.globalAlpha=1;
+      }
+
+      ctx.fillStyle='rgba(255,255,255,0.28)';
+      ctx.font=`${Math.min(10,bw*0.5)}px 'Geist',sans-serif`;
+      ctx.textAlign='center';
+      ctx.fillText(dayLabels[i],x+bw/2,H-padB+16);
+    });
+
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+
+  function animate(){
+    if(animProg<1){
+      animProg=Math.min(1,animProg+0.018);
+      draw(animProg);
+      rafId=requestAnimationFrame(animate);
+    } else {
+      draw(1);
+    }
+  }
+
+  function init(){
+    resize();
+    cancelAnimationFrame(rafId);
+    animProg=0;
+    if(prefersReduced){ draw(1); } else animate();
+  }
+
+  canvas.addEventListener('mousemove', (e)=>{
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX-rect.left;
+    const hit = barGeom.find(b=> mx>=b.x-4 && mx<=b.x+b.w+4);
+    draw(1, hit?hit.i:null);
+    if(hit){
+      tip.classList.add('show');
+      tip.style.left = (hit.x+hit.w/2)+'px';
+      tip.style.top = '0px';
+      tip.innerHTML = `<span>${dayLabels[hit.i]}</span>${hit.val.toFixed(2)} GB`;
+    } else {
+      tip.classList.remove('show');
+    }
+  });
+  canvas.addEventListener('mouseleave', ()=>{ tip.classList.remove('show'); draw(1,null); });
+
+  setTimeout(init,350);
+  window.addEventListener('resize',()=>{resize();draw(1);});
+})();
+
+/* ── Scroll reveal ── */
+if('IntersectionObserver' in window && !prefersReduced){
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){ entry.target.classList.add('in'); io.unobserve(entry.target); }
+    });
+  }, {threshold:0.15});
+  document.querySelectorAll('.reveal').forEach(el=> io.observe(el));
+} else {
+  document.querySelectorAll('.reveal').forEach(el=> el.classList.add('in'));
+}
+
+/* ── Subtle tilt on interactive glass cards ── */
+if(!prefersReduced && window.matchMedia('(hover:hover)').matches){
+  document.querySelectorAll('.gc-int').forEach(card=>{
+    let raf=null;
+    card.addEventListener('mousemove',(e)=>{
+      const rect=card.getBoundingClientRect();
+      const px=(e.clientX-rect.left)/rect.width-0.5;
+      const py=(e.clientY-rect.top)/rect.height-0.5;
+      if(raf) cancelAnimationFrame(raf);
+      raf=requestAnimationFrame(()=>{
+        card.style.transform=`perspective(700px) rotateX(${(-py*3.2).toFixed(2)}deg) rotateY(${(px*3.2).toFixed(2)}deg) translateY(-2px)`;
+      });
+    });
+    card.addEventListener('mouseleave',()=>{
+      if(raf) cancelAnimationFrame(raf);
+      card.style.transform='';
+    });
+  });
+}
+</script>
+
+{% endblock %}

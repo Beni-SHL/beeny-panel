@@ -1,0 +1,299 @@
+{% extends "layout.html" %}
+
+{% block title %}OpenVPN Settings{% endblock %}
+
+{% block content %}
+
+<style>
+/* ========== LIQUID GLASS STYLES ========== */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.page-header {
+  margin-bottom: 8px;
+}
+
+.page-header h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+}
+
+/* Hero Cards (system-hero) */
+.system-hero {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 8px;
+}
+
+.hero-card {
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.hero-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.hero-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 12px;
+}
+
+.hero-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+
+/* Glass card for info rows */
+.glass-card {
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row span {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.3px;
+}
+
+.info-row strong {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Action Buttons */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.action-btn {
+  border: none;
+  border-radius: 60px;
+  padding: 14px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: 'DM Sans', sans-serif;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.action-btn.success {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(34, 197, 94, 0.15));
+  border-color: rgba(74, 222, 128, 0.3);
+  color: #4ade80;
+}
+
+.action-btn.warning {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.15));
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .system-hero {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .hero-value {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-page {
+    padding: 12px;
+  }
+  .system-hero {
+    grid-template-columns: 1fr;
+  }
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-header h1 {
+    font-size: 24px;
+  }
+}
+</style>
+
+<div class="settings-page">
+  <div class="page-header">
+    <h1>OpenVPN Settings</h1>
+    <p>Manage OpenVPN Service & Configuration</p>
+  </div>
+
+  <!-- Hero Cards -->
+  <div class="system-hero">
+    <div class="hero-card">
+      <div class="hero-label">OpenVPN Status</div>
+      <div class="hero-value" id="vpnStatus">Loading...</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-label">Protocol</div>
+      <div class="hero-value" id="vpnProtocol">UDP</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-label">Port</div>
+      <div class="hero-value" id="vpnPort">1194</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-label">Connected Users</div>
+      <div class="hero-value" id="vpnUsers">0</div>
+    </div>
+  </div>
+
+  <!-- Info Card (Cipher, Auth, Network) -->
+  <div class="glass-card">
+    <div class="section-title">🔐 Connection Details</div>
+    <div class="info-row">
+      <span>Cipher</span>
+      <strong id="vpnCipher">-</strong>
+    </div>
+    <div class="info-row">
+      <span>Authentication</span>
+      <strong id="vpnAuth">-</strong>
+    </div>
+    <div class="info-row">
+      <span>VPN Network</span>
+      <strong id="vpnNetwork">-</strong>
+    </div>
+  </div>
+
+  <!-- Controls (only Restart and Reload, no Reset) -->
+  <div class="glass-card">
+    <div class="section-title">⚡ OpenVPN Controls</div>
+    <div class="action-grid">
+      <button class="action-btn success" onclick="restartVPN()">
+        <i class="fa-solid fa-rotate-right"></i> Restart OpenVPN
+      </button>
+      <button class="action-btn warning" onclick="reloadVPN()">
+        <i class="fa-solid fa-arrows-rotate"></i> Reload Config
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const panelPath = "{{ panel_path }}";
+
+async function loadVPNStatus() {
+  try {
+    const res = await fetch(panelPath + "/api/openvpn/info");
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("vpnStatus").innerText = data.status || "Unknown";
+      document.getElementById("vpnProtocol").innerText = data.protocol || "-";
+      document.getElementById("vpnPort").innerText = data.port || "-";
+      document.getElementById("vpnUsers").innerText = data.users || 0;
+      document.getElementById("vpnCipher").innerText = data.cipher || "-";
+      document.getElementById("vpnAuth").innerText = data.auth || "-";
+      document.getElementById("vpnNetwork").innerText = data.network || "-";
+    } else {
+      console.error("API error:", data.message);
+    }
+  } catch (e) {
+    console.error("Failed to load VPN status:", e);
+  }
+}
+
+async function restartVPN() {
+  if (!confirm("Restart OpenVPN service?")) return;
+  try {
+    await fetch(panelPath + "/api/vpn/restart", { method: "POST" });
+    alert("Restart initiated. Status will update shortly.");
+    setTimeout(loadVPNStatus, 3000);
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+}
+
+async function reloadVPN() {
+  if (!confirm("Reload OpenVPN configuration?")) return;
+  try {
+    await fetch(panelPath + "/api/vpn/restart", { method: "POST" }); // same endpoint, but we keep it
+    alert("Reload initiated. Config will be reapplied.");
+    setTimeout(loadVPNStatus, 3000);
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+}
+
+// Initial load
+loadVPNStatus();
+// Auto-refresh every 30 seconds
+setInterval(loadVPNStatus, 30000);
+</script>
+
+{% endblock %}

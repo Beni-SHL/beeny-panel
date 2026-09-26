@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">Edit User</h2>
+
+<div class="glass-card">
+
+<form method="post">
+
+    <div class="mb-3">
+        <label>Username</label>
+
+        <input
+            name="username"
+            value="{{ user.username }}"
+            class="form-control">
+    </div>
+
+    <div class="mb-3">
+
+        <label>Protocol</label>
+
+        <select
+            name="protocol"
+            class="form-control">
+
+            <option value="openvpn"
+            {% if user.protocol=="openvpn" %}
+            selected
+            {% endif %}>
+            OpenVPN
+            </option>
+
+            <option value="wireguard"
+            {% if user.protocol=="wireguard" %}
+            selected
+            {% endif %}>
+            WireGuard
+            </option>
+
+        </select>
+
+    </div>
+
+    <div class="mb-3">
+
+        <label>Max Devices</label>
+
+        <input
+            type="number"
+            name="max_devices"
+            value="{{ user.max_devices }}"
+            class="form-control">
+
+    </div>
+
+    <div class="mb-3">
+
+        <label>Expire Date</label>
+
+        <input
+            type="date"
+            name="expire_date"
+            value="{{ user.expire_date }}"
+            class="form-control">
+
+    </div>
+
+    <div class="mb-3">
+
+        <label>Status</label>
+
+        <select
+            name="status"
+            class="form-control">
+
+            <option value="active"
+            {% if user.status=="active" %}
+            selected
+            {% endif %}>
+            Active
+            </option>
+
+            <option value="disabled"
+            {% if user.status=="disabled" %}
+            selected
+            {% endif %}>
+            Disabled
+            </option>
+
+        </select>
+
+    </div>
+
+    <button
+        class="btn btn-success">
+        Save Changes
+    </button>
+
+</form>
+
+</div>
+
+{% endblock %}

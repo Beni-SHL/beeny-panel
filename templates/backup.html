@@ -1,0 +1,518 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<style>
+/* ---------- CSS Variables برای لایت/دارک مود ---------- */
+:root {
+  --bg-glass: rgba(255, 255, 255, 0.05);
+  --border-glass: rgba(255, 255, 255, 0.1);
+  --border-top-glass: rgba(255, 255, 255, 0.18);
+  --text-primary: #fff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --stat-icon: #8b5cf6;
+  --btn-primary: #06b6d4;
+  --btn-purple: #8b5cf6;
+  --table-border: rgba(255, 255, 255, 0.08);
+  --hero-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-glass: rgba(0, 0, 0, 0.03);
+    --border-glass: rgba(0, 0, 0, 0.08);
+    --border-top-glass: rgba(0, 0, 0, 0.12);
+    --text-primary: #1e293b;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --stat-icon: #6366f1;
+    --btn-primary: #0891b2;
+    --btn-purple: #7c3aed;
+    --table-border: rgba(0, 0, 0, 0.05);
+    --hero-gradient: linear-gradient(135deg, #818cf8, #a78bfa, #22d3ee);
+  }
+}
+
+.backup-center {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---------- Hero Section (glass) ---------- */
+.backup-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  padding: 40px;
+  border-radius: 32px;
+  background: var(--hero-gradient);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.hero-badge {
+  display: inline-flex;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  color: white;
+  margin-bottom: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+.backup-hero h1 {
+  color: white;
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+}
+.backup-hero p {
+  color: rgba(255,255,255,.85);
+  max-width: 650px;
+  font-size: 16px;
+}
+.hero-right {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.hero-stat {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.12);
+  backdrop-filter: blur(8px);
+  min-width: 110px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.hero-stat span {
+  display: block;
+  color: rgba(255,255,255,.8);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.hero-stat strong {
+  font-size: 22px;
+  color: white;
+  font-weight: 800;
+}
+.green {
+  color: #4ade80 !important;
+}
+
+/* ---------- Stat Cards (Glass) ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.stat-card,
+.action-card,
+.table-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--border-glass);
+  border-top: 1px solid var(--border-top-glass);
+  border-radius: 28px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+.stat-card {
+  padding: 25px;
+  text-align: center;
+}
+.stat-card i {
+  font-size: 32px;
+  color: var(--stat-icon);
+}
+.stat-card h2 {
+  font-size: 34px;
+  color: var(--text-primary);
+  margin: 10px 0;
+}
+.stat-card span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ---------- Action Cards ---------- */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.action-card {
+  padding: 28px;
+}
+.action-header {
+  font-size: 22px;
+  color: var(--text-primary);
+  margin-bottom: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.action-card p {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.primary-btn {
+  border: none;
+  padding: 12px 20px;
+  border-radius: 16px;
+  background: var(--btn-primary);
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.primary-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+.purple {
+  background: var(--btn-purple);
+}
+input#backupFile {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 10px;
+  color: var(--text-primary);
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+/* ---------- Table Card (Glass) ---------- */
+.table-card {
+  padding: 28px;
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.table-header h3 {
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+.refresh-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+}
+.refresh-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+.backup-table {
+  overflow-x: auto;
+}
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1fr 1fr;
+  gap: 20px;
+  padding: 15px;
+  align-items: center;
+}
+.table-head {
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--table-border);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.table-row {
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.action-links {
+  display: flex;
+  gap: 16px;
+}
+.action-links a {
+  text-decoration: none;
+  color: #60a5fa;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: 0.1s;
+}
+.action-links a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Responsive (موبایل) ---------- */
+@media (max-width: 900px) {
+  .backup-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 30px 20px;
+  }
+  .backup-hero h1 {
+    font-size: 32px;
+  }
+  .hero-right {
+    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+  }
+  .hero-stat {
+    min-width: auto;
+    padding: 14px;
+  }
+  .hero-stat strong {
+    font-size: 18px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .action-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  /* تبدیل ردیف‌های جدول به کارت عمودی */
+  .table-head {
+    display: none;
+  }
+  .table-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-glass);
+  }
+  .table-row > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  .table-row > div:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .action-links {
+    justify-content: flex-start;
+    gap: 20px;
+  }
+}
+
+/* برای دیتا-لیبل در موبایل (با جاوااسکریپت هم می‌شود ولی با css خالص نمی‌شود. در اسکریپت مقداردهی می‌کنیم) */
+</style>
+
+<div class="backup-center">
+
+  <section class="backup-hero">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <i class="fa-solid fa-shield-halved"></i>
+        ENTERPRISE BACKUP CENTER
+      </div>
+      <h1>Backup & Recovery Center</h1>
+      <p>Protect your VPN infrastructure with automated backups, disaster recovery and one-click restore.</p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-stat">
+        <span>Last Backup</span>
+        <strong id="last-backup">Loading...</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Stored Backups</span>
+        <strong id="backup-count">0</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Total Size</span>
+        <strong id="backup-size">0 MB</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Status</span>
+        <strong class="green">Protected</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <i class="fa-solid fa-database"></i>
+      <h2 id="db-count">0</h2>
+      <span>Database Backups</span>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-box-archive"></i>
+      <h2 id="full-count">0</h2>
+      <span>Full Snapshots</span>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-hard-drive"></i>
+      <h2 id="storage-used">0 MB</h2>
+      <span>Storage Used</span>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <h2>ON</h2>
+      <span>Auto Protection</span>
+    </div>
+  </section>
+
+  <section class="action-grid">
+    <div class="action-card">
+      <div class="action-header">
+        <i class="fa-solid fa-database"></i> Database Backup
+      </div>
+      <p>Create a secure backup of the Beeny database.</p>
+      <button class="primary-btn" onclick="createDBBackup()">
+        <i class="fa-solid fa-download"></i> Backup Database
+      </button>
+    </div>
+    <div class="action-card">
+      <div class="action-header">
+        <i class="fa-solid fa-box-archive"></i> Full Panel Snapshot
+      </div>
+      <p>Backup templates, configs, database and assets.</p>
+      <button class="primary-btn purple" onclick="createFullBackup()">
+        <i class="fa-solid fa-shield"></i> Create Snapshot
+      </button>
+    </div>
+    <div class="action-card">
+      <div class="action-header">
+        <i class="fa-solid fa-upload"></i> Upload Backup
+      </div>
+      <p>Upload backup file and restore later.</p>
+      <input type="file" id="backupFile">
+      <button class="primary-btn" onclick="uploadBackup()">Upload Backup</button>
+    </div>
+  </section>
+
+  <section class="table-card">
+    <div class="table-header">
+      <h3><i class="fa-solid fa-folder-open"></i> Backup Explorer</h3>
+      <button class="refresh-btn" onclick="loadBackups()"><i class="fa-solid fa-rotate"></i></button>
+    </div>
+    <div class="backup-table">
+      <div class="table-head">
+        <div>Name</div>
+        <div>Type</div>
+        <div>Size</div>
+        <div>Actions</div>
+      </div>
+      <div id="backupList"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const panelPath = "{{ panel_path|default('') }}";
+
+async function createDBBackup() {
+  const res = await fetch(panelPath + "/api/backup/create-db", { method: "POST" });
+  const data = await res.json();
+  alert(data.message);
+  loadBackups();
+}
+
+async function createFullBackup() {
+  const res = await fetch(panelPath + "/api/backup/create-full", { method: "POST" });
+  const data = await res.json();
+  alert(data.message);
+  loadBackups();
+}
+
+async function uploadBackup() {
+  const file = document.getElementById("backupFile").files[0];
+  if (!file) { alert("Select backup file"); return; }
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(panelPath + "/api/backup/upload", { method: "POST", body: formData });
+  const data = await res.json();
+  alert(data.message);
+  loadBackups();
+}
+
+async function deleteBackup(filename) {
+  if (!confirm("Delete backup?")) return;
+  const res = await fetch(panelPath + "/api/backup/delete/" + filename, { method: "POST" });
+  const data = await res.json();
+  alert(data.message);
+  loadBackups();
+}
+
+async function restoreBackup(filename) {
+  if (!confirm("Restore backup and restart panel?")) return;
+  const res = await fetch(panelPath + "/api/backup/restore/" + filename, { method: "POST" });
+  const data = await res.json();
+  alert(data.message);
+}
+
+async function loadBackups() {
+  const res = await fetch(panelPath + "/api/backup/list");
+  const data = await res.json();
+  let html = "";
+  let totalSize = 0;
+  let dbCount = 0;
+  let fullCount = 0;
+
+  data.forEach(item => {
+    totalSize += item.size;
+    if (item.name.startsWith("db_")) dbCount++;
+    else fullCount++;
+
+    html += `
+      <div class="table-row">
+        <div data-label="Name">${item.name}</div>
+        <div data-label="Type">${item.name.startsWith("db_") ? "Database" : "Full"}</div>
+        <div data-label="Size">${item.size} MB</div>
+        <div data-label="Actions" class="action-links">
+          <a href="${panelPath}/api/backup/download/${item.name}">Download</a>
+          <a onclick="restoreBackup('${item.name}')">Restore</a>
+          <a onclick="deleteBackup('${item.name}')">Delete</a>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("backupList").innerHTML = html;
+  document.getElementById("backup-count").innerText = data.length;
+  document.getElementById("db-count").innerText = dbCount;
+  document.getElementById("full-count").innerText = fullCount;
+  document.getElementById("backup-size").innerText = totalSize.toFixed(2) + " MB";
+  document.getElementById("storage-used").innerText = totalSize.toFixed(2) + " MB";
+  if (data.length) document.getElementById("last-backup").innerText = data[0].name;
+}
+
+loadBackups();
+</script>
+
+{% endblock %}

@@ -1,0 +1,367 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="settings-center">
+
+<div class="hero-card">
+
+<div class="hero-content">
+
+<div class="hero-badge">
+<i class="fa-solid fa-sliders"></i>
+SETTINGS CENTER
+</div>
+
+<h1>Beeny Control Center</h1>
+
+<p>
+Manage panel configuration, VPN services,
+security settings, backups and server operations.
+</p>
+
+</div>
+
+<div class="hero-glow"></div>
+
+</div>
+
+<div class="settings-grid">
+
+<a href="{{ panel_path }}/settings/general" class="setting-card">
+<div class="card-icon">
+<i class="fa-solid fa-user-shield"></i>
+</div>
+<h3>General</h3>
+<p>Panel path, port, admin credentials</p>
+</a>
+
+<a href="{{ panel_path }}/settings/ssl" class="setting-card">
+<div class="card-icon">
+<i class="fa-solid fa-lock"></i>
+</div>
+<h3>SSL</h3>
+<p>Certificates and HTTPS settings</p>
+</a>
+
+<a href="{{ panel_path }}/settings/system" class="setting-card">
+<div class="card-icon">
+<i class="fa-solid fa-server"></i>
+</div>
+<h3>System</h3>
+<p>Panel services and VPS controls</p>
+</a>
+
+<a href="{{ panel_path }}/settings/backup" class="setting-card">
+<div class="card-icon">
+<i class="fa-solid fa-database"></i>
+</div>
+<h3>Backups</h3>
+<p>Database backup and restore</p>
+</a>
+
+<a href="{{ panel_path }}/settings/openvpn" class="setting-card">
+<div class="card-icon">
+<i class="fa-solid fa-shield-halved"></i>
+</div>
+<h3>OpenVPN</h3>
+<p>VPN service configuration</p>
+</a>
+
+<a href="{{ panel_path }}/settings/danger" class="setting-card danger">
+<div class="card-icon">
+<i class="fa-solid fa-triangle-exclamation"></i>
+</div>
+<h3>Danger Zone</h3>
+<p>Reset operations and destructive actions</p>
+</a>
+
+</div>
+
+<a href="{{ panel_path }}/settings/monitoring" class="monitor-card">
+
+<div class="monitor-left">
+
+<div class="monitor-title">
+<i class="fa-solid fa-chart-line"></i>
+Live Monitoring Dashboard
+</div>
+
+<div class="monitor-subtitle">
+Real-time system resources, VPN metrics and charts
+</div>
+
+</div>
+
+<div class="monitor-right">
+
+<div class="mini-stat">
+<span>CPU</span>
+<strong id="cpu-mini">0%</strong>
+</div>
+
+<div class="mini-stat">
+<span>RAM</span>
+<strong id="ram-mini">0%</strong>
+</div>
+
+<div class="mini-stat">
+<span>DISK</span>
+<strong id="disk-mini">0%</strong>
+</div>
+
+<div class="mini-stat">
+<span>NET</span>
+<strong id="net-mini">0</strong>
+</div>
+
+</div>
+
+</a>
+
+</div>
+
+<style>
+
+.settings-center{
+display:flex;
+flex-direction:column;
+gap:25px;
+}
+
+.hero-card{
+position:relative;
+overflow:hidden;
+border-radius:32px;
+padding:50px;
+background:linear-gradient(
+135deg,
+#6366f1,
+#8b5cf6,
+#06b6d4
+);
+}
+
+.hero-content{
+position:relative;
+z-index:2;
+}
+
+.hero-badge{
+display:inline-flex;
+gap:10px;
+padding:10px 18px;
+border-radius:999px;
+background:rgba(255,255,255,.15);
+color:white;
+margin-bottom:20px;
+font-size:13px;
+}
+
+.hero-card h1{
+font-size:42px;
+font-weight:800;
+color:white;
+}
+
+.hero-card p{
+max-width:700px;
+color:rgba(255,255,255,.8);
+font-size:15px;
+}
+
+.hero-glow{
+position:absolute;
+width:500px;
+height:500px;
+background:rgba(255,255,255,.12);
+border-radius:50%;
+right:-150px;
+top:-150px;
+filter:blur(80px);
+}
+
+.settings-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+}
+
+.setting-card{
+background:rgba(255,255,255,.05);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.08);
+border-radius:28px;
+padding:28px;
+text-decoration:none;
+transition:.35s;
+}
+
+.setting-card:hover{
+transform:translateY(-8px);
+background:rgba(255,255,255,.08);
+}
+
+.card-icon{
+width:64px;
+height:64px;
+border-radius:18px;
+display:flex;
+align-items:center;
+justify-content:center;
+background:rgba(99,102,241,.15);
+font-size:24px;
+color:#818cf8;
+margin-bottom:20px;
+}
+
+.setting-card h3{
+color:white;
+margin-bottom:8px;
+}
+
+.setting-card p{
+color:#94a3b8;
+font-size:13px;
+}
+
+.danger .card-icon{
+background:rgba(239,68,68,.15);
+color:#ef4444;
+}
+
+.monitor-card{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:28px;
+border-radius:30px;
+background:linear-gradient(
+135deg,
+rgba(99,102,241,.15),
+rgba(6,182,212,.15)
+);
+border:1px solid rgba(255,255,255,.08);
+text-decoration:none;
+transition:.35s;
+}
+
+.monitor-card:hover{
+transform:translateY(-4px);
+}
+
+.monitor-title{
+font-size:22px;
+font-weight:700;
+color:white;
+margin-bottom:8px;
+}
+
+.monitor-subtitle{
+color:#94a3b8;
+}
+
+.monitor-right{
+display:flex;
+gap:20px;
+}
+
+.mini-stat{
+min-width:90px;
+padding:14px;
+border-radius:18px;
+background:rgba(255,255,255,.05);
+text-align:center;
+}
+
+.mini-stat span{
+display:block;
+font-size:12px;
+color:#94a3b8;
+}
+
+.mini-stat strong{
+font-size:20px;
+color:white;
+}
+
+@media(max-width:900px){
+
+.settings-grid{
+grid-template-columns:1fr;
+}
+
+.setting-card{
+display:flex;
+align-items:center;
+gap:15px;
+padding:18px;
+min-height:78px;
+}
+
+.card-icon{
+margin:0;
+width:50px;
+height:50px;
+font-size:18px;
+}
+
+.monitor-card{
+flex-direction:column;
+gap:15px;
+}
+
+.monitor-right{
+width:100%;
+display:grid;
+grid-template-columns:repeat(2,1fr);
+}
+
+.hero-card{
+padding:30px;
+}
+
+.hero-card h1{
+font-size:30px;
+}
+}
+
+</style>
+
+<script>
+
+const panelPath = "{{ panel_path|default('') }}";
+
+function updateMiniStats(){
+
+fetch(panelPath + "/api/system/stats")
+
+.then(r=>r.json())
+
+.then(data=>{
+
+document.getElementById("cpu-mini").innerText =
+data.cpu + "%";
+
+document.getElementById("ram-mini").innerText =
+data.ram + "%";
+
+document.getElementById("disk-mini").innerText =
+data.disk + "%";
+
+document.getElementById("net-mini").innerText =
+data.network;
+
+})
+
+.catch(()=>{});
+
+}
+
+updateMiniStats();
+
+setInterval(updateMiniStats,3000);
+
+</script>
+
+{% endblock %}

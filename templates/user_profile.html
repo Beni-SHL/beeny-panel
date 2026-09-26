@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="profile-wrapper">
+
+<div class="profile-card">
+
+<h1>{{ user.username }}</h1>
+
+<div class="profile-grid">
+
+<div class="profile-item">
+<span>Protocol</span>
+<strong>{{ user.protocol }}</strong>
+</div>
+
+<div class="profile-item">
+<span>Status</span>
+<strong>{{ user.status }}</strong>
+</div>
+
+<div class="profile-item">
+<span>Connection</span>
+<strong>{{ user.online_status }}</strong>
+</div>
+
+<div class="profile-item">
+<span>Devices</span>
+<strong>{{ user.max_devices }}</strong>
+</div>
+
+<div class="profile-item">
+<span>Expire</span>
+<strong>{{ days_left }} Days</strong>
+</div>
+
+<div class="profile-item">
+<span>Traffic Used</span>
+<strong>{{ user.traffic_usage|round(2) }} GB</strong>
+</div>
+
+<div class="profile-item">
+<span>Traffic Limit</span>
+
+{% if user.traffic_limit == 0 %}
+<strong>Unlimited</strong>
+{% else %}
+<strong>{{ user.traffic_limit }} GB</strong>
+{% endif %}
+
+</div>
+
+</div>
+
+<div class="profile-actions">
+
+    <div class="dropdown d-inline-block">
+        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 12px; background: rgba(96, 165, 250, 0.2); border: 1px solid rgba(96, 165, 250, 0.4); color: #60a5fa; padding: 10px 20px;">
+            <i class="fa fa-download"></i> Download Config
+        </button>
+        
+        <ul class="dropdown-menu dropdown-menu-dark" style="background: rgba(0,0,0,0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px 0;">
+            <li>
+                <a class="dropdown-item text-success" href="{{ panel_path }}/users/download/{{ user.username }}" style="padding: 10px 16px;">
+                    <i class="fa fa-globe"></i> Multi-Location (VIP)
+                </a>
+            </li>
+            
+            <li><hr class="dropdown-divider" style="border-color: rgba(255,255,255,0.1);"></li>
+            
+            {% for node in assigned_nodes %}
+            <li>
+                <a class="dropdown-item text-light" href="{{ panel_path }}/users/download/{{ user.username }}?node_id={{ node.id }}" style="padding: 10px 16px;">
+                    <i class="fa fa-server"></i> {{ node.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    </div>
+<a
+href="/users/reset_traffic/{{ user.id }}"
+class="glass-btn">
+Reset Traffic
+</a>
+
+<a
+href="/users/edit/{{ user.id }}"
+class="glass-btn">
+Edit User
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

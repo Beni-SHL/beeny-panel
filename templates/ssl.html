@@ -1,0 +1,173 @@
+{% extends "layout.html" %}
+
+{% block title %}SSL Settings{% endblock %}
+
+{% block content %}
+
+<div class="settings-page">
+
+```
+<div class="page-header">
+    <h1>SSL Settings</h1>
+    <p>Manage Let's Encrypt SSL Certificate</p>
+</div>
+
+<div class="ssl-grid">
+
+    <div class="glass-card ssl-hero">
+
+        <div class="ssl-status">
+
+            <div class="status-dot" id="sslDot"></div>
+
+            <div>
+                <h2 id="sslStatus">Loading...</h2>
+                <span id="sslDomain">-</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="glass-card">
+
+        <div class="info-row">
+            <span>Issuer</span>
+            <strong id="sslIssuer">-</strong>
+        </div>
+
+        <div class="info-row">
+            <span>Expire Date</span>
+            <strong id="sslExpire">-</strong>
+        </div>
+
+        <div class="info-row">
+            <span>Days Left</span>
+            <strong id="sslDays">-</strong>
+        </div>
+
+        <div class="info-row">
+            <span>Auto Renew</span>
+            <strong id="sslRenew">-</strong>
+        </div>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+<style>
+
+.ssl-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.ssl-hero{
+    min-height:180px;
+    display:flex;
+    align-items:center;
+}
+
+.ssl-status{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.status-dot{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#888;
+}
+
+.status-dot.active{
+    background:#00d26a;
+    box-shadow:0 0 15px #00d26a;
+}
+
+.status-dot.expired{
+    background:#ff4444;
+    box-shadow:0 0 15px #ff4444;
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    padding:14px 0;
+    border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.info-row:last-child{
+    border-bottom:none;
+}
+
+@media(max-width:900px){
+
+    .ssl-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+<script>
+
+const panelPath = "{{ panel_path }}";
+
+async function loadSSLInfo(){
+
+    try{
+
+        const res = await fetch(
+            panelPath + "/api/ssl/info"
+        );
+
+        const data = await res.json();
+
+        if(!data.success){
+            return;
+        }
+
+        document.getElementById("sslStatus").innerText =
+            data.status;
+
+        document.getElementById("sslDomain").innerText =
+            data.domain;
+
+        document.getElementById("sslIssuer").innerText =
+            data.issuer;
+
+        document.getElementById("sslExpire").innerText =
+            data.expire_date;
+
+        document.getElementById("sslDays").innerText =
+            data.days_left + " Days";
+
+        document.getElementById("sslRenew").innerText =
+            data.auto_renew ? "Enabled" : "Disabled";
+
+        const dot = document.getElementById("sslDot");
+
+        if(data.status === "Active"){
+            dot.classList.add("active");
+        }else{
+            dot.classList.add("expired");
+        }
+
+    }catch(e){
+        console.log(e);
+    }
+
+}
+
+loadSSLInfo();
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,1127 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="general-page">
+
+    <!-- HERO -->
+
+    <div class="general-hero">
+        <div class="hero-content">
+
+            <div class="hero-badge">
+                <i class="fa-solid fa-shield-halved"></i>
+                ADMINISTRATION CENTER
+            </div>
+
+            <h1>General Settings</h1>
+
+            <p>
+                Manage panel access, administrator credentials,
+                security policies and system actions.
+            </p>
+
+        </div>
+
+        <div class="hero-status">
+
+            <div class="status-card">
+                <span>Panel Path</span>
+                <strong>{{ panel_path }}</strong>
+            </div>
+
+            <div class="status-card">
+                <span>Admin User</span>
+                <strong>{{ current_user.username }}</strong>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ACCESS -->
+
+    <div class="settings-card">
+
+        <div class="card-header">
+            <div>
+                <h3>
+                    <i class="fa-solid fa-link"></i>
+                    Access Management
+                </h3>
+
+                <p>Manage panel URL and access path</p>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="info-box">
+
+                <label>Current Panel URL</label>
+
+                <div class="readonly-field">
+                    <i class="fa-solid fa-globe"></i>
+                    <span id="current-url">
+                        {{ request.host_url }}{{ panel_path }}
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label>Panel Path</label>
+
+                    <input
+                        type="text"
+                        id="panelPath"
+                        value="{{ panel_path }}"
+                        placeholder="/panel"
+                    >
+
+                    <small>
+                        Example:
+                        /admin
+                        /vpn
+                        /Ho@B3n
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ADMIN -->
+
+    <div class="settings-card">
+
+        <div class="card-header">
+
+            <div>
+                <h3>
+                    <i class="fa-solid fa-user-shield"></i>
+                    Administrator
+                </h3>
+
+                <p>
+                    Change administrator username and password
+                </p>
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label>Administrator Username</label>
+
+                    <input
+                        type="text"
+                        id="adminUsername"
+                        value="{{ current_user.username }}"
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="form-row two-col">
+
+                <div class="form-group">
+
+                    <label>New Password</label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="adminPassword"
+                            placeholder="Leave empty to keep current password"
+                        >
+
+                        <button
+                            type="button"
+                            class="eye-btn"
+                            onclick="togglePassword('adminPassword')"
+                        >
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Confirm Password</label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="adminPassword2"
+                            placeholder="Repeat password"
+                        >
+
+                        <button
+                            type="button"
+                            class="eye-btn"
+                            onclick="togglePassword('adminPassword2')"
+                        >
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SESSION -->
+
+    <div class="settings-card">
+
+        <div class="card-header">
+
+            <div>
+                <h3>
+                    <i class="fa-solid fa-user-lock"></i>
+                    Session & Security
+                </h3>
+
+                <p>
+                    Control login sessions and security behavior
+                </p>
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="security-grid">
+
+                <div class="security-box">
+
+                    <div class="security-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
+                    <h4>Active Sessions</h4>
+
+                    <p>
+                        View and manage connected sessions
+                    </p>
+
+                    <button
+                        class="glass-btn primary"
+                        onclick="viewSessions()"
+                    >
+                        Manage
+                    </button>
+
+                </div>
+
+                <div class="security-box">
+
+                    <div class="security-icon">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </div>
+
+                    <h4>Logout All Devices</h4>
+
+                    <p>
+                        Force logout on every active session
+                    </p>
+
+                    <button
+                        class="glass-btn danger"
+                        onclick="logoutAll()"
+                    >
+                        Logout All
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- PANEL ACTIONS -->
+
+    <div class="settings-card">
+
+        <div class="card-header">
+
+            <div>
+                <h3>
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    Panel Actions
+                </h3>
+
+                <p>
+                    Maintenance and administration tools
+                </p>
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="action-grid">
+
+                <button
+                    class="action-box"
+                    onclick="restartPanel()"
+                >
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>Restart Panel</span>
+                </button>
+
+                <button
+                    class="action-box"
+                    onclick="clearCache()"
+                >
+                    <i class="fa-solid fa-broom"></i>
+                    <span>Clear Cache</span>
+                </button>
+
+                <button
+                    class="action-box"
+                    onclick="reloadConfig()"
+                >
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>Reload Config</span>
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SAVE -->
+
+    <div class="save-section">
+
+        <button
+            class="save-btn"
+            onclick="saveGeneralSettings()"
+        >
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save Changes
+        </button>
+
+    </div>
+
+</div>
+
+<style>
+
+.general-page{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+}
+
+/* HERO */
+
+.general-hero{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:30px;
+
+    padding:40px;
+
+    border-radius:32px;
+
+    background:
+    linear-gradient(
+        135deg,
+        #4f46e5,
+        #7c3aed,
+        #06b6d4
+    );
+
+    position:relative;
+    overflow:hidden;
+}
+
+.general-hero::before{
+    content:'';
+    position:absolute;
+    inset:0;
+
+    background:
+    radial-gradient(circle at top right,
+    rgba(255,255,255,.25),
+    transparent 45%);
+}
+
+.hero-content{
+    position:relative;
+    z-index:2;
+}
+
+.hero-badge{
+    display:inline-flex;
+    gap:10px;
+
+    padding:10px 18px;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.15);
+
+    color:white;
+
+    margin-bottom:18px;
+}
+
+.general-hero h1{
+    color:white;
+    font-size:42px;
+    font-weight:800;
+    margin-bottom:10px;
+}
+
+.general-hero p{
+    color:rgba(255,255,255,.8);
+    max-width:650px;
+}
+
+.hero-status{
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.status-card{
+    min-width:180px;
+
+    background:
+    rgba(255,255,255,.12);
+
+    backdrop-filter:blur(15px);
+
+    padding:20px;
+
+    border-radius:22px;
+
+    text-align:center;
+}
+
+.status-card span{
+    display:block;
+    color:rgba(255,255,255,.7);
+}
+
+.status-card strong{
+    color:white;
+    font-size:22px;
+}
+
+/* CARDS */
+
+.settings-card{
+    background:
+    rgba(255,255,255,.05);
+
+    backdrop-filter:blur(24px);
+
+    border:
+    1px solid rgba(255,255,255,.08);
+
+    border-radius:30px;
+
+    overflow:hidden;
+}
+
+.card-header{
+    padding:25px 30px;
+
+    border-bottom:
+    1px solid rgba(255,255,255,.08);
+}
+
+.card-header h3{
+    color:white;
+    font-size:22px;
+    margin-bottom:5px;
+}
+
+.card-header p{
+    color:#94a3b8;
+    margin:0;
+}
+
+.card-body{
+    padding:30px;
+}
+
+/* FORM */
+
+.form-row{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:20px;
+}
+
+.two-col{
+    grid-template-columns:1fr 1fr;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.form-group label{
+    color:white;
+    font-weight:600;
+}
+
+.form-group input{
+    height:55px;
+
+    border:none;
+
+    outline:none;
+
+    padding:0 18px;
+
+    border-radius:16px;
+
+    background:
+    rgba(255,255,255,.06);
+
+    color:white;
+}
+
+.form-group small{
+    color:#94a3b8;
+}
+
+.readonly-field{
+    height:55px;
+
+    border-radius:16px;
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+    padding:0 20px;
+
+    background:
+    rgba(255,255,255,.06);
+
+    color:white;
+}
+
+.password-wrapper{
+    position:relative;
+}
+
+.eye-btn{
+    position:absolute;
+    right:15px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    border:none;
+    background:none;
+
+    color:#94a3b8;
+    cursor:pointer;
+}
+
+/* SECURITY */
+
+.security-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.security-box{
+    background:
+    rgba(255,255,255,.04);
+
+    border:
+    1px solid rgba(255,255,255,.08);
+
+    border-radius:24px;
+
+    padding:25px;
+
+    text-align:center;
+}
+
+.security-icon{
+    font-size:34px;
+    color:#8b5cf6;
+    margin-bottom:15px;
+}
+
+.security-box h4{
+    color:white;
+}
+
+.security-box p{
+    color:#94a3b8;
+}
+
+/* ACTIONS */
+
+.action-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+}
+
+.action-box{
+    border:none;
+
+    background:
+    rgba(255,255,255,.05);
+
+    border:
+    1px solid rgba(255,255,255,.08);
+
+    border-radius:22px;
+
+    padding:28px;
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.action-box:hover{
+    transform:translateY(-5px);
+    background:
+    rgba(255,255,255,.09);
+}
+
+.action-box i{
+    display:block;
+
+    font-size:30px;
+
+    margin-bottom:12px;
+
+    color:#8b5cf6;
+}
+
+/* BUTTONS */
+
+.glass-btn{
+    border:none;
+
+    padding:12px 18px;
+
+    border-radius:14px;
+
+    color:white;
+
+    cursor:pointer;
+}
+
+.primary{
+    background:#6366f1;
+}
+
+.danger{
+    background:#ef4444;
+}
+
+.save-section{
+    display:flex;
+    justify-content:flex-end;
+}
+
+.save-btn{
+    border:none;
+
+    padding:16px 32px;
+
+    border-radius:18px;
+
+    background:
+    linear-gradient(
+        135deg,
+        #6366f1,
+        #8b5cf6
+    );
+
+    color:white;
+
+    font-size:16px;
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+.save-btn:hover{
+    transform:translateY(-3px);
+}
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+    .general-hero{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .hero-status{
+        width:100%;
+    }
+
+    .two-col{
+        grid-template-columns:1fr;
+    }
+
+    .security-grid{
+        grid-template-columns:1fr;
+    }
+
+    .action-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+/* موبایل حرفه‌ای */
+
+@media(max-width:768px){
+
+    .settings-card{
+        border-radius:20px;
+    }
+
+    .card-body{
+        padding:18px;
+    }
+
+    .card-header{
+        padding:18px;
+    }
+
+    .general-hero{
+        padding:24px;
+        border-radius:24px;
+    }
+
+    .general-hero h1{
+        font-size:28px;
+    }
+
+    .status-card{
+        width:100%;
+        min-width:unset;
+
+        padding:14px;
+        border-radius:16px;
+    }
+
+    .security-box,
+    .action-box{
+        min-height:unset;
+        padding:16px;
+        border-radius:18px;
+    }
+
+    .action-box{
+        display:flex;
+        align-items:center;
+        gap:15px;
+        text-align:left;
+    }
+
+    .action-box i{
+        margin:0;
+        font-size:22px;
+    }
+
+}
+
+</style>
+
+<script>
+
+function togglePassword(id){
+
+    const field =
+        document.getElementById(id);
+
+    if(field.type === 'password'){
+        field.type = 'text';
+    }else{
+        field.type = 'password';
+    }
+
+}
+
+/* SAVE SETTINGS */
+
+async function saveGeneralSettings(){
+
+    const username =
+        document.getElementById(
+            'adminUsername'
+        ).value.trim();
+
+    const password =
+        document.getElementById(
+            'adminPassword'
+        ).value;
+
+    const password2 =
+        document.getElementById(
+            'adminPassword2'
+        ).value;
+
+    const panelPath =
+        document.getElementById(
+            'panelPath'
+        ).value.trim();
+
+    if(password){
+
+        if(password !== password2){
+
+            alert(
+                'Passwords do not match'
+            );
+
+            return;
+        }
+
+    }
+
+    if(
+        !confirm(
+            'Save settings and restart panel?'
+        )
+    ){
+        return;
+    }
+
+    try{
+
+        const response =
+            await fetch(
+                '{{ panel_path }}/api/panel/settings',
+                {
+                    method:'POST',
+
+                    headers:{
+                        'Content-Type':
+                        'application/json'
+                    },
+
+                    body:JSON.stringify({
+
+                        username:username,
+
+                        password:password,
+
+                        panel_path:panelPath
+
+                    })
+                }
+            );
+
+        const data =
+            await response.json();
+
+        alert(
+            data.message
+        );
+
+        if(data.success){
+
+            showRestartScreen();
+
+            setTimeout(()=>{
+
+                if(data.redirect){
+
+                    window.location.href =
+                        data.redirect;
+
+                }else{
+
+                    window.location.href =
+                        '/login';
+
+                }
+
+            },6000);
+
+        }
+
+    }catch(err){
+
+        alert(
+            'Failed to save settings'
+        );
+
+    }
+
+}
+
+/* RESTART SCREEN */
+
+function showRestartScreen(){
+
+    const overlay =
+    document.createElement('div');
+
+    overlay.id =
+        'restart-overlay';
+
+    overlay.innerHTML = `
+        <div class="restart-box">
+
+            <i class="fa-solid fa-rotate fa-spin"></i>
+
+            <h2>
+                Applying Settings
+            </h2>
+
+            <p>
+                Restarting panel...
+            </p>
+
+            <small>
+                You will be redirected automatically
+            </small>
+
+        </div>
+    `;
+
+    overlay.style.position='fixed';
+    overlay.style.inset='0';
+    overlay.style.zIndex='99999';
+    overlay.style.background='rgba(0,0,0,.85)';
+    overlay.style.display='flex';
+    overlay.style.alignItems='center';
+    overlay.style.justifyContent='center';
+
+    document.body.appendChild(
+        overlay
+    );
+
+}
+
+/* PANEL ACTIONS */
+
+async function restartPanel(){
+
+    if(
+        !confirm(
+            'Restart panel service?'
+        )
+    ){
+        return;
+    }
+
+    try{
+
+        const response =
+            await fetch(
+                '{{ panel_path }}/api/panel/restart',
+                {
+                    method:'POST'
+                }
+            );
+
+        const data =
+            await response.json();
+
+        alert(
+            data.message
+        );
+
+    }catch(e){
+
+        alert(
+            'Restart failed'
+        );
+
+    }
+
+}
+
+async function clearCache(){
+
+    if(
+        !confirm(
+            'Clear panel cache?'
+        )
+    ){
+        return;
+    }
+
+    try{
+
+        const response =
+            await fetch(
+                '{{ panel_path }}/api/panel/clear-cache',
+                {
+                    method:'POST'
+                }
+            );
+
+        const data =
+            await response.json();
+
+        alert(
+            data.message
+        );
+
+    }catch(e){
+
+        alert(
+            'Operation failed'
+        );
+
+    }
+
+}
+
+async function reloadConfig(){
+
+    try{
+
+        const response =
+            await fetch(
+                '{{ panel_path }}/api/panel/reload',
+                {
+                    method:'POST'
+                }
+            );
+
+        const data =
+            await response.json();
+
+        alert(
+            data.message
+        );
+
+    }catch(e){
+
+        alert(
+            'Reload failed'
+        );
+
+    }
+
+}
+
+/* SESSION */
+
+async function logoutAll(){
+
+    if(
+        !confirm(
+            'Logout all devices?'
+        )
+    ){
+        return;
+    }
+
+    try{
+
+        const response =
+            await fetch(
+                '{{ panel_path }}/api/logout/all',
+                {
+                    method:'POST'
+                }
+            );
+
+        const data =
+            await response.json();
+
+        alert(
+            data.message
+        );
+
+        if(data.success){
+
+            location.href =
+                '{{ panel_path }}/login';
+
+        }
+
+    }catch(e){
+
+        alert(
+            'Failed'
+        );
+
+    }
+
+}
+
+function viewSessions(){
+
+    window.location.href =
+        '{{ panel_path }}/sessions';
+
+}
+
+/* URL PREVIEW */
+
+document
+.getElementById(
+    'panelPath'
+)
+.addEventListener(
+    'input',
+    function(){
+
+        const path =
+            this.value;
+
+        document
+        .getElementById(
+            'current-url'
+        )
+        .innerHTML =
+            window.location.origin
+            + path;
+
+    }
+);
+
+</script>
+
+
+
+{% endblock %}

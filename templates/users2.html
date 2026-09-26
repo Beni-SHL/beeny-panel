@@ -1,0 +1,372 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+/* ========== 2026 LIQUID GLASS UI ========== */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root{
+  --glass-bg: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.08);
+  --glass-shadow: 0 12px 40px rgba(0,0,0,0.15); --blur: blur(14px) saturate(180%);
+  --green: #4ade80; --red: #f87171; --amber: #fbbf24; --blue: #60a5fa;
+}
+
+*{box-sizing:border-box; font-family:'DM Sans',sans-serif;}
+
+.users-page { display:flex; flex-direction:column; gap:16px; }
+
+/* -- Hero Toolbar -- */
+.users-toolbar{
+  padding:24px 28px; border-radius:28px; position: relative; overflow: hidden;
+  background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+  backdrop-filter:var(--blur); -webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--glass-border); border-top:1px solid rgba(255,255,255,0.18);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.1), var(--glass-shadow);
+  display:flex; flex-direction:column; gap:18px;
+}
+.toolbar-row1{ display:flex; align-items:center; justify-content:space-between; gap:12px; z-index: 1; }
+.toolbar-title h1{ font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:#fff; margin:0; letter-spacing:-0.5px;}
+.toolbar-title span{ font-size:12px; color:rgba(255,255,255,0.4); letter-spacing:2px; font-weight:600;}
+
+.search-wrap{ position:relative; display:flex; align-items:center; }
+.search-wrap i{ position:absolute; left:16px; color:rgba(255,255,255,0.4); font-size:13px; z-index:1; }
+.search-wrap input{
+  background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-top:1px solid rgba(255,255,255,0.2);
+  border-radius:40px; padding:10px 16px 10px 42px; color:#fff; font-size:14px; width:220px; outline:none; transition:all .3s;
+}
+.search-wrap input:focus{ background:rgba(0,0,0,0.25); border-color:rgba(96,165,250,0.4); width:260px;}
+
+.btn-add{
+  display:flex; align-items:center; gap:8px; padding: 10px 20px; border-radius:40px; font-weight: 600;
+  background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.1));
+  border:1px solid rgba(74,222,128,0.3); color:#4ade80; text-decoration:none; transition:all .3s; cursor: pointer;
+}
+.btn-add:hover{ transform:translateY(-2px); color:#fff; border-color:rgba(74,222,128,0.6); }
+
+/* -- Filters -- */
+.filter-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; z-index: 1; }
+.filter-select{
+  background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:30px;
+  padding:7px 32px 7px 14px; color:rgba(255,255,255,0.8); font-size:12px; outline:none; cursor:pointer;
+  appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.5)'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center;
+}
+.filter-select option{ background:#111; color:#fff; }
+
+/* -- Users List -- */
+.accordion-users{display:flex;flex-direction:column;gap:8px;}
+.user-row{
+  border-radius:20px; background:rgba(255,255,255,0.025); backdrop-filter:blur(8px) saturate(150%);
+  border:1px solid rgba(255,255,255,0.08); border-top:1px solid rgba(255,255,255,0.18);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 24px rgba(0,0,0,0.15); transition:all .25s; overflow: visible;
+}
+.user-row:hover{ border-top-color:rgba(255,255,255,0.28); box-shadow:0 10px 36px rgba(0,0,0,0.25); }
+.user-header{display:flex;align-items:center;padding:15px 18px;gap:14px;cursor:pointer;}
+.avatar{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,0.09);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;position:relative;border:1px solid rgba(255,255,255,0.2);}
+.avatar-online::after{content:'';position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:var(--green);border:2px solid rgba(0,0,0,0.4);box-shadow:0 0 6px var(--green);}
+.user-name-block{flex:1;min-width:0}
+.user-name-block h3{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;margin:0 0 7px 0;}
+.user-pills{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:4px 10px;border-radius:30px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);}
+.pill-online{background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.22);color:var(--green)}
+.user-details{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.user-row.open .user-details{max-height:500px;}
+.details-inner{padding:0 18px 18px;display:flex;flex-direction:column;gap:16px;}
+.details-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.detail-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;}
+.detail-card span{font-size:10px;color:rgba(255,255,255,0.35);text-transform:uppercase}
+.detail-card strong{font-size:14px;font-weight:600;color:#fff}
+
+/* -- Traffic Progress Bar -- */
+.traffic-section{display:flex;flex-direction:column;gap:6px}
+.traffic-label-row{display:flex;justify-content:space-between;align-items:center}
+.traffic-label-row span{font-size:11px;color:rgba(255,255,255,0.4);}
+.traffic-label-row strong{font-size:12px;color:rgba(255,255,255,0.8)}
+.progress-track{height:6px;background:rgba(0,0,0,0.3);border-radius:10px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);}
+.progress-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .4s ease;}
+.progress-fill.warn{background:linear-gradient(90deg,var(--amber),var(--red))}
+
+/* -- Glass Buttons & Dropdowns -- */
+.action-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap; margin-top: 5px;}
+.glass-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:500;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);transition:all .2s;text-decoration:none; cursor:pointer;}
+.glass-btn:hover{background:rgba(255,255,255,0.15);color:#fff; transform: translateY(-1px);}
+
+.glass-dropdown-menu {
+  background: rgba(15, 15, 25, 0.85); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 10px; box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+  margin-top: 8px !important; min-width: 200px;
+}
+.glass-dropdown-menu .dropdown-item {
+  color: rgba(255,255,255,0.8); border-radius: 10px; padding: 8px 14px; font-size: 13px; transition: 0.2s; display: flex; align-items: center; gap: 8px;
+}
+.glass-dropdown-menu .dropdown-item:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+/* -- Liquid Glass Modals -- */
+.glass-modal {
+  display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px);
+  align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; padding: 20px;
+}
+.glass-modal.show { display: flex; opacity: 1; }
+.glass-modal-content {
+  background: rgba(20,20,30,0.65); backdrop-filter: blur(40px) saturate(200%); -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.15); border-top: 1px solid rgba(255,255,255,0.25); border-radius: 28px;
+  padding: 30px; width: 100%; max-width: 500px; transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); position: relative;
+}
+.glass-modal.show .glass-modal-content { transform: translateY(0); }
+.modal-close { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 20px; cursor: pointer; transition: 0.2s; }
+.modal-close:hover { color: #fff; transform: rotate(90deg); }
+.glass-modal h2 { font-family: 'Syne', sans-serif; font-size: 24px; color: #fff; margin-bottom: 24px; font-weight: 800; }
+.glass-input {
+  background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.2);
+  border-radius: 14px; padding: 12px 16px; color: #fff; width: 100%; font-size: 14px; outline: none; margin-bottom: 16px; transition: 0.3s;
+}
+.glass-input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(96,165,250,0.2); }
+.glass-input option { background: #111; color: #fff; }
+.nodes-grid-modal { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; max-height: 150px; overflow-y: auto;}
+.node-checkbox { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.node-checkbox input { appearance: none; width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.2); cursor: pointer; transition: 0.2s; position: relative;}
+.node-checkbox input:checked { background: var(--green); border-color: var(--green); }
+.node-checkbox input:checked::after { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; font-size: 10px; color: #000; top: 2px; left: 3px; }
+.modal-btn-submit { width: 100%; padding: 14px; border-radius: 14px; font-weight: 600; border: none; background: linear-gradient(135deg, rgba(96,165,250,0.2), rgba(59,130,246,0.1)); border: 1px solid rgba(96,165,250,0.3); color: #93c5fd; cursor: pointer; transition: 0.3s; }
+.modal-btn-submit:hover { background: linear-gradient(135deg, rgba(96,165,250,0.3), rgba(59,130,246,0.2)); color: #fff; border-color: rgba(96,165,250,0.6); }
+
+@media(max-width:768px){ .details-grid{grid-template-columns:repeat(2,1fr)} .search-wrap input{width:160px;} .search-wrap input:focus{width:180px;} .nodes-grid-modal {grid-template-columns: 1fr;} }
+</style>
+
+<div class="users-page">
+  <div class="users-toolbar">
+    <div class="toolbar-row1">
+      <div class="toolbar-title">
+        <h1>Users List</h1>
+        <span id="totalUsersCount">0</span>
+      </div>
+      <div class="toolbar-actions">
+        <div class="search-wrap">
+          <i class="fa fa-search"></i>
+          <input type="text" id="userSearch" autocomplete="off" placeholder="Search users...">
+        </div>
+        <button class="btn-add" onclick="openModal('addModal')"><i class="fa fa-user-plus"></i></button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <select id="sortFilter" class="filter-select">
+        <option value="newest">Newest First</option>
+        <option value="traffic_desc">Highest Usage</option>
+        <option value="traffic_asc">Lowest Usage</option>
+        <option value="oldest">Oldest First</option>
+      </select>
+      <select id="protocolFilter" class="filter-select">
+        <option value="">All Protocols</option>
+        <option value="openvpn">OpenVPN</option>
+        <option value="wireguard">WireGuard</option>
+      </select>
+      <select id="statusFilter" class="filter-select">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="disabled">Disabled</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="usersListContainer" class="accordion-users"></div>
+</div>
+
+<div id="addModal" class="glass-modal">
+  <div class="glass-modal-content">
+    <button class="modal-close" onclick="closeModal('addModal')"><i class="fa fa-times"></i></button>
+    <h2>Add New User</h2>
+    <form action="{{ panel_path }}/users/add" method="POST">
+      <div style="display:flex; gap:10px;">
+        <input type="text" name="username" class="glass-input" placeholder="Username" required>
+        <select name="protocol" class="glass-input">
+          <option value="openvpn">OpenVPN</option>
+          <option value="wireguard">WireGuard</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <input type="number" name="max_devices" class="glass-input" placeholder="Devices (e.g. 1)" value="1" required>
+        <input type="number" step="0.1" name="traffic_limit" class="glass-input" placeholder="Traffic GB (0=Unlimited)" value="10">
+      </div>
+      <div>
+        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Validity (Days from first connect)</label>
+        <input type="number" name="expire_days" class="glass-input" placeholder="e.g. 30">
+      </div>
+      <div>
+        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Allowed Nodes</label>
+        <div class="nodes-grid-modal">
+          {% for node in nodes %}
+          <label class="node-checkbox">
+            <input type="checkbox" name="nodes" value="{{ node.id }}" checked>
+            <span style="font-size:13px; color:#fff;">{{ node.name }} <span style="opacity:0.5; font-size:11px;">({{ node.country }})</span></span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <button type="submit" class="modal-btn-submit"><i class="fa fa-check"></i> Create User</button>
+    </form>
+  </div>
+</div>
+
+<div id="editModal" class="glass-modal">
+  <div class="glass-modal-content">
+    <button class="modal-close" onclick="closeModal('editModal')"><i class="fa fa-times"></i></button>
+    <h2>Edit User</h2>
+    <form id="editForm" method="POST">
+      <div style="display:flex; gap:10px;">
+        <input type="text" id="edit_username" class="glass-input" disabled style="opacity:0.5;">
+        <select name="protocol" id="edit_protocol" class="glass-input">
+          <option value="openvpn">OpenVPN</option>
+          <option value="wireguard">WireGuard</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <input type="number" name="max_devices" id="edit_devices" class="glass-input" placeholder="Devices" required>
+        <input type="number" step="0.1" name="traffic_limit" id="edit_traffic" class="glass-input" placeholder="Traffic GB">
+      </div>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+            <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Validity (Days)</label>
+            <input type="number" name="expire_days" id="edit_expire" class="glass-input" placeholder="Replace days...">
+        </div>
+        <div style="flex:1;">
+            <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Status</label>
+            <select name="status" id="edit_status" class="glass-input">
+              <option value="active">Active</option>
+              <option value="disabled">Disabled</option>
+            </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Re-assign Nodes</label>
+        <div class="nodes-grid-modal">
+          {% for node in nodes %}
+          <label class="node-checkbox">
+            <input type="checkbox" name="nodes" value="{{ node.id }}" checked>
+            <span style="font-size:13px; color:#fff;">{{ node.name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <button type="submit" class="modal-btn-submit" style="border-color:rgba(74,222,128,0.3); color:#4ade80;"><i class="fa fa-save"></i> Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// --- Modal Logic ---
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function openEdit(id, userStr, proto, dev, limit, expire, status) {
+    document.getElementById('editForm').action = `{{ panel_path }}/users/edit/${id}`;
+    document.getElementById('edit_username').value = userStr;
+    document.getElementById('edit_protocol').value = proto;
+    document.getElementById('edit_devices').value = dev;
+    document.getElementById('edit_traffic').value = limit;
+    document.getElementById('edit_expire').value = expire;
+    document.getElementById('edit_status').value = status;
+    openModal('editModal');
+}
+
+// --- Fetch & Render Logic ---
+const searchInput = document.getElementById('userSearch');
+const protocolSelect = document.getElementById('protocolFilter');
+const statusSelect = document.getElementById('statusFilter');
+const sortSelect = document.getElementById('sortFilter');
+const container = document.getElementById('usersListContainer');
+const totalSpan = document.getElementById('totalUsersCount');
+
+function getFilterParams() {
+  const p = new URLSearchParams();
+  if(searchInput.value) p.append('q', searchInput.value);
+  if(protocolSelect.value) p.append('protocol', protocolSelect.value);
+  if(statusSelect.value) p.append('status', statusSelect.value);
+  if(sortSelect.value) p.append('sort', sortSelect.value);
+  p.append('page', 1); p.append('per_page', 50); // For demo we load 50
+  return p.toString();
+}
+
+async function loadUsers() {
+  container.innerHTML = '<div style="text-align:center; padding:40px; color:rgba(255,255,255,0.5);"><i class="fa fa-spinner fa-spin fa-2x"></i></div>';
+  try {
+    const res = await fetch(`{{ panel_path }}/api/users/search?${getFilterParams()}`);
+    const data = await res.json();
+    renderUsers(data.users, data.pagination.total);
+  } catch(e) { container.innerHTML = '<div style="text-align:center; padding:40px; color:red;">Failed to load data</div>'; }
+}
+
+function getFlag(countryCode) {
+    if(!countryCode) return '<i class="fa fa-server"></i>';
+    return `<img src="https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png" style="border-radius:3px; width:16px;">`;
+}
+
+function renderUsers(users, total) {
+  totalSpan.textContent = total;
+  if (!users.length) { container.innerHTML = '<div style="text-align:center; padding:50px; color:rgba(255,255,255,0.4);"><i class="fa fa-users-slash fa-3x"></i><br><br>No Users Found</div>'; return; }
+
+  container.innerHTML = users.map(user => {
+    let trafficStr = user.traffic_limit === 0 ? 'Unlimited' : `${user.traffic_usage} / ${user.traffic_limit} GB`;
+    
+    // Build Config Dropdown with Flags
+    let configDrops = `<li><a class="dropdown-item" href="{{ panel_path }}/users/download/${user.username}"><i class="fa fa-globe text-primary"></i> Multi-Location Config</a></li>`;
+    configDrops += `<li><hr class="dropdown-divider" style="border-color:rgba(255,255,255,0.1); margin:4px 0;"></li>`;
+    if(user.nodes_list && user.nodes_list.length > 0) {
+        user.nodes_list.forEach(n => {
+            configDrops += `<li><a class="dropdown-item" href="{{ panel_path }}/users/download/${user.username}?node_id=${n.id}">${getFlag(n.country)} Node: ${n.name}</a></li>`;
+        });
+    }
+
+    return `
+      <div class="user-row">
+        <div class="user-header" onclick="toggleRow(this)">
+          <div class="avatar ${user.online_status === 'online' ? 'avatar-online' : ''}">${user.username.charAt(0).toUpperCase()}</div>
+          <div class="user-name-block">
+            <h3>${user.username}</h3>
+            <div class="user-pills">
+              ${user.online_status === 'online' ? '<span class="pill pill-online"><i class="fa fa-circle" style="font-size:8px;"></i> Online</span>' : ''}
+              <span class="pill"><i class="fa fa-database"></i> ${trafficStr}</span>
+              <span class="pill"><i class="fa fa-clock"></i> ${user.days_left_text}</span>
+            </div>
+          </div>
+          <button class="expand-btn"><i class="fa fa-chevron-down"></i></button>
+        </div>
+        <div class="user-details">
+          <div class="details-inner">
+            <div class="details-grid">
+              <div class="detail-card"><span>Status</span><strong>${user.status}</strong></div>
+              <div class="detail-card"><span>Protocol</span><strong>${user.protocol.toUpperCase()}</strong></div>
+              <div class="detail-card"><span>Devices</span><strong>${user.current_devices}/${user.max_devices}</strong></div>
+              <div class="detail-card"><span>Allowed Nodes</span><strong>${user.nodes_list.length} Node(s)</strong></div>
+            </div>
+            
+            <div class="traffic-section">
+              <div class="traffic-label-row"><span>Traffic Usage</span><strong>${trafficStr} (${user.traffic_percent}%)</strong></div>
+              <div class="progress-track"><div class="progress-fill ${user.traffic_percent > 80 ? 'warn' : ''}" style="width: ${Math.min(user.traffic_percent, 100)}%"></div></div>
+            </div>
+
+            <div class="action-row">
+              <a href="{{ panel_path }}/users/view/${user.id}" class="glass-btn"><i class="fa fa-id-card"></i> Profile</a>
+              <button onclick="openEdit(${user.id}, '${user.username}', '${user.protocol}', ${user.max_devices}, ${user.traffic_limit}, '${user.expire_days_val}', '${user.status}')" class="glass-btn"><i class="fa fa-pen"></i> Edit</button>
+              
+              <div class="dropdown d-inline-block">
+                  <button class="glass-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-color:rgba(96,165,250,0.3); color:#93c5fd;"><i class="fa fa-download"></i> Configs</button>
+                  <ul class="dropdown-menu glass-dropdown-menu">${configDrops}</ul>
+              </div>
+
+              <a href="{{ panel_path }}/users/reset_traffic/${user.id}" class="glass-btn" onclick="return confirm('Reset traffic?')" style="margin-left:auto;"><i class="fa fa-rotate-left"></i></a>
+              <a href="{{ panel_path }}/users/delete/${user.id}" class="glass-btn" onclick="return confirm('Delete user?')" style="color:var(--red); border-color:rgba(248,113,113,0.3);"><i class="fa fa-trash"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.toggleRow = function(header) { header.closest('.user-row').classList.toggle('open'); };
+[searchInput, protocolSelect, statusSelect, sortSelect].forEach(el => el.addEventListener('change', loadUsers));
+searchInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') loadUsers(); });
+
+document.addEventListener('DOMContentLoaded', loadUsers);
+</script>
+{% endblock %}

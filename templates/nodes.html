@@ -1,0 +1,357 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+    --glass-bg: rgba(255,255,255,0.045);
+    --glass-border: rgba(255,255,255,0.08);
+    --glass-border-top: rgba(255,255,255,0.18);
+    --blur: blur(20px) saturate(160%);
+    --green: #4ade80;
+    --red: #f87171;
+    --blue: #60a5fa;
+}
+
+.nodes-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* ─── TOOLBAR & ADD FORM ─── */
+.glass-toolbar {
+    padding: 24px;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid var(--glass-border-top);
+    border-radius: 22px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 18px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.glass-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-top: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    padding: 10px 16px;
+    color: #fff;
+    font-size: 13px;
+    width: 100%;
+    transition: all 0.25s;
+    outline: none;
+}
+
+.glass-input::placeholder { color: rgba(255,255,255,0.3); }
+.glass-input:focus {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+.glass-input option { background: #1a1a2e; color: #fff; }
+
+.primary-btn {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(74, 222, 128, 0.15));
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-top: 1px solid rgba(96, 165, 250, 0.5);
+    color: var(--blue);
+    font-weight: 600;
+    width: 100%;
+    justify-content: center;
+}
+.primary-btn:hover {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(74, 222, 128, 0.25));
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(96,165,250,0.2);
+}
+
+/* ─── NODE CARDS GRID ─── */
+.nodes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.node-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid var(--glass-border-top);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 20px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.node-card:hover {
+    border-top-color: rgba(255,255,255,0.3);
+    transform: translateY(-4px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 28px rgba(0,0,0,0.3);
+}
+
+.node-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding-bottom: 12px;
+}
+
+.node-header h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.status-badge.online {
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    color: var(--green);
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.1);
+}
+.status-badge.offline {
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+    color: var(--red);
+}
+
+.node-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+}
+.node-body p { margin: 0; display: flex; align-items: center; }
+.node-body i { width: 22px; color: rgba(255,255,255,0.4); }
+.node-body strong { color: #fff; font-weight: 500; margin-right: 6px; }
+
+.blur-text {
+    filter: blur(5px);
+    transition: filter 0.3s ease;
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 11px;
+    word-break: break-all;
+    white-space: normal; 
+}
+.blur-text:hover { filter: blur(0); }
+
+.node-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.glass-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.2s;
+    text-decoration: none;
+    cursor: pointer;
+    flex: 1;
+    justify-content: center;
+}
+.glass-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.glass-btn.danger { color: rgba(248,113,113,0.85); }
+.glass-btn.danger:hover { background: rgba(248,113,113,0.15); border-color: rgba(248,113,113,0.3); color: var(--red); }
+
+/* ─── MODAL GLASS UI ─── */
+.modal-content {
+    background: rgba(15, 15, 25, 0.85);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-top: 1px solid rgba(255,255,255,0.25);
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    color: #fff;
+}
+.modal-header {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 20px 24px;
+}
+.modal-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+}
+.modal-footer {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 16px 24px;
+}
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.5;
+}
+.btn-close:hover { opacity: 1; }
+
+@media(max-width: 768px) {
+    .glass-toolbar { padding: 18px; }
+}
+</style>
+
+<div class="nodes-page">
+
+    <div class="glass-toolbar">
+        <div class="section-title"><i class="fa fa-server" style="color: #60a5fa;"></i> Add New Node</div>
+        <form method="POST" action="{{ panel_path }}/settings/nodes/add" class="row g-3">
+            <div class="col-md-3 col-sm-6">
+                <input type="text" name="name" class="glass-input" placeholder="Node Name (e.g. Germany-1)" required>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <input type="text" name="ip" class="glass-input" placeholder="Address (IP or Domain:Port)" required>
+            </div>
+            <div class="col-md-2 col-sm-6">
+                <input type="text" name="country" class="glass-input" placeholder="Country (Optional)">
+            </div>
+            <div class="col-md-2 col-sm-6">
+                <select name="protocol" class="glass-input">
+                    <option value="OpenVPN">OpenVPN</option>
+                    <option value="WireGuard">WireGuard</option>
+                </select>
+            </div>
+            <div class="col-md-2 col-sm-12">
+                <input type="text" name="api_key" class="glass-input" placeholder="API Key" required>
+            </div>
+            <div class="col-12 mt-3">
+                <button type="submit" class="glass-btn primary-btn" style="width: auto; padding: 10px 24px;">
+                    <i class="fa fa-plus"></i> Connect Node
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="nodes-grid">
+        {% for node in nodes %}
+        <div class="node-card">
+            <div class="node-header">
+                <h4>{{ node.name }}</h4>
+                {% if node.status == 'online' %}
+                    <span class="status-badge online"><i class="fa fa-plug-circle-check"></i> Online</span>
+                {% else %}
+                    <span class="status-badge offline"><i class="fa fa-plug-circle-xmark"></i> Offline</span>
+                {% endif %}
+            </div>
+            <div class="node-body">
+                <p><i class="fa fa-globe"></i> <strong>Address:</strong> {{ node.ip }}</p>
+                <p>
+    <i class="fa fa-map-location-dot"></i> <strong>Country:</strong> 
+    {% if node.country %}
+        <span class="fi fi-{{ node.country | lower }}" style="border-radius: 3px; margin-right: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span> 
+        {{ node.country | upper }}
+    {% else %}
+        -
+    {% endif %}
+</p>
+                <p><i class="fa fa-shield-halved"></i> <strong>Protocol:</strong> {{ node.protocol }}</p>
+                <p><i class="fa fa-key"></i> <strong>API Key:</strong> <span class="blur-text" title="Hover to view">{{ node.api_key }}</span></p>
+            </div>
+            <div class="node-actions">
+                <button type="button" class="glass-btn" data-bs-toggle="modal" data-bs-target="#editNodeModal{{ node.id }}">
+                    <i class="fa fa-pen"></i> Edit
+                </button>
+                <a href="{{ panel_path }}/settings/nodes/delete/{{ node.id }}" class="glass-btn danger" onclick="return confirm('Delete this node? All users assigned to this node will lose access to it.')">
+                    <i class="fa fa-trash"></i> Delete
+                </a>
+            </div>
+        </div>
+
+        <div class="modal fade" id="editNodeModal{{ node.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fa fa-pen-to-square" style="color: #60a5fa;"></i> Edit Node</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="POST" action="{{ panel_path }}/settings/nodes/edit/{{ node.id }}">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Node Name</label>
+                                <input type="text" name="name" class="glass-input" value="{{ node.name }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Address (IP or Domain:Port)</label>
+                                <input type="text" name="ip" class="glass-input" value="{{ node.ip }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Country</label>
+                                <input type="text" name="country" class="glass-input" value="{{ node.country }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Protocol</label>
+                                <select name="protocol" class="glass-input">
+                                    <option value="OpenVPN" {% if node.protocol == 'OpenVPN' %}selected{% endif %}>OpenVPN</option>
+                                    <option value="WireGuard" {% if node.protocol == 'WireGuard' %}selected{% endif %}>WireGuard</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">API Key</label>
+                                <input type="text" name="api_key" class="glass-input" value="{{ node.api_key }}" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="glass-btn" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="glass-btn primary-btn" style="width: auto;"><i class="fa fa-save"></i> Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not nodes %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.3);">
+            <i class="fa fa-server" style="font-size: 48px; margin-bottom: 16px; opacity: 0.2;"></i>
+            <p>No nodes added yet. Use the form above to connect your first server.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}

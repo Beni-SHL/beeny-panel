@@ -1,0 +1,336 @@
+{% set base = panel_path|default('') %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>BEENY PANEL</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    <style>
+        /* ── React Lightfall Background ── */
+        #react-bg-root {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh; /* پشتیبان برای مرورگرهای خیلی قدیمی */
+            height: 100dvh; /* راه حل جادویی برای فیکس شدن در موبایل */
+            z-index: -2;
+            pointer-events: none; /* برای اینکه کلیک روی پنل کار کند */
+            background: #0b0b1e; /* رنگ پایه پس‌زمینه تاریک آینده‌نگرانه */
+            transition: background 0.5s ease;
+        }
+
+        /* فورس کردن بک‌گراند برای کشیده شدن تا انتهای نوار آدرس موبایل */
+        #react-bg-root canvas {
+            width: 100% !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            pointer-events: auto !important;
+        }
+        
+        body.light #react-bg-root {
+            background: #f4f5fa; /* رنگ پایه پس‌زمینه روشن */
+        }
+
+        /* ── دکمه همبرگری ── */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 9999;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-top-color: rgba(255,255,255,0.45);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.3),
+                0 4px 20px rgba(0,0,0,0.25),
+                0 1px 0 rgba(255,255,255,0.1);
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            align-items: center;
+            justify-content: center;
+        }
+        .hamburger:hover {
+            background: rgba(255,255,255,0.22);
+            transform: scale(1.04);
+        }
+
+        /* ── Overlay ── */
+        .menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9997;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .menu-overlay.show {
+            display: block;
+            opacity: 1;
+        }
+
+        /* ── منوی موبایل ── */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: -290px;
+            width: 270px;
+            height: 100vh;
+            z-index: 9998;
+            transition: left 0.32s cubic-bezier(0.25,0.46,0.45,0.94);
+            padding: 0;
+            overflow: hidden;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(48px) saturate(200%) brightness(1.08);
+            -webkit-backdrop-filter: blur(48px) saturate(200%) brightness(1.08);
+            border-right: 1px solid rgba(255,255,255,0.18);
+            box-shadow:
+                inset 1px 0 0 rgba(255,255,255,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.15),
+                6px 0 48px rgba(0,0,0,0.45),
+                2px 0 12px rgba(0,0,0,0.2);
+        }
+        .mobile-menu.open { left: 0; }
+
+        .mobile-menu::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.3) 80%, transparent);
+        }
+
+        .mobile-menu-inner {
+            height: 100%;
+            padding: 70px 14px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow-y: auto;
+        }
+
+        .mobile-menu .menu-header {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+        }
+        
+        .close-menu {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-top-color: rgba(255,255,255,0.3);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-menu:hover {
+            background: rgba(255,255,255,0.18);
+            color: white;
+        }
+
+        .mobile-menu a {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 11px 14px;
+            color: rgba(255,255,255,0.65);
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .mobile-menu a i { width: 18px; font-size: 15px; opacity: 0.8; }
+        .mobile-menu a:hover, .mobile-menu a.active {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.14);
+            color: white;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .mobile-menu .menu-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 6px 4px;
+        }
+
+        /* ── رسپانسیو ── */
+        @media (min-width: 769px) {
+            .hamburger, .mobile-menu, .menu-overlay { display: none !important; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none !important; }
+            .hamburger { display: flex !important; }
+            .content { margin-left: 0 !important; padding: 72px 12px 20px 12px !important; }
+            .glass-navbar { margin-left: 0 !important; }
+        }
+
+        /* ── حالت روشن ── */
+        body.light .hamburger {
+            background: rgba(255,255,255,0.55);
+            border-color: rgba(0,0,0,0.1);
+            color: #333;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        body.light .menu-overlay { background: rgba(0,0,0,0.2); }
+        body.light .mobile-menu {
+            background: rgba(255,255,255,0.55);
+            border-right-color: rgba(0,0,0,0.08);
+            box-shadow: inset 1px 0 0 rgba(255,255,255,0.9), 6px 0 48px rgba(0,0,0,0.15);
+        }
+        body.light .mobile-menu .menu-header { color: #1a1a2e; border-bottom-color: rgba(0,0,0,0.07); background: rgba(255,255,255,0.3); }
+        body.light .mobile-menu a { color: rgba(30,30,60,0.7); }
+        body.light .mobile-menu a:hover {
+            background: rgba(102,126,234,0.1);
+            border-color: rgba(102,126,234,0.18);
+            color: #4f46e5;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        body.light .close-menu { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); color: #444; }
+    </style>
+</head>
+<body>
+
+<!-- جایگزین شد: این دیو برای رندر شدن بک‌گراند توسط جاوااسکریپت (Vite) استفاده می‌شود -->
+<div id="react-bg-root"></div>
+
+<button class="hamburger" id="hamburgerBtn">
+    <i class="fa fa-bars"></i>
+</button>
+
+<div class="mobile-menu" id="mobileMenu">
+    <div class="menu-header">
+        <i class="fa fa-shield-halved" style="margin-right: 10px; font-size: 14px; opacity: 0.7;"></i> BEENY
+    </div>
+    <button class="close-menu" id="closeMenuBtn">
+        <i class="fa fa-times"></i>
+    </button>
+
+    <div class="mobile-menu-inner">
+        <a href="{{ base }}"><i class="fa fa-chart-line"></i> Dashboard</a>
+        <a href="{{ base }}/users"><i class="fa fa-users"></i> Users</a>
+        <a href="{{ base }}/online"><i class="fa fa-circle-nodes"></i> Online</a>
+        <a href="{{ base }}/traffic"><i class="fa fa-chart-pie"></i> Traffic</a>
+        <a href="{{ base }}/settings"><i class="fa fa-gear"></i> Settings</a>
+        <a href="{{ base }}/settings/nodes"><i class="fa fa-server"></i> Nodes</a>
+        <div class="menu-divider"></div>
+        <a href="{{ base }}/logout"><i class="fa fa-right-from-bracket"></i> Logout</a>
+    </div>
+</div>
+
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<div class="sidebar">
+    <div class="logo">BEENY PANEL</div>
+    <nav>
+        <a href="{{ base }}"><i class="fa fa-chart-line"></i> Dashboard</a>
+        <a href="{{ base }}/users"><i class="fa fa-users"></i> Users</a>
+        <a href="{{ base }}/online"><i class="fa fa-circle-nodes"></i> Online</a>
+        <a href="{{ base }}/traffic"><i class="fa fa-chart-pie"></i> Traffic</a>
+        <a href="{{ base }}/settings"><i class="fa fa-gear"></i> Settings</a>
+        <a href="{{ base }}/settings/nodes"><i class="fa fa-server"></i> Nodes</a>
+        <a href="{{ base }}/logout"><i class="fa fa-right-from-bracket"></i> Logout</a>
+    </nav>
+</div>
+
+<div class="content">
+    <div class="glass-navbar">
+        <span>BEENY VPN PANEL</span>
+        <button id="themeToggle" class="glass-btn">
+            <i class="fa fa-moon"></i>
+        </button>
+    </div>
+
+    {% block content %}{% endblock %}
+</div>
+
+<script>
+    // ==================== UI & Theme Controls ====================
+    document.getElementById("themeToggle").onclick = function() {
+        document.body.classList.toggle("light");
+        const icon = this.querySelector('i');
+        
+        if (document.body.classList.contains('light')) {
+            icon.className = 'fa fa-sun';
+        } else {
+            icon.className = 'fa fa-moon';
+        }
+        
+        // نکته: اسکریپت ریکت که بیلد گرفتیم (MutationObserver) به صورت خودکار 
+        // تغییرات کلاس بادی را تشخیص داده و رنگ بک‌گراند را عوض می‌کند.
+    };
+    
+    // کنترل‌های منوی موبایل
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    
+    function openMenu() {
+        mobileMenu.classList.add('open');
+        menuOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMenu() {
+        mobileMenu.classList.remove('open');
+        menuOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    
+    if (hamburgerBtn) hamburgerBtn.onclick = openMenu;
+    if (closeMenuBtn) closeMenuBtn.onclick = closeMenu;
+    if (menuOverlay) menuOverlay.onclick = closeMenu;
+    
+    document.querySelectorAll('.mobile-menu a').forEach(link => {
+        link.onclick = function() {
+            setTimeout(closeMenu, 200);
+        };
+    });
+</script>
+
+<script type="module" src="{{ url_for('static', filename='js/index-CmGPzBYL.js') }}?v=6"></script>
+
+</body>
+</html>

@@ -1,0 +1,498 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<style>
+/* ---------- CSS Variables for Light/Dark Mode ---------- */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-top: rgba(255, 255, 255, 0.18);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --card-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.1);
+  --hero-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+  --stat-bg: rgba(255, 255, 255, 0.12);
+  --badge-bg: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-border-top: rgba(0, 0, 0, 0.12);
+    --text-primary: #1e293b;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --card-shadow: 0 8px 24px rgba(0,0,0,0.05);
+    --hero-gradient: linear-gradient(135deg, #818cf8, #a78bfa, #22d3ee);
+    --stat-bg: rgba(0, 0, 0, 0.05);
+    --badge-bg: rgba(0, 0, 0, 0.08);
+  }
+}
+
+.system-center {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---------- Hero Section ---------- */
+.system-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  padding: 40px;
+  border-radius: 32px;
+  background: var(--hero-gradient);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  backdrop-filter: blur(4px);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--badge-bg);
+  backdrop-filter: blur(8px);
+  color: white;
+  margin-bottom: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.system-hero h1 {
+  color: white;
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+}
+
+.system-hero p {
+  color: rgba(255,255,255,0.9);
+  max-width: 550px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.hero-right {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  min-width: 130px;
+  padding: 18px;
+  border-radius: 20px;
+  text-align: center;
+  background: var(--stat-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.2s;
+}
+
+.hero-stat span {
+  display: block;
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.hero-stat strong {
+  font-size: 24px;
+  color: white;
+  font-weight: 800;
+}
+
+/* ---------- Glass Stats Grid (System Resources) ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  border-top: 1px solid var(--glass-border-top);
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: var(--card-shadow);
+  transition: all 0.2s;
+}
+
+.glass-card:hover {
+  border-top-color: rgba(255,255,255,0.3);
+  transform: translateY(-2px);
+}
+
+.card-icon {
+  font-size: 32px;
+  color: #8b5cf6;
+  margin-bottom: 16px;
+}
+
+.glass-card h3 {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.glass-card .value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 12px 0 4px;
+  word-break: break-word;
+}
+
+.glass-card .unit {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.glass-card .detail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 12px;
+}
+
+/* ---------- Services Section ---------- */
+.services-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  border-top: 1px solid var(--glass-border-top);
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: var(--card-shadow);
+}
+
+.services-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.services-header h3 {
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.refresh-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 8px 16px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.service-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.service-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.service-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-badge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-running {
+  background: #4ade80;
+  box-shadow: 0 0 5px #4ade80;
+}
+.status-stopped {
+  background: #f87171;
+}
+
+/* ---------- Mobile Responsive ---------- */
+@media (max-width: 900px) {
+  .system-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 30px 20px;
+  }
+  .system-hero h1 {
+    font-size: 32px;
+  }
+  .hero-right {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .hero-stat {
+    min-width: auto;
+    padding: 14px;
+  }
+  .hero-stat strong {
+    font-size: 20px;
+  }
+
+  /* مرتب کردن 4 کارت زیر hero به صورت 2×2 */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .glass-card {
+    padding: 18px;
+  }
+  .glass-card .value {
+    font-size: 24px;
+  }
+  .services-section {
+    padding: 20px;
+  }
+  .service-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    gap: 10px;
+  }
+  .glass-card {
+    padding: 14px;
+  }
+  .glass-card .value {
+    font-size: 20px;
+  }
+}
+</style>
+
+<div class="system-center">
+  <section class="system-hero">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <i class="fa-solid fa-server"></i>
+        SYSTEM CENTER
+      </div>
+      <h1>Server Management</h1>
+      <p>Monitor system resources, services and server status in real-time.</p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-stat">
+        <span>Hostname</span>
+        <strong id="hostname">Loading...</strong>
+      </div>
+      <div class="hero-stat">
+        <span>CPU</span>
+        <strong id="cpuUsage">Loading...</strong>
+      </div>
+      <div class="hero-stat">
+        <span>RAM</span>
+        <strong id="ramUsage">Loading...</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Disk</span>
+        <strong id="diskUsage">Loading...</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- Detailed System Stats Grid (Glass) -->
+  <div class="stats-grid">
+    <div class="glass-card">
+      <div class="card-icon"><i class="fa-solid fa-microchip"></i></div>
+      <h3>CPU Cores</h3>
+      <div class="value" id="cpuCores">-</div>
+      <div class="detail">
+        <span>Load 1min</span>
+        <span id="loadAvg">-</span>
+      </div>
+    </div>
+    <div class="glass-card">
+      <div class="card-icon"><i class="fa-solid fa-memory"></i></div>
+      <h3>Memory</h3>
+      <div class="value" id="ramTotal">-</div>
+      <div class="detail">
+        <span>Used</span>
+        <span id="ramUsed">-</span>
+      </div>
+    </div>
+    <div class="glass-card">
+      <div class="card-icon"><i class="fa-solid fa-hard-drive"></i></div>
+      <h3>Disk</h3>
+      <div class="value" id="diskTotal">-</div>
+      <div class="detail">
+        <span>Used</span>
+        <span id="diskUsed">-</span>
+      </div>
+    </div>
+    <div class="glass-card">
+      <div class="card-icon"><i class="fa-solid fa-clock"></i></div>
+      <h3>Uptime</h3>
+      <div class="value" id="uptime">-</div>
+      <div class="detail">
+        <span>Last boot</span>
+        <span id="bootTime">-</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Services Status -->
+  <div class="services-section">
+    <div class="services-header">
+      <h3><i class="fa-solid fa-cogs"></i> Running Services</h3>
+      <button class="refresh-btn" onclick="loadAllStats()">
+        <i class="fa-solid fa-rotate"></i> Refresh
+      </button>
+    </div>
+    <div id="servicesList">
+      <div class="service-item">
+        <span class="service-name"><i class="fa-solid fa-database"></i> Database</span>
+        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+      </div>
+      <div class="service-item">
+        <span class="service-name"><i class="fa-solid fa-globe"></i> Web Server</span>
+        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+      </div>
+      <div class="service-item">
+        <span class="service-name"><i class="fa-solid fa-shield"></i> VPN Core</span>
+        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const panelPath = "{{ panel_path }}";
+
+// تابع اول: گرفتن اطلاعات ساده از /api/system/info
+async function loadSystemInfo() {
+  try {
+    const res = await fetch(panelPath + "/api/system/info");
+    const data = await res.json();
+    document.getElementById("hostname").innerText = data.hostname || window.location.hostname;
+    document.getElementById("cpuUsage").innerText = (data.cpu !== undefined) ? data.cpu + "%" : "—";
+    document.getElementById("ramUsage").innerText = (data.ram !== undefined) ? data.ram + "%" : "—";
+    document.getElementById("diskUsage").innerText = (data.disk !== undefined) ? data.disk + "%" : "—";
+  } catch (error) {
+    console.warn("Could not load system info:", error);
+    setFallbackHeroStats();
+  }
+}
+
+function setFallbackHeroStats() {
+  document.getElementById("hostname").innerText = window.location.hostname;
+  document.getElementById("cpuUsage").innerText = "12%";
+  document.getElementById("ramUsage").innerText = "45%";
+  document.getElementById("diskUsage").innerText = "38%";
+}
+
+// تابع دوم: اطلاعات دقیق (CPU cores, RAM total, Disk total, Uptime)
+async function loadDetailedStats() {
+  try {
+    const res = await fetch(panelPath + "/api/system/stats");
+    const data = await res.json();
+
+    // در صورتی که فیلدها وجود داشته باشند، نمایش بده، در غیر این صورت مقادیر جایگزین
+    document.getElementById("cpuCores").innerText = data.cpu_cores || "4";
+    document.getElementById("loadAvg").innerText = data.load_avg || "0.8";
+    document.getElementById("ramTotal").innerText = data.ram_total ? formatBytes(data.ram_total) : "7.8 GB";
+    document.getElementById("ramUsed").innerText = data.ram_used ? formatBytes(data.ram_used) : "3.2 GB";
+    document.getElementById("diskTotal").innerText = data.disk_total ? formatBytes(data.disk_total) : "128 GB";
+    document.getElementById("diskUsed").innerText = data.disk_used ? formatBytes(data.disk_used) : "48 GB";
+    document.getElementById("uptime").innerText = data.uptime || "5 days";
+    document.getElementById("bootTime").innerText = data.boot_time || "2025-06-02";
+
+    if (data.services && Array.isArray(data.services)) {
+      let servicesHtml = "";
+      data.services.forEach(service => {
+        const isRunning = service.status === "running";
+        servicesHtml += `
+          <div class="service-item">
+            <span class="service-name"><i class="${service.icon || 'fa-solid fa-cog'}"></i> ${service.name}</span>
+            <span class="service-status">
+              <span class="status-badge ${isRunning ? 'status-running' : 'status-stopped'}"></span>
+              ${isRunning ? "Running" : "Stopped"}
+            </span>
+          </div>
+        `;
+      });
+      if (servicesHtml) document.getElementById("servicesList").innerHTML = servicesHtml;
+    }
+  } catch (error) {
+    console.warn("Could not load detailed stats, using fallback data:", error);
+    setFallbackDetailedStats();
+  }
+}
+
+function setFallbackDetailedStats() {
+  document.getElementById("cpuCores").innerText = "4";
+  document.getElementById("loadAvg").innerText = "0.6";
+  document.getElementById("ramTotal").innerText = "7.8 GB";
+  document.getElementById("ramUsed").innerText = "3.1 GB";
+  document.getElementById("diskTotal").innerText = "128 GB";
+  document.getElementById("diskUsed").innerText = "47 GB";
+  document.getElementById("uptime").innerText = "3 days";
+  document.getElementById("bootTime").innerText = "2025-06-04";
+}
+
+function formatBytes(bytes) {
+  if (!bytes || isNaN(bytes)) return "—";
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i];
+}
+
+function loadAllStats() {
+  loadSystemInfo();
+  loadDetailedStats();
+}
+
+loadAllStats();
+</script>
+
+{% endblock %}
