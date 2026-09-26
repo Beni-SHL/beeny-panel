@@ -10,6 +10,7 @@
 git clone https://github.com/OWNER/REPOSITORY.git
 cd REPOSITORY
 bash install.sh --check
+bash install.sh --demo    # پیش‌نمایش مراحل، بدون تغییر سرور
 sudo bash install.sh
 ```
 
