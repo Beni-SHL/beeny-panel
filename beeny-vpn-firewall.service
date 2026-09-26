@@ -1,0 +1,14 @@
+[Unit]
+Description=Beeny VPN forwarding rules
+After=network-online.target
+Wants=network-online.target
+Before=openvpn-server@server.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/beeny-vpn-firewall start
+ExecStop=/usr/local/sbin/beeny-vpn-firewall stop
+
+[Install]
+WantedBy=multi-user.target
