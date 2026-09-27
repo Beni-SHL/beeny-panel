@@ -1,6 +1,9 @@
 """Initialize the first admin. Password is read from stdin, never argv."""
 import sys
+from pathlib import Path
 from werkzeug.security import generate_password_hash
+# Direct execution sets sys.path[0] to scripts/, not the panel root.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app import app, db, Admin
 
 if __name__ == '__main__':
