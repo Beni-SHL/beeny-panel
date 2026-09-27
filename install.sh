@@ -96,16 +96,28 @@ phase 1 'Server preflight and settings'
 . /etc/os-release
 [[ "$ID" == ubuntu && ( "$VERSION_ID" == 22.04 || "$VERSION_ID" == 24.04 ) ]] || { echo 'Supported: Ubuntu 22.04/24.04' >&2; exit 1; }
 if [[ "$RESUME_PKI" == 1 ]]; then
-  [[ ! -e "$DEST" && ! -e "$ENV_FILE" && ! -e /etc/openvpn/server/server.conf &&
+  # A truncated GitHub upload may have run the old phase-4 tail without variables.
+  # Accept only its distinctive empty-port/empty-interface files, and never a live VPN.
+  partial_tail=0
+  if [[ -f /etc/openvpn/server/server.conf && ! -L /etc/openvpn/server/server.conf &&
+        -f /etc/beeny-panel/vpn.env && ! -L /etc/beeny-panel/vpn.env ]] &&
+     grep -Eq '^port[[:space:]]*$' /etc/openvpn/server/server.conf &&
+     grep -qx 'BEENY_NET_IFACE=' /etc/beeny-panel/vpn.env &&
+     ! systemctl is-active --quiet openvpn-server@server; then
+    partial_tail=1
+  fi
+  [[ ! -e "$DEST" && ! -e "$ENV_FILE" &&
+     ( ( ! -e /etc/openvpn/server/server.conf && ! -e /etc/beeny-panel/vpn.env ) || "$partial_tail" == 1 ) &&
      -f /etc/openvpn/easy-rsa/pki/ca.crt && -f /etc/openvpn/easy-rsa/pki/private/ca.key &&
      ! -e /etc/openvpn/easy-rsa/pki/issued/server.crt && -f "$LOG" ]] &&
     grep -q 'Option conflict:' "$LOG" && grep -q "build-server-full" "$LOG" || {
-    echo 'Cannot safely resume: expected this installer’s failed CA stage with no server certificate or panel.' >&2; exit 1;
+    echo 'Cannot safely resume: expected this installer’s failed CA stage (optionally followed by its truncated tail), with no server certificate or panel.' >&2; exit 1;
   }
+  [[ "$partial_tail" == 0 ]] || info 'Found incomplete settings from the truncated installer; they will be replaced.'
   info 'Resuming with the existing CA; no new CA will be generated.'
 else
   [[ ! -e "$DEST" && ! -e "$ENV_FILE" && ! -e /etc/openvpn/server/server.conf &&
-     ! -e /etc/openvpn/easy-rsa/pki/private/ca.key && ! -e /etc/openvpn/easy-rsa/pki/ca.crt ]] || {
+     ! -e /etc/beeny-panel/vpn.env && ! -e /etc/openvpn/easy-rsa/pki/private/ca.key && ! -e /etc/openvpn/easy-rsa/pki/ca.crt ]] || {
     echo 'An existing panel/OpenVPN CA was detected. Use --resume-pki only for this installer’s interrupted CA stage.' >&2; exit 1;
   }
 fi
