@@ -89,9 +89,54 @@ if [[ "${1:-}" == '--check' ]]; then ok 'Source validation passed'; exit 0; fi
 if [[ "${1:-}" == '--demo' ]]; then demo; exit 0; fi
 RESUME_PKI=0
 if [[ "${1:-}" == '--resume-pki' ]]; then RESUME_PKI=1; shift; fi
-[[ $# == 0 ]] || { echo 'Usage: sudo bash install.sh [--check|--demo|--resume-pki]' >&2; exit 2; }
+RESUME_PANEL=0
+if [[ "${1:-}" == '--resume-panel' ]]; then RESUME_PANEL=1; shift; fi
+[[ $# == 0 ]] || { echo 'Usage: sudo bash install.sh [--check|--demo|--resume-pki|--resume-panel]' >&2; exit 2; }
 [[ $EUID == 0 ]] || { echo 'Run as root: sudo bash install.sh' >&2; exit 1; }
 banner
+if [[ "$RESUME_PANEL" == 1 ]]; then
+  phase 1 'Resume panel setup'
+  [[ -f "$ENV_FILE" && -f "$DEST/app.py" && -f "$DEST/config.json" &&
+     -x "$DEST/venv/bin/python" && -f "$DEST/scripts/init_admin.py" &&
+     ! -e /etc/systemd/system/beeny-panel.service ]] &&
+    systemctl is-active --quiet openvpn-server@server || {
+    echo 'Cannot safely resume panel: expected completed VPN, copied panel, and no panel service.' >&2; exit 1;
+  }
+  [[ -t 0 ]] || { echo 'Run interactively to enter admin credentials.' >&2; exit 1; }
+  set -a
+  . "$ENV_FILE"
+  set +a
+  [[ -n "${BEENY_SECRET_KEY:-}" && "${BEENY_VPN_PORT:-}" =~ ^[0-9]{1,5}$ &&
+     "${BEENY_PORT:-}" =~ ^[0-9]{4,5}$ &&
+     "${BEENY_PUBLIC_HOST:-}" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || {
+    echo 'Panel environment is incomplete.' >&2; exit 1;
+  }
+  vpn_host=$BEENY_PUBLIC_HOST
+  vpn_port=$BEENY_VPN_PORT
+  panel_port=$BEENY_PORT
+  panel_path="$(python3 - "$DEST/config.json" <<'PY'
+import json,sys
+print(json.load(open(sys.argv[1]))['panel_path'])
+PY
+)"
+  [[ "$panel_path" =~ ^/[A-Za-z0-9_-]{3,48}$ ]] || { echo 'Panel path is invalid.' >&2; exit 1; }
+  panel_domain=''
+  if [[ "${BEENY_PUBLIC_HTTPS:-}" == 1 ]]; then
+    ask panel_domain 'Panel HTTPS domain (same as entered during initial setup):'
+    [[ "$panel_domain" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,}$ ]] || { echo 'Invalid domain.' >&2; exit 1; }
+    [[ -n "$(getent ahostsv4 "$panel_domain" | awk 'NR==1{print $1}')" ]] || {
+      echo 'Panel domain must resolve in DNS.' >&2; exit 1;
+    }
+  fi
+  ask admin_user 'Admin username:'
+  [[ "$admin_user" =~ ^[A-Za-z0-9_.-]{3,64}$ ]] || { echo 'Invalid username' >&2; exit 1; }
+  printf '%s  › Admin password (12+ characters): %s' "$CYAN" "$RESET"
+  IFS= read -rs admin_pass; echo
+  [[ ${#admin_pass} -ge 12 ]] || { echo 'Password too short' >&2; exit 1; }
+  install -m 644 "$ROOT_DIR/scripts/init_admin.py" "$DEST/scripts/init_admin.py"
+  printf '%s\n' "$admin_pass" | "$DEST/venv/bin/python" "$DEST/scripts/init_admin.py" "$admin_user"
+  unset admin_pass
+else
 phase 1 'Server preflight and settings'
 . /etc/os-release
 [[ "$ID" == ubuntu && ( "$VERSION_ID" == 22.04 || "$VERSION_ID" == 24.04 ) ]] || { echo 'Supported: Ubuntu 22.04/24.04' >&2; exit 1; }
@@ -242,6 +287,7 @@ chmod 600 "$DEST/config.json"
 export BEENY_SECRET_KEY="$secret" BEENY_PUBLIC_HOST="$vpn_host" BEENY_VPN_PORT="$vpn_port"
 printf '%s\n' "$admin_pass" | "$DEST/venv/bin/python" "$DEST/scripts/init_admin.py" "$admin_user"
 unset admin_pass secret BEENY_SECRET_KEY
+fi
 install -m 644 "$DEST/beeny-panel.service" /etc/systemd/system/beeny-panel.service
 systemctl daemon-reload
 systemctl enable --now beeny-panel
