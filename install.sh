@@ -134,7 +134,7 @@ PY
   IFS= read -rs admin_pass; echo
   [[ ${#admin_pass} -ge 12 ]] || { echo 'Password too short' >&2; exit 1; }
   install -m 644 "$ROOT_DIR/scripts/init_admin.py" "$DEST/scripts/init_admin.py"
-  printf '%s\n' "$admin_pass" | "$DEST/venv/bin/python" "$DEST/scripts/init_admin.py" "$admin_user"
+  printf '%s\n' "$admin_pass" | PYTHONPATH="$DEST${PYTHONPATH:+:$PYTHONPATH}" "$DEST/venv/bin/python" "$DEST/scripts/init_admin.py" "$admin_user"
   unset admin_pass
 else
 phase 1 'Server preflight and settings'
@@ -308,7 +308,7 @@ with open(sys.argv[1], 'w') as f:
 PY
 chmod 600 "$DEST/config.json"
 export BEENY_SECRET_KEY="$secret" BEENY_PUBLIC_HOST="$vpn_host" BEENY_VPN_PORT="$vpn_port"
-printf '%s\n' "$admin_pass" | "$DEST/venv/bin/python" "$DEST/scripts/init_admin.py" "$admin_user"
+printf '%s\n' "$admin_pass" | PYTHONPATH="$DEST${PYTHONPATH:+:$PYTHONPATH}" "$DEST/venv/bin/python" "$DEST/scripts/init_admin.py" "$admin_user"
 unset admin_pass secret BEENY_SECRET_KEY
 fi
 install -m 644 "$DEST/beeny-panel.service" /etc/systemd/system/beeny-panel.service
