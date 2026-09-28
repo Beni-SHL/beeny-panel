@@ -167,13 +167,26 @@ else
   }
 fi
 [[ -t 0 ]] || { echo 'Run interactively to enter credentials.' >&2; exit 1; }
-ask vpn_host 'Public VPS IPv4 address:'
-python3 - "$vpn_host" <<'PY' || { echo 'Enter a valid public IPv4 address.' >&2; exit 1; }
+ask vpn_ip 'Public VPS IPv4 address:'
+python3 - "$vpn_ip" <<'PY' || { echo 'Enter a valid public IPv4 address.' >&2; exit 1; }
 import ipaddress,sys
 address=ipaddress.IPv4Address(sys.argv[1])
 if not address.is_global:
     raise ValueError('Address must be public')
 PY
+ask vpn_domain 'VPN hostname for client profiles (empty = VPS IP):'
+vpn_host="$vpn_ip"
+if [[ -n "$vpn_domain" ]]; then
+  [[ "$vpn_domain" =~ ^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}$ ]] || {
+    echo 'Enter a valid VPN hostname without a scheme or port.' >&2; exit 1;
+  }
+  if ! getent ahostsv4 "$vpn_domain" | awk '{print $1}' | grep -Fxq "$vpn_ip"; then
+    echo "VPN hostname must have a DNS A record pointing to $vpn_ip before installation." >&2
+    echo 'Use a direct DNS record; an HTTP-only proxy cannot carry OpenVPN TCP traffic.' >&2
+    exit 1
+  fi
+  vpn_host="$vpn_domain"
+fi
 ask vpn_port 'VPN TCP port [110]:'; vpn_port="${vpn_port:-110}"
 [[ "$vpn_port" =~ ^[0-9]{1,5}$ ]] && (( vpn_port >= 1 && vpn_port <= 65535 )) || { echo 'Invalid VPN port' >&2; exit 1; }
 ask panel_port 'Panel local port [8080]:'; panel_port="${panel_port:-8080}"
@@ -351,7 +364,7 @@ else
   sed -i 's/^BEENY_BIND=.*/BEENY_BIND=0.0.0.0/; s/^BEENY_PUBLIC_HTTPS=.*/BEENY_PUBLIC_HTTPS=0/' "$ENV_FILE"
   systemctl restart beeny-panel
   if command -v ufw >/dev/null && ufw status | grep -q '^Status: active'; then ufw allow "$panel_port/tcp"; fi
-  panel_url="http://$vpn_host:$panel_port$panel_path/login"
+  panel_url="http://$vpn_ip:$panel_port$panel_path/login"
   info 'IP access uses HTTP; add a domain and HTTPS before sharing private account links.'
 fi
 printf 'BEENY_PANEL_BASE_URL=%s\n' "${panel_url%$panel_path/login}" >> "$ENV_FILE"
