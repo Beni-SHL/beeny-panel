@@ -229,6 +229,8 @@
         }
         body.light .close-menu { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); color: #444; }
     </style>
+    <link rel="icon" href="{{ url_for('static', filename='beeny-mark.svg') }}" type="image/svg+xml">
+    <link href="{{ url_for('static', filename='css/brand.css') }}" rel="stylesheet">
 </head>
 <body>
 
@@ -241,7 +243,7 @@
 
 <div class="mobile-menu" id="mobileMenu">
     <div class="menu-header">
-        <i class="fa fa-shield-halved" style="margin-right: 10px; font-size: 14px; opacity: 0.7;"></i> BEENY
+        <img src="{{ url_for('static', filename='beeny-mark.svg') }}" alt=""> BEENY PANEL
     </div>
     <button class="close-menu" id="closeMenuBtn">
         <i class="fa fa-times"></i>
@@ -250,7 +252,6 @@
     <div class="mobile-menu-inner">
         <a href="{{ base }}"><i class="fa fa-chart-line"></i> Dashboard</a>
         <a href="{{ base }}/users"><i class="fa fa-users"></i> Users</a>
-        <a href="{{ base }}/online"><i class="fa fa-circle-nodes"></i> Online</a>
         <a href="{{ base }}/traffic"><i class="fa fa-chart-pie"></i> Traffic</a>
         <a href="{{ base }}/settings"><i class="fa fa-gear"></i> Settings</a>
         <a href="{{ base }}/settings/nodes"><i class="fa fa-server"></i> Nodes</a>
@@ -262,21 +263,22 @@
 <div class="menu-overlay" id="menuOverlay"></div>
 
 <div class="sidebar">
-    <div class="logo">BEENY PANEL</div>
-    <nav>
+    <a class="logo brand-lockup" href="{{ base }}"><img src="{{ url_for('static', filename='beeny-mark.svg') }}" alt=""><span><strong>BEENY</strong><small>CONTROL PANEL</small></span></a>
+    <nav aria-label="Main navigation">
+        <span class="nav-label">WORKSPACE</span>
         <a href="{{ base }}"><i class="fa fa-chart-line"></i> Dashboard</a>
         <a href="{{ base }}/users"><i class="fa fa-users"></i> Users</a>
-        <a href="{{ base }}/online"><i class="fa fa-circle-nodes"></i> Online</a>
         <a href="{{ base }}/traffic"><i class="fa fa-chart-pie"></i> Traffic</a>
-        <a href="{{ base }}/settings"><i class="fa fa-gear"></i> Settings</a>
+        <span class="nav-label">INFRASTRUCTURE</span>
         <a href="{{ base }}/settings/nodes"><i class="fa fa-server"></i> Nodes</a>
-        <a href="{{ base }}/logout"><i class="fa fa-right-from-bracket"></i> Logout</a>
+        <a href="{{ base }}/settings"><i class="fa fa-gear"></i> Settings</a>
+        <a class="logout" href="{{ base }}/logout"><i class="fa fa-right-from-bracket"></i> Logout</a>
     </nav>
 </div>
 
 <div class="content">
     <div class="glass-navbar">
-        <span>BEENY VPN PANEL</span>
+        <span class="nav-title"><img src="{{ url_for('static', filename='beeny-mark.svg') }}" alt=""> <span>BEENY <b>PANEL</b></span></span>
         <button id="themeToggle" class="glass-btn">
             <i class="fa fa-moon"></i>
         </button>
@@ -284,10 +286,16 @@
 
     {% block content %}{% endblock %}
 </div>
+<link href="{{ url_for('static', filename='css/light-pages.css') }}" rel="stylesheet">
 
 <script>
     // ==================== UI & Theme Controls ====================
+    if (localStorage.getItem("beeny-theme") === "light") {
+        document.body.classList.add("light");
+        document.querySelector("#themeToggle i").className = "fa fa-sun";
+    }
     document.getElementById("themeToggle").onclick = function() {
+        localStorage.setItem("beeny-theme", document.body.classList.contains("light") ? "dark" : "light");
         document.body.classList.toggle("light");
         const icon = this.querySelector('i');
         

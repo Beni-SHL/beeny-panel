@@ -243,6 +243,7 @@
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .actions-grid{grid-template-columns:repeat(2,1fr)}
 }
+body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px 35px rgba(29,52,91,.08)}body.light .dashboard .dash-header-left h1{background:linear-gradient(90deg,#15263f,#5b52a6);-webkit-background-clip:text;background-clip:text}body.light .dashboard .stat-value,body.light .dashboard .section-title,body.light .dashboard .mini-name,body.light .dashboard .proto-name,body.light .dashboard .proto-count,body.light .dashboard .tsummary-item strong,body.light .dashboard .donut-center .dc-val{color:#182942}body.light .dashboard .stat-label,body.light .dashboard .stat-sub,body.light .dashboard .section-sub,body.light .dashboard .dash-header-left p,body.light .dashboard .mini-sub,body.light .dashboard .hero-caption,body.light .dashboard .hero-caption b,body.light .dashboard .hero-chip,body.light .dashboard .tsummary-item span,body.light .dashboard .empty-state,body.light .dashboard .view-all{color:#536882}body.light .dashboard .hero-value{background:linear-gradient(120deg,#263b68,#6651c8,#2683b2);-webkit-background-clip:text;background-clip:text}body.light .dashboard .user-mini-row,body.light .dashboard .tsummary-item,body.light .dashboard .proto-row,body.light .dashboard .action-tile,body.light .dashboard .hero-chip{background:#f1f5fc;border-color:#dfe6f2}body.light .dashboard .mini-avatar{color:#263c63;background:#e7edfa}body.light .dashboard .action-tile{color:#2e4770}body.light .dashboard .action-tile:hover{background:#e5e9fa;color:#40339a}.dashboard .stat-spark{display:none}
 </style>
 
 <div class="dashboard">
@@ -263,11 +264,11 @@
 {% set lifetime = lifetime_traffic|default(total_traffic) %}
 <div class="gc gc-int hero-traffic reveal">
   <div class="hero-traffic-left">
-    <div class="hero-eyebrow"><span class="dot"></span>Lifetime Traffic</div>
+    <div class="hero-eyebrow"><span class="dot"></span>Lifetime Tracked Traffic</div>
     <div class="hero-value" id="lifetimeValue" data-target="{{ lifetime }}">0 GB</div>
     <div class="hero-caption">
-      <b>Cumulative total</b> consumed since day one — this figure only ever goes up. User resets, edits or quota
-      changes do not subtract from it, so it always reflects true lifetime bandwidth usage across the server.
+      <b>Cumulative total</b> recorded since ledger activation — this figure only ever goes up. User resets, edits or quota
+      changes do not subtract from it, and remains available for bandwidth accounting.
     </div>
     <div class="hero-chips">
       <div class="hero-chip"><span class="sq" style="background:var(--cyan)"></span>Never resets</div>
@@ -394,7 +395,7 @@
       {% else %}
         <div class="empty-state">
           <i class="fa fa-signal"></i>
-          No users online right now
+          No users connected right now
         </div>
       {% endif %}
     </div>
@@ -517,17 +518,7 @@ function fmtGB(v){
   const wrap = canvas.parentElement;
   const DPR = window.devicePixelRatio||1;
 
-  function seededRandom(seed){
-    let s = seed % 2147483647; if(s<=0) s+=2147483646;
-    return function(){ s = s*16807 % 2147483647; return (s-1)/2147483646; };
-  }
-  const rnd = seededRandom(Math.round(target*137)+11);
-  const n = 16;
-  const weights = Array.from({length:n},(_,i)=> 0.4+rnd()*0.9+i*0.045);
-  const wsum = weights.reduce((a,b)=>a+b,0);
-  let acc=0; const pts=[0];
-  weights.forEach(w=>{ acc += (w/wsum)*target; pts.push(acc); });
-  pts[pts.length-1] = target;
+  const pts = {{ cumulative_traffic|tojson }};
   const maxV = Math.max(...pts,1);
 
   let W,H,prog=0;
@@ -598,76 +589,6 @@ function fmtGB(v){
   window.addEventListener('resize',()=>{resize();draw(1);});
 })();
 
-/* ── Stat card sparklines ── */
-function seededRandomFactory(seed){
-  let s = seed % 2147483647; if(s<=0) s+=2147483646;
-  return function(){ s = s*16807 % 2147483647; return (s-1)/2147483646; };
-}
-document.querySelectorAll('.stat-spark').forEach((canvas,idx)=>{
-  const statCard = canvas.closest('.stat-card');
-  const valueEl = statCard.querySelector('.stat-value');
-  const target = parseInt(valueEl.getAttribute('data-target'))||0;
-  const color = canvas.getAttribute('data-color')||'#60a5fa';
-  const DPR = window.devicePixelRatio||1;
-  const rnd = seededRandomFactory((target+1)*97+idx*13+7);
-  const n = 10;
-  const base = Math.max(target,4);
-  let val = base*(0.4+rnd()*0.3);
-  const pts=[];
-  for(let i=0;i<n-1;i++){
-    val += (rnd()-0.35)*base*0.18;
-    val = Math.max(val, base*0.12);
-    pts.push(val);
-  }
-  pts.push(base);
-  const maxV = Math.max(...pts,1);
-
-  function resize(){
-    const w = canvas.parentElement.clientWidth;
-    const h = 30;
-    canvas.width = w*DPR; canvas.height = h*DPR;
-    canvas.style.width=w+'px'; canvas.style.height=h+'px';
-    return {w,h};
-  }
-  let dims = resize();
-  let prog=0;
-  function draw(p){
-    const ctx=canvas.getContext('2d');
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.scale(DPR,DPR);
-    const {w,h}=dims;
-    const step=w/(pts.length-1);
-    const visible = Math.max(2, Math.floor(pts.length*Math.min(1,p*1.2)));
-    ctx.beginPath();
-    for(let i=0;i<visible;i++){
-      const x=i*step, y=h-(pts[i]/maxV)*h*0.85-2;
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    }
-    ctx.lineTo((visible-1)*step,h);
-    ctx.lineTo(0,h);
-    ctx.closePath();
-    const grad=ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0,color+'55');
-    grad.addColorStop(1,color+'05');
-    ctx.fillStyle=grad; ctx.fill();
-
-    ctx.beginPath();
-    for(let i=0;i<visible;i++){
-      const x=i*step, y=h-(pts[i]/maxV)*h*0.85-2;
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    }
-    ctx.strokeStyle=color; ctx.lineWidth=1.6; ctx.lineJoin='round'; ctx.stroke();
-    ctx.setTransform(1,0,0,1,0,0);
-  }
-  function animate(){
-    prog=Math.min(1,prog+0.035);
-    draw(prog);
-    if(prog<1) requestAnimationFrame(animate);
-  }
-  setTimeout(()=>{ dims=resize(); if(prefersReduced){draw(1);} else animate(); }, 250+idx*60);
-  window.addEventListener('resize',()=>{ dims=resize(); draw(1); });
-});
-
 /* ── Expiring badges ── */
 document.querySelectorAll('.user-mini-row[data-expire]').forEach(row=>{
   const exp   = new Date(row.getAttribute('data-expire'));
@@ -736,10 +657,8 @@ linkProtoHover('wgRow', document.getElementById('donutWG'));
   let W,H,animProg=0,rafId;
 
   const totalTraffic = parseFloat('{{ total_traffic }}')||0;
-  const avgDay       = totalTraffic/7;
-  const dayLabels    = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const seeds        = [0.65,0.82,1.00,0.70,0.90,0.58,0.76];
-  const rawData      = seeds.map(s=>Math.max(0.1,parseFloat((avgDay*s).toFixed(2))));
+  const dayLabels    = {{ week_labels|tojson }};
+  const rawData      = {{ week_traffic|tojson }};
   const maxVal       = Math.max(...rawData,1);
   const peakIdx      = rawData.indexOf(Math.max(...rawData));
 

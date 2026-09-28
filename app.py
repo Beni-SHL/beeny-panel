@@ -3,7 +3,7 @@
 Beeny Panel - VPN Management System (Fully Integrated & Fixed)
 """
 
-from flask import Flask, render_template, request, redirect, send_file, jsonify, session
+from flask import Flask, render_template, request, redirect, send_file, jsonify, session, abort
 import subprocess
 import os
 from threading import Thread
@@ -19,9 +19,15 @@ from werkzeug.utils import secure_filename
 import ssl
 import requests
 import io
+import math
 import re
 import socket
+import secrets
+import hashlib
 from renewal import extend_expiry, activation_error
+from traffic_ledger import parse_status, usage_delta
+
+PRIMARY_NODE_KEY = "__beeny_local_primary__"
 
 # Load config
 CONFIG_FILE = "/opt/beeny-panel/config.json"
@@ -44,6 +50,8 @@ if not app.config["SECRET_KEY"]:
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("BEENY_PUBLIC_HTTPS") == "1"
+app.config["REMEMBER_COOKIE_SECURE"] = app.config["SESSION_COOKIE_SECURE"]
+app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=7)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///beeny.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -101,6 +109,89 @@ class UserSession(db.Model):
     last_seen = db.Column(db.DateTime)
 
 
+class TrafficSample(db.Model):
+    """Last observed counter for a single OpenVPN session on one server."""
+    id = db.Column(db.Integer, primary_key=True)
+    node_id = db.Column(db.Integer, nullable=False, index=True)
+    session_key = db.Column(db.String(512), nullable=False)
+    last_bytes = db.Column(db.BigInteger, nullable=False, default=0)
+    last_received = db.Column(db.BigInteger, nullable=False, default=0)
+    last_sent = db.Column(db.BigInteger, nullable=False, default=0)
+    __table_args__ = (db.UniqueConstraint('node_id', 'session_key'),)
+
+
+class TrafficDaily(db.Model):
+    """VPN bytes measured per day and server; independent of user accounts."""
+    id = db.Column(db.Integer, primary_key=True)
+    node_id = db.Column(db.Integer, nullable=False, index=True)
+    node_name = db.Column(db.String(100), nullable=False)
+    day = db.Column(db.String(10), nullable=False, index=True)
+    bytes_total = db.Column(db.BigInteger, nullable=False, default=0)
+    bytes_received = db.Column(db.BigInteger, nullable=False, default=0)
+    bytes_sent = db.Column(db.BigInteger, nullable=False, default=0)
+    __table_args__ = (db.UniqueConstraint('node_id', 'day'),)
+
+
+class TrafficDailyUser(db.Model):
+    """Historic consumption stays visible after the current quota is reset."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False, index=True)
+    day = db.Column(db.String(10), nullable=False, index=True)
+    bytes_total = db.Column(db.BigInteger, nullable=False, default=0)
+    __table_args__ = (db.UniqueConstraint('user_id', 'day'),)
+
+
+class AccountLink(db.Model):
+    user_id = db.Column(db.Integer, primary_key=True)
+    token_hash = db.Column(db.String(64), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
+def is_primary_node(node):
+    return bool(node and node.api_key == PRIMARY_NODE_KEY)
+
+
+def ensure_primary_node():
+    """Register the VPN on this panel host as a selectable node once."""
+    public_host = os.environ.get("BEENY_PUBLIC_HOST", "").strip()
+    if not public_host:
+        raise RuntimeError("BEENY_PUBLIC_HOST is required for the primary VPN node")
+    primary = Node.query.filter_by(api_key=PRIMARY_NODE_KEY).first()
+    if primary is None:
+        primary = Node(name="Primary server", ip=public_host, host="",
+                       country="", protocol="OpenVPN", api_key=PRIMARY_NODE_KEY,
+                       status="online")
+        db.session.add(primary)
+        db.session.flush()
+    else:
+        primary.ip = public_host
+        primary.status = "online"
+    # Accounts created by earlier clean-server installs had implicit local access.
+    # Explicitly grant that node only where no assignments were recorded.
+    for user in User.query.all():
+        if not UserNode.query.filter_by(user_id=user.id).first():
+            db.session.add(UserNode(user_id=user.id, node_id=primary.id))
+    db.session.commit()
+    return primary
+
+
+def sync_primary_access(user, primary_selected):
+    """Apply the local node selection using OpenVPN's per-client CCD."""
+    ccd_file = f"/etc/openvpn/ccd/{user.username}"
+    if user.status != "active" or not primary_selected:
+        os.makedirs("/etc/openvpn/ccd", exist_ok=True)
+        with open(ccd_file, "w") as handle:
+            handle.write("disable\n")
+        if user.status == "active":
+            try:
+                with socket.create_connection(("127.0.0.1", 7505), timeout=1) as management:
+                    management.sendall(f"kill {user.username}\n".encode("ascii"))
+            except OSError:
+                pass
+    elif os.path.exists(ccd_file):
+        os.remove(ccd_file)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return Admin.query.get(int(user_id))
@@ -137,7 +228,7 @@ def kick_user_globally(user):
         relations = UserNode.query.filter_by(user_id=user.id).all()
         for rel in relations:
             node = Node.query.get(rel.node_id)
-            if node:
+            if node and not is_primary_node(node):
                 target = node.host if node.host else node.ip
                 if not target: continue
                 address = target.strip()
@@ -155,98 +246,87 @@ def kick_user_globally(user):
 
 
 def update_openvpn_status():
-    """تجمیع حجم مصرفی و وضعیت آنلاین کاربران از تمام سرورها به صورت غیرمسدودکننده"""
-    online_users = {}
-    
-    def parse_log_data(log_text):
-        if not log_text: return
-        for line in log_text.splitlines():
-            if line.startswith("CLIENT_LIST"):
-                parts = line.strip().split(",")
-                if len(parts) >= 7:
-                    username = parts[1]
-                    try:
-                        total_bytes = int(parts[5]) + int(parts[6])
-                        if username not in online_users:
-                            online_users[username] = {"bytes": total_bytes, "connections": 1}
-                        else:
-                            online_users[username]["connections"] += 1
-                            online_users[username]["bytes"] += total_bytes
-                    except: pass
-
-    try:
-        if os.path.exists("/var/log/openvpn-status.log"):
-            with open("/var/log/openvpn-status.log", "r") as f:
-                parse_log_data(f.read())
-    except: pass
-    
-    try:
-        nodes = Node.query.all()
-        for node in nodes:
-            if node.status == "offline": continue
-            try:
-                target = node.host if node.host else node.ip
-                if not target: continue
-                address = target.strip()
-                if not address.startswith("http"): address = f"http://{address}"
-                if ":" not in address.replace("http://", "").replace("https://", ""): address = f"{address}:5001"
-                
-                r = requests.get(
-                    f"{address}/api/node/status-log", 
-                    headers={"Authorization": f"Bearer {node.api_key}"}, 
-                    timeout=1.0
-                )
-                if r.status_code == 200:
-                    parse_log_data(r.json().get("log", ""))
-            except: pass
-    except: pass
-        
-    for user in User.query.all():
-        if user.username in online_users:
-            current_bytes = online_users[user.username]["bytes"]
-            device_count = online_users[user.username]["connections"]
-            
-            if user.traffic_used is None: user.traffic_used = 0
-            if user.last_session_bytes is None: user.last_session_bytes = 0
-            
-            if user.last_session_bytes == -1:
-                diff = 0
-            elif current_bytes >= user.last_session_bytes:
-                diff = current_bytes - user.last_session_bytes
-            else:
-                diff = current_bytes
-            
-            user.traffic_used += diff
-            user.last_session_bytes = current_bytes
-            user.traffic_usage = round(user.traffic_used / 1073741824, 2)
-            user.online_status = "online"
-            user.online = True
-            user.current_devices = device_count
-            
-            # --- منطق استارت تاریخ انقضا در اولین اتصال ---
-            if user.traffic_usage > 0 and user.expire_date and user.expire_date.isdigit():
-                days_to_add = int(user.expire_date)
-                user.expire_date = (datetime.now() + timedelta(days=days_to_add)).strftime("%Y-%m-%d")
-            
-            # --- تفکیک اخراج موقت (دیوایس) از غیرفعال شدن کامل (حجم) ---
-            if (user.traffic_limit > 0 and user.traffic_usage >= user.traffic_limit):
-                user.status = "disabled"
-                disable_user_globally(user)
-            elif (user.max_devices and device_count > user.max_devices):
-                kick_user_globally(user) # فقط کیک میکنه تا وقتی یکی از دیوایس ها قطع شد بلافاصله بتونه وصل بشه
-                
-        else:
-            user.online_status = "offline"
-            user.online = False
-            user.current_devices = 0
-            
+    """Count deltas from each VPN session into a durable, per-node daily ledger."""
+    nodes = Node.query.all()
+    presence = {}
+    today = datetime.utcnow().date().isoformat()
+    for node in nodes:
         try:
-            if user.expire_date and not user.expire_date.isdigit() and user.expire_date != "-":
-                if datetime.strptime(user.expire_date, "%Y-%m-%d").date() < datetime.now().date():
-                    user.status = "disabled"
-                    disable_user_globally(user)
-        except: pass
-        
+            if is_primary_node(node):
+                with open("/var/log/openvpn-status.log", encoding="utf-8") as stream:
+                    log = stream.read()
+            else:
+                target = (node.host or node.ip).strip()
+                if not target:
+                    continue
+                address = target if target.startswith(("http://", "https://")) else f"http://{target}"
+                if ":" not in address.split("//", 1)[-1]:
+                    address += ":5001"
+                response = requests.get(f"{address}/api/node/status-log",
+                                        headers={"Authorization": f"Bearer {node.api_key}"}, timeout=3)
+                response.raise_for_status()
+                log = response.json().get("log", "")
+            clients = parse_status(log)
+            node.status = 'online'
+            seen = set()
+            for username, session_key, received, sent, address in clients:
+                if session_key in seen:
+                    continue
+                seen.add(session_key)
+                sample = TrafficSample.query.filter_by(node_id=node.id, session_key=session_key).first()
+                diff_received = usage_delta(sample.last_received if sample else None, received)
+                diff_sent = usage_delta(sample.last_sent if sample else None, sent)
+                diff = diff_received + diff_sent
+                if sample:
+                    sample.last_bytes = received + sent
+                    sample.last_received = received
+                    sample.last_sent = sent
+                else:
+                    db.session.add(TrafficSample(node_id=node.id, session_key=session_key,
+                                                 last_bytes=received + sent,
+                                                 last_received=received, last_sent=sent))
+                if diff:
+                    daily = TrafficDaily.query.filter_by(node_id=node.id, day=today).first()
+                    if daily is None:
+                        daily = TrafficDaily(node_id=node.id, node_name=node.name, day=today,
+                                             bytes_total=0, bytes_received=0, bytes_sent=0)
+                        db.session.add(daily)
+                        db.session.flush()
+                    daily.bytes_total += diff
+                    daily.bytes_received += diff_received
+                    daily.bytes_sent += diff_sent
+                details = presence.setdefault(username, {"bytes": 0, "connections": 0, "address": address})
+                details["bytes"] += diff
+                details["connections"] += 1
+                user = User.query.filter_by(username=username).first()
+                if user and diff:
+                    user_daily = TrafficDailyUser.query.filter_by(user_id=user.id, day=today).first()
+                    if user_daily is None:
+                        user_daily = TrafficDailyUser(user_id=user.id, day=today, bytes_total=0)
+                        db.session.add(user_daily)
+                        db.session.flush()
+                    user_daily.bytes_total += diff
+            db.session.commit()
+        except Exception:
+            app.logger.exception("Could not collect VPN status from node %s", node.name)
+            db.session.rollback()
+            node.status = 'offline'
+            continue
+    for user in User.query.all():
+        details = presence.get(user.username)
+        user.online = bool(details)
+        user.online_status = "online" if details else "offline"
+        user.current_devices = details["connections"] if details else 0
+        if details:
+            user.traffic_used = (user.traffic_used or 0) + details["bytes"]
+            user.traffic_usage = round(user.traffic_used / 1073741824, 3)
+            if details["bytes"] and user.expire_date and user.expire_date.isdigit():
+                user.expire_date = (datetime.now().date() + timedelta(days=int(user.expire_date))).isoformat()
+            if user.max_devices and user.current_devices > user.max_devices:
+                kick_user_globally(user)
+        if activation_error(user.expire_date, user.traffic_limit, user.traffic_usage or 0):
+            user.status = "disabled"
+            disable_user_globally(user)
     db.session.commit()
 
 
@@ -269,7 +349,7 @@ def login():
         password = request.form.get("password")
         admin = Admin.query.filter_by(username=username).first()
         if admin and check_password_hash(admin.password, password):
-            login_user(admin)
+            login_user(admin, remember=request.form.get("remember") == "1")
             return redirect(f"{PANEL_PATH}")
         return render_template("login.html", error="Invalid username or password", panel_path=PANEL_PATH)
     return render_template("login.html", panel_path=PANEL_PATH)
@@ -283,65 +363,88 @@ def logout():
 
 # ==================== MAIN ROUTES ====================
 
-@app.route('/client/login', methods=['GET', 'POST'])
-def client_login():
-    if os.environ.get("BEENY_ENABLE_CLIENT_PORTAL") != "1":
-        return "Client portal disabled", 404
-    if request.method == 'POST':
-        username = request.form.get('username')
-        user = User.query.filter_by(username=username).first()
-        if user:
-            session['client_user'] = user.username
-            return redirect('/client/dashboard')
-        return render_template('client_login.html', error="کاربر یافت نشد")
-    return render_template('client_login.html')
-
-@app.route('/client/dashboard')
-def client_dashboard():
-    if os.environ.get("BEENY_ENABLE_CLIENT_PORTAL") != "1":
-        return "Client portal disabled", 404
-    if 'client_user' not in session:
-        return redirect('/client/login')
-    
-    user = User.query.filter_by(username=session['client_user']).first_or_404()
-    
-    days_left = "-"
-    if user.expire_date and user.expire_date.isdigit():
-        days_left = f"{user.expire_date} روز (پس از اولین اتصال)"
-    elif user.expire_date and user.expire_date != "-":
-        days = (datetime.strptime(user.expire_date, "%Y-%m-%d") - datetime.now()).days
-        days_left = f"{days} روز" if days >= 0 else "منقضی شده"
-
-    return render_template('client.html', user=user, days_left=days_left)
-
 @app.route(PANEL_PATH)
 @login_required
 def home():
+    online_users_list = User.query.filter_by(online=True).order_by(User.username).limit(6).all()
     online_users = User.query.filter_by(online=True).count()
-    expiring_users = 0
+    today = datetime.now().date()
+    expiring_users_list = []
     for user in User.query.all():
         try:
-            if user.expire_date and user.expire_date != "-":
-                expire = datetime.strptime(user.expire_date, "%Y-%m-%d")
-                if (expire - datetime.now()).days <= 7:
-                    expiring_users += 1
-        except:
-            pass
-    total_traffic = round(db.session.query(db.func.sum(User.traffic_usage)).scalar() or 0, 1)
+            expiry = datetime.strptime(user.expire_date, "%Y-%m-%d").date()
+            if 0 <= (expiry - today).days <= 7:
+                expiring_users_list.append(user)
+        except (ValueError, TypeError):
+            continue
+    expiring_users_list.sort(key=lambda u: u.expire_date)
+    expiring_users = len(expiring_users_list)
+    total_traffic = round((db.session.query(db.func.sum(TrafficDaily.bytes_total)).scalar() or 0) / 1073741824, 2)
     total_users = User.query.count()
     active_users = User.query.filter_by(status="active").count()
     openvpn_users = User.query.filter_by(protocol="openvpn").count()
     wireguard_users = User.query.filter_by(protocol="wireguard").count()
+    recent_days = [(today - timedelta(days=i)).isoformat() for i in range(15, -1, -1)]
+    recent_totals = dict(db.session.query(TrafficDaily.day, db.func.sum(TrafficDaily.bytes_total))
+                         .filter(TrafficDaily.day >= recent_days[0])
+                         .group_by(TrafficDaily.day).all())
+    preceding_bytes = (db.session.query(db.func.sum(TrafficDaily.bytes_total))
+                       .filter(TrafficDaily.day < recent_days[0]).scalar() or 0)
+    running = preceding_bytes
+    cumulative_traffic = []
+    for day in recent_days:
+        running += recent_totals.get(day, 0)
+        cumulative_traffic.append(round(running / 1073741824, 3))
     
     return render_template("dashboard.html",
                          panel_path=PANEL_PATH,  
                          online_users=online_users, 
+                         online_users_list=online_users_list,
                          expiring_users=expiring_users, 
+                         expiring_users_list=expiring_users_list[:6],
                          total_traffic=total_traffic, 
+                         cumulative_traffic=cumulative_traffic,
+                         week_labels=[day[5:] for day in recent_days[-7:]],
+                         week_traffic=[round(recent_totals.get(day, 0) / 1073741824, 3) for day in recent_days[-7:]],
                          total_users=total_users, 
                          active_users=active_users, 
                          openvpn_users=openvpn_users, 
                          wireguard_users=wireguard_users)
+
+
+@app.get(f"{PANEL_PATH}/traffic" if PANEL_PATH != '/' else "/traffic")
+@login_required
+def traffic_page():
+    today = datetime.utcnow().date()
+    start = (today - timedelta(days=29)).isoformat()
+    rows = TrafficDaily.query.filter(TrafficDaily.day >= start).all()
+    lifetime = db.session.query(db.func.sum(TrafficDaily.bytes_total)).scalar() or 0
+    outbound = db.session.query(db.func.sum(TrafficDaily.bytes_sent)).scalar() or 0
+    inbound = db.session.query(db.func.sum(TrafficDaily.bytes_received)).scalar() or 0
+    today_total = sum(row.bytes_total for row in rows if row.day == today.isoformat())
+    node_ids = {row.node_id for row in rows}
+    node_ids.update(node.id for node in Node.query.all())
+    all_totals = dict(db.session.query(TrafficDaily.node_id, db.func.sum(TrafficDaily.bytes_total))
+                      .group_by(TrafficDaily.node_id).all())
+    names = {node.id: node.name for node in Node.query.all()}
+    for old_id, old_name in db.session.query(TrafficDaily.node_id, TrafficDaily.node_name).distinct().all():
+        names.setdefault(old_id, old_name + ' (removed)')
+    for row in rows:
+        names.setdefault(row.node_id, row.node_name + ' (removed)')
+    nodes = [{'name': names.get(node_id, f'Node #{node_id}'),
+              'total': round(all_totals.get(node_id, 0) / 1073741824, 3),
+              'today': round(sum(row.bytes_total for row in rows if row.node_id == node_id and row.day == today.isoformat()) / 1073741824, 3)}
+             for node_id in node_ids]
+    nodes.sort(key=lambda item: item['total'], reverse=True)
+    days = [(today - timedelta(days=i)).isoformat() for i in range(29, -1, -1)]
+    daily = [{'day': day, 'gb': round(sum(row.bytes_total for row in rows if row.day == day) / 1073741824, 3)} for day in days]
+    return render_template('traffic.html', panel_path=PANEL_PATH, nodes=nodes,
+                           daily=daily, lifetime=round(lifetime / 1073741824, 3),
+                           outbound=round(outbound / 1073741824, 3),
+                           inbound=round(inbound / 1073741824, 3),
+                           today_total=round(today_total / 1073741824, 3),
+                           last_30=round(sum(row.bytes_total for row in rows) / 1073741824, 3),
+                           sampled_at=datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC'))
 
 
 @app.route(f"{PANEL_PATH}/users" if PANEL_PATH != '/' else "/users")
@@ -355,6 +458,7 @@ def users():
 @login_required
 def add_user():
     nodes = Node.query.all()
+    primary_id = next((node.id for node in nodes if is_primary_node(node)), None)
     
     # متد GET برای نمایش صفحه فرم 
     if request.method == "GET":
@@ -370,11 +474,20 @@ def add_user():
     if expire_days and (not expire_days.isdigit() or not 1 <= int(expire_days) <= 3650):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="Validity must be 1–3650 days."), 400
-    expire_val = expire_days if expire_days else "-"
+    expiry_start = request.form.get("expiry_start", "first_use")
+    if expiry_start not in {"first_use", "today"}:
+        return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
+                               error="Choose a valid validity start."), 400
+    expire_val = ((datetime.now().date() + timedelta(days=int(expire_days))).isoformat()
+                  if expire_days and expiry_start == "today" else (expire_days or "-"))
+    initial_status = request.form.get("status", "active")
+    if initial_status not in {"active", "disabled"}:
+        return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
+                               error="Choose a valid account status."), 400
     try:
         max_devices = int(request.form["max_devices"])
         traffic_limit = int(request.form.get("traffic_limit", "0"))
-        if max_devices < 1 or traffic_limit < 0:
+        if max_devices < 1 or max_devices > 100 or traffic_limit < 0 or traffic_limit > 100000:
             raise ValueError()
     except (ValueError, KeyError):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
@@ -385,7 +498,7 @@ def add_user():
         protocol=request.form["protocol"],
         max_devices=max_devices,
         expire_date=expire_val,
-        status="active",
+        status=initial_status,
         traffic_limit=traffic_limit
     )
 
@@ -395,9 +508,9 @@ def add_user():
     except ValueError:
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="Invalid node selection."), 400
-    if not set(selected_ids).issubset({node.id for node in nodes}):
+    if not selected_ids or len(set(selected_ids)) != len(selected_ids) or not set(selected_ids).issubset({node.id for node in nodes}):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
-                               error="Invalid node selection."), 400
+                               error="Select at least one available node."), 400
     if User.query.filter_by(username=user.username).first():
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="Username already exists."), 409
@@ -413,17 +526,27 @@ def add_user():
     for node_id in selected_ids:
         db.session.add(UserNode(user_id=user.id, node_id=node_id))
     db.session.commit()
+    sync_primary_access(user, primary_id in selected_ids)
+    if user.status == "disabled":
+        disable_user_globally(user)
 
-    from cluster import create_user_on_node
+    from cluster import create_user_on_node, set_user_state_on_node
+    node_sync_failed = False
     for node_id in selected_nodes:
         node = Node.query.get(int(node_id))
-        if node:
-            try:
-                create_user_on_node(node, user)
-            except Exception as e:
-                pass
+        if node and not is_primary_node(node):
+            result = create_user_on_node(node, user)
+            if not result.startswith('Success:'):
+                node_sync_failed = True
+                app.logger.error('Node certificate sync failed for %s on %s: %s', user.username, node.name, result)
+            elif user.status != 'active':
+                synced, reason = set_user_state_on_node(node, user.username, False)
+                if not synced:
+                    node_sync_failed = True
+                    app.logger.error('Node status sync failed for %s on %s: %s', user.username, node.name, reason)
 
-    return redirect(f"{PANEL_PATH}/users?notice=User%20Created" if PANEL_PATH != '/' else "/users?notice=User%20Created")
+    base = PANEL_PATH.rstrip('/')
+    return redirect(f"{base}/users/view/{user.id}?notice=created" + ('&sync_warning=1' if node_sync_failed else ''))
 
 
 @app.route(f"{PANEL_PATH}/users/edit/<int:user_id>" if PANEL_PATH != '/' else "/users/edit/<int:user_id>", methods=["GET", "POST"])
@@ -431,6 +554,7 @@ def add_user():
 def edit_user(user_id):
     user = User.query.get_or_404(user_id)
     nodes = Node.query.all()
+    primary_id = next((node.id for node in nodes if is_primary_node(node)), None)
     
     current_node_ids = [rel.node_id for rel in UserNode.query.filter_by(user_id=user.id).all()]
     
@@ -446,8 +570,16 @@ def edit_user(user_id):
     try:
         max_devices = int(request.form["max_devices"])
         new_limit = int(request.form.get("traffic_limit", "0"))
-        if max_devices < 1 or new_limit < 0:
+        traffic_add = request.form.get("traffic_add", "").strip()
+        if max_devices < 1 or max_devices > 100 or new_limit < 0 or new_limit > 100000:
             raise ValueError()
+        if traffic_add:
+            if not traffic_add.isdigit() or not 1 <= int(traffic_add) <= 100000:
+                raise ValueError()
+            # Zero denotes unlimited, so a quota addition starts from consumed data.
+            new_limit = max(new_limit, math.ceil(user.traffic_usage or 0)) + int(traffic_add)
+            if new_limit > 100000:
+                raise ValueError()
     except (ValueError, KeyError):
         return invalid("Check the device and data limits.")
     requested_status = request.form.get("status")
@@ -465,11 +597,19 @@ def edit_user(user_id):
         new_node_ids = [int(n) for n in request.form.getlist("nodes")]
     except ValueError:
         return invalid("Invalid node selection.")
-    if not set(new_node_ids).issubset({node.id for node in nodes}):
-        return invalid("Invalid node selection.")
+    if not new_node_ids or len(set(new_node_ids)) != len(new_node_ids) or not set(new_node_ids).issubset({node.id for node in nodes}):
+        return invalid("Select at least one available node.")
 
     next_expiry = user.expire_date
-    if renewal_days:
+    exact_expiry = request.form.get("set_expiry_date", "").strip()
+    if request.form.get("unlimited_time") == "1":
+        next_expiry = "-"
+    elif exact_expiry:
+        try:
+            next_expiry = datetime.strptime(exact_expiry, "%Y-%m-%d").date().isoformat()
+        except ValueError:
+            return invalid("Choose a valid expiry date (YYYY-MM-DD).")
+    elif renewal_days:
         try:
             next_expiry = extend_expiry(next_expiry, int(renewal_days), renewal_mode)
         except (ValueError, OverflowError):
@@ -492,10 +632,7 @@ def edit_user(user_id):
         user.last_session_bytes = -1
     if user.status == "disabled":
         disable_user_globally(user)
-    else:
-        ccd_file = f"/etc/openvpn/ccd/{user.username}"
-        if os.path.exists(ccd_file):
-            os.remove(ccd_file)
+    sync_primary_access(user, primary_id in new_node_ids)
             
     removed_nodes = set(current_node_ids) - set(new_node_ids)
     added_nodes = set(new_node_ids) - set(current_node_ids)
@@ -506,22 +643,32 @@ def edit_user(user_id):
         
     db.session.commit()
     
-    from cluster import create_user_on_node, delete_user_on_node
+    from cluster import create_user_on_node, delete_user_on_node, set_user_state_on_node
+    node_sync_failed = False
     # پاک کردن کاربر از نودهایی که تیک آنها برداشته شده (جلوگیری از ماندن کاربر در نودهای اضافی)
     for nid in removed_nodes:
         node = Node.query.get(nid)
-        if node:
-            try: delete_user_on_node(node, user.username)
-            except: pass
+        if node and not is_primary_node(node):
+            if not delete_user_on_node(node, user.username):
+                node_sync_failed = True
             
     # اضافه کردن کاربر به نودهای جدید
     for nid in added_nodes:
         node = Node.query.get(nid)
-        if node:
-            try: create_user_on_node(node, user)
-            except: pass
-            
-    return redirect(f"{PANEL_PATH}/users?notice=User%20Updated" if PANEL_PATH != '/' else "/users?notice=User%20Updated")
+        if node and not is_primary_node(node):
+            result = create_user_on_node(node, user)
+            if not result.startswith('Success:'):
+                node_sync_failed = True
+                app.logger.error('Node certificate sync failed for %s on %s: %s', user.username, node.name, result)
+    for nid in new_node_ids:
+        node = Node.query.get(nid)
+        if node and not is_primary_node(node):
+            synced, reason = set_user_state_on_node(node, user.username, user.status == 'active')
+            if not synced:
+                node_sync_failed = True
+                app.logger.error('Node status sync failed for %s on %s: %s', user.username, node.name, reason)
+    base = PANEL_PATH.rstrip('/')
+    return redirect(f"{base}/users/view/{user.id}?notice=updated" + ('&sync_warning=1' if node_sync_failed else ''))
 
 @app.route(f"{PANEL_PATH}/users/delete/<int:user_id>" if PANEL_PATH != '/' else "/users/delete/<int:user_id>")
 @login_required
@@ -534,11 +681,12 @@ def delete_user(user_id):
     user_nodes = UserNode.query.filter_by(user_id=user_id).all()
     for rel in user_nodes:
         node = Node.query.get(rel.node_id)
-        if node:
+        if node and not is_primary_node(node):
             try: delete_user_on_node(node, user.username)
             except: pass
             
     UserNode.query.filter_by(user_id=user_id).delete()
+    AccountLink.query.filter_by(user_id=user_id).delete()
     db.session.delete(user)
     db.session.commit()
     return redirect(f"{PANEL_PATH}/users" if PANEL_PATH != '/' else "/users")
@@ -550,14 +698,14 @@ def view_user(user_id):
     user = User.query.get_or_404(user_id)
     try:
         if user.expire_date and user.expire_date.isdigit():
-            days_left = f"{user.expire_date} (Starts on connection)"
+            days_left = f"{user.expire_date} days · starts on first use"
         elif user.expire_date and user.expire_date != "-":
-            days = (datetime.strptime(user.expire_date, "%Y-%m-%d") - datetime.now()).days
+            days = (datetime.strptime(user.expire_date, "%Y-%m-%d").date() - datetime.now().date()).days
             days_left = days if days >= 0 else 0
         else:
-            days_left = "-"
-    except:
-        days_left = "-"
+            days_left = "Unlimited"
+    except (ValueError, TypeError):
+        days_left = "Unknown"
         
     user_nodes = []
     relations = UserNode.query.filter_by(user_id=user.id).all()
@@ -566,18 +714,95 @@ def view_user(user_id):
         if node:
             user_nodes.append(node)
     
-    return render_template("user_profile.html", user=user, days_left=days_left, assigned_nodes=user_nodes, panel_path=PANEL_PATH)
+    usage = float(user.traffic_usage or 0)
+    limit = int(user.traffic_limit or 0)
+    return render_template("user_profile.html", user=user, days_left=days_left,
+                           assigned_nodes=user_nodes, panel_path=PANEL_PATH,
+                           portal_exists=AccountLink.query.filter_by(user_id=user.id).first() is not None,
+                           used_gb=usage, remaining_gb=max(0, limit - usage) if limit else None,
+                           usage_percent=min(100, round(usage / limit * 100)) if limit else 0)
+
+
+@app.post(f"{PANEL_PATH}/users/view/<int:user_id>/portal" if PANEL_PATH != '/' else "/users/view/<int:user_id>/portal")
+@login_required
+def rotate_account_link(user_id):
+    user = User.query.get_or_404(user_id)
+    token = secrets.token_urlsafe(32)
+    row = AccountLink.query.filter_by(user_id=user.id).first()
+    if row is None:
+        row = AccountLink(user_id=user.id, token_hash='')
+        db.session.add(row)
+    row.token_hash = hashlib.sha256(token.encode('ascii')).hexdigest()
+    row.created_at = datetime.utcnow()
+    db.session.commit()
+    relations = UserNode.query.filter_by(user_id=user.id).all()
+    assigned = [Node.query.get(rel.node_id) for rel in relations]
+    base_url = os.environ.get('BEENY_PANEL_BASE_URL')
+    if not base_url:
+        scheme = 'https' if os.environ.get('BEENY_PUBLIC_HTTPS') == '1' else request.scheme
+        base_url = f'{scheme}://{request.host}'
+    return render_template('user_profile.html', user=user, panel_path=PANEL_PATH,
+                           assigned_nodes=[node for node in assigned if node],
+                           portal_exists=True,
+                           portal_url=base_url.rstrip('/') + PANEL_PATH.rstrip('/') + '/c/' + token,
+                           days_left=user.expire_date or 'Unlimited',
+                           used_gb=float(user.traffic_usage or 0),
+                           remaining_gb=max(0, user.traffic_limit - (user.traffic_usage or 0)) if user.traffic_limit else None,
+                           usage_percent=min(100, round((user.traffic_usage or 0) / user.traffic_limit * 100)) if user.traffic_limit else 0)
+
+
+def account_from_token(token):
+    if not re.fullmatch(r'[A-Za-z0-9_-]{43}', token):
+        abort(404)
+    digest = hashlib.sha256(token.encode('ascii')).hexdigest()
+    link = AccountLink.query.filter_by(token_hash=digest).first()
+    if link is None:
+        abort(404)
+    return User.query.get_or_404(link.user_id)
+
+
+@app.get(f"{PANEL_PATH}/c/<token>" if PANEL_PATH != '/' else "/c/<token>")
+def customer_portal(token):
+    user = account_from_token(token)
+    assigned = [Node.query.get(rel.node_id) for rel in UserNode.query.filter_by(user_id=user.id).all()]
+    since = (datetime.utcnow().date() - timedelta(days=13)).isoformat()
+    rows = TrafficDailyUser.query.filter(TrafficDailyUser.user_id == user.id,
+                                         TrafficDailyUser.day >= since).order_by(TrafficDailyUser.day).all()
+    daily = {row.day: round(row.bytes_total / 1073741824, 3) for row in rows}
+    days = [(datetime.utcnow().date() - timedelta(days=offset)).isoformat() for offset in range(13, -1, -1)]
+    response = app.make_response(render_template('customer_portal.html', user=user, token=token,
+                                                 nodes=[node for node in assigned if node],
+                                                 daily=[(day, daily.get(day, 0)) for day in days],
+                                                 panel_path=PANEL_PATH,
+                                                 remaining=max(0, user.traffic_limit - (user.traffic_usage or 0)) if user.traffic_limit else None))
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Referrer-Policy'] = 'no-referrer'
+    response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
+
+@app.get(f"{PANEL_PATH}/c/<token>/download" if PANEL_PATH != '/' else "/c/<token>/download")
+def customer_config(token):
+    user = account_from_token(token)
+    response = app.make_response(build_config(user, request.args.get('node_id', type=int)))
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Referrer-Policy'] = 'no-referrer'
+    return response
 
 
 @app.route(f"{PANEL_PATH}/users/download/<username>" if PANEL_PATH != '/' else "/users/download/<username>")
 @login_required
 def download_config(username):
     user = User.query.filter_by(username=username).first_or_404()
-    
+    return build_config(user, request.args.get('node_id', type=int))
+
+
+def build_config(user, requested_node_id=None):
+    username = user.username
     try:
         with open(f"/etc/openvpn/easy-rsa/pki/ca.crt", "r") as f:
             ca_data = f.read()
-        with open(f"/etc/openvpn/easy-rsa/ta.key", "r") as f:
+        with open("/etc/openvpn/ta.key", "r") as f:
             ta_data = f.read()
         with open(f"/etc/openvpn/easy-rsa/pki/issued/{username}.crt", "r") as f:
             cert_raw = f.read()
@@ -585,41 +810,37 @@ def download_config(username):
             cert_data = cert_match.group(0) if cert_match else cert_raw
         with open(f"/etc/openvpn/easy-rsa/pki/private/{username}.key", "r") as f:
             key_data = f.read()
-    except Exception as e:
-        return f"Error reading local VPN certificates: {str(e)}", 500
+    except OSError:
+        app.logger.exception("VPN client material is missing for %s", username)
+        return "VPN configuration is unavailable. Check the panel service log for the missing certificate or key.", 503
 
     user_nodes_relations = UserNode.query.filter_by(user_id=user.id).all()
-    requested_node_id = request.args.get('node_id', type=int)
-    
-    remotes_block = ""
-    
+    assigned_ids = {rel.node_id for rel in user_nodes_relations}
+    if requested_node_id is not None and requested_node_id not in assigned_ids:
+        return "Node not assigned to this account.", 403
+    nodes_to_download = ([Node.query.get(requested_node_id)] if requested_node_id is not None
+                         else [Node.query.get(rel.node_id) for rel in user_nodes_relations])
+    nodes_to_download = [node for node in nodes_to_download if node]
+    if not nodes_to_download:
+        return "No available node is assigned to this account.", 409
+
     def clean_address(node_obj):
-        target = node_obj.host if node_obj.host else node_obj.ip
-        if not target: return "127.0.0.1"
-        return target.split(":")[0].strip()
-    
-    if requested_node_id:
-        # فیکس باگ: بررسی اینکه آیا این نود واقعاً به کاربر اختصاص داده شده یا خیر
-        if not any(rel.node_id == requested_node_id for rel in user_nodes_relations):
-            return "Unauthorized or Node not assigned to this user.", 403
-            
-        node = Node.query.get(requested_node_id)
-        if node:
-            clean_ip = clean_address(node)
-            remotes_block = f"remote {clean_ip} {os.environ.get('BEENY_VPN_PORT', '110')}"
-    else:
-        remotes_block = "remote-random\n"
-        for rel in user_nodes_relations:
-            node = Node.query.get(rel.node_id)
-            if node:
-                clean_ip = clean_address(node)
-                remotes_block += f"remote {clean_ip} {os.environ.get('BEENY_VPN_PORT', '110')}\n"
-                
-        if not user_nodes_relations:
-            public_host = os.environ.get("BEENY_PUBLIC_HOST", "").strip()
-            if not public_host:
-                return "Public VPN host is not configured", 503
-            remotes_block = f"remote {public_host} {os.environ.get('BEENY_VPN_PORT', '110')}"
+        target = (os.environ.get("BEENY_PUBLIC_HOST", "") if is_primary_node(node_obj)
+                  else (node_obj.host or node_obj.ip)).strip()
+        target = target.removeprefix("https://").removeprefix("http://").split("/")[0].split(":")[0]
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]*", target):
+            raise ValueError("Invalid VPN node address")
+        return target
+
+    try:
+        remotes_block = "\n".join(
+            f"remote {clean_address(node)} {os.environ.get('BEENY_VPN_PORT', '110')}"
+            for node in nodes_to_download
+        )
+    except ValueError:
+        return "An assigned node has an invalid VPN address.", 503
+    if len(nodes_to_download) > 1:
+        remotes_block = "remote-random\n" + remotes_block
 
     ovpn_template = f"""client
 dev tun
@@ -673,13 +894,12 @@ def reset_traffic(user_id):
     user.traffic_usage = 0
     user.traffic_used = 0
     user.last_session_bytes = -1
-    user.status = "active"
-    
+    if not activation_error(user.expire_date, user.traffic_limit, 0):
+        user.status = "active"
+    primary = Node.query.filter_by(api_key=PRIMARY_NODE_KEY).first()
+    selected = bool(primary and UserNode.query.filter_by(user_id=user.id, node_id=primary.id).first())
+    sync_primary_access(user, selected)
     db.session.commit()
-    
-    ccd_file = f"/etc/openvpn/ccd/{user.username}"
-    if os.path.exists(ccd_file):
-        os.remove(ccd_file)
     return redirect(f"{PANEL_PATH}/users" if PANEL_PATH != '/' else "/users")
 
 @app.route(f"{PANEL_PATH}/api/users/search" if PANEL_PATH != '/' else "/api/users/search")
@@ -728,8 +948,8 @@ def api_users_search():
             'id': u.id, 'username': u.username, 'protocol': u.protocol, 'status': u.status,
             'online_status': u.online_status, 'current_devices': u.current_devices, 'max_devices': u.max_devices,
             'expire_days_val': u.expire_date if (u.expire_date and u.expire_date.isdigit()) else '',
-            'days_left_text': days_left_text, 'traffic_usage': round(u.traffic_usage, 1), 'traffic_limit': u.traffic_limit,
-            'traffic_percent': round((u.traffic_usage / u.traffic_limit * 100), 1) if u.traffic_limit > 0 else 0,
+            'days_left_text': days_left_text, 'traffic_usage': round(u.traffic_usage or 0, 1), 'traffic_limit': u.traffic_limit or 0,
+            'traffic_percent': round(((u.traffic_usage or 0) / u.traffic_limit * 100), 1) if u.traffic_limit and u.traffic_limit > 0 else 0,
             'nodes_list': nodes_list_data   
         })   
 
@@ -835,6 +1055,9 @@ def settings():
 def nodes_page():
     nodes = Node.query.all()
     for node in nodes:
+        if is_primary_node(node):
+            node.status = "online"
+            continue
         try:
             target = node.host if node.host else node.ip
             if not target:
@@ -863,6 +1086,8 @@ def nodes_page():
 @app.route(f"{PANEL_PATH}/settings/nodes/add" if PANEL_PATH != '/' else "/settings/nodes/add", methods=["POST"])
 @login_required
 def add_node():
+    if request.form.get("api_key") == PRIMARY_NODE_KEY:
+        return "Reserved node identifier.", 400
     node = Node(
         name=request.form.get("name"),
         ip=request.form.get("ip"),
@@ -888,10 +1113,23 @@ def add_node():
 @login_required
 def edit_node(node_id):
     node = Node.query.get_or_404(node_id)
-    node.name = request.form.get("name")
+    country = request.form.get("country", "").strip().upper()
+    if country and not re.fullmatch(r"[A-Z]{2}", country):
+        return "Use a two-letter country code, such as DE or GB.", 400
+    name = request.form.get("name", "").strip()
+    if not 1 <= len(name) <= 100:
+        return "Enter a node name (1–100 characters).", 400
+    if is_primary_node(node):
+        node.name = name
+        node.country = country
+        db.session.commit()
+        return redirect(f"{PANEL_PATH}/settings/nodes" if PANEL_PATH != '/' else "/settings/nodes")
+    if request.form.get("api_key") == PRIMARY_NODE_KEY:
+        return "Reserved node identifier.", 400
+    node.name = name
     node.ip = request.form.get("ip")
     node.host = request.form.get("host")
-    node.country = request.form.get("country")
+    node.country = country
     node.protocol = request.form.get("protocol")
     node.api_key = request.form.get("api_key")
     
@@ -903,6 +1141,8 @@ def edit_node(node_id):
 @login_required
 def delete_node(node_id):
     node = Node.query.get_or_404(node_id)
+    if is_primary_node(node):
+        return "The primary node cannot be deleted.", 403
     UserNode.query.filter_by(node_id=node_id).delete()
     db.session.delete(node)
     db.session.commit()
@@ -1286,5 +1526,6 @@ def openvpn_info():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all() # ساخت جدول‌ها در صورت عدم وجود
+        ensure_primary_node()
     Thread(target=background_updater, daemon=True).start()
     app.run(host=os.environ.get("BEENY_BIND", "127.0.0.1"), port=int(os.environ.get("BEENY_PORT", "8080")), debug=False)

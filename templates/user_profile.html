@@ -1,100 +1,58 @@
 {% extends "layout.html" %}
-
 {% block content %}
-
-<div class="profile-wrapper">
-
-<div class="profile-card">
-
-<h1>{{ user.username }}</h1>
-
-<div class="profile-grid">
-
-<div class="profile-item">
-<span>Protocol</span>
-<strong>{{ user.protocol }}</strong>
-</div>
-
-<div class="profile-item">
-<span>Status</span>
-<strong>{{ user.status }}</strong>
-</div>
-
-<div class="profile-item">
-<span>Connection</span>
-<strong>{{ user.online_status }}</strong>
-</div>
-
-<div class="profile-item">
-<span>Devices</span>
-<strong>{{ user.max_devices }}</strong>
-</div>
-
-<div class="profile-item">
-<span>Expire</span>
-<strong>{{ days_left }} Days</strong>
-</div>
-
-<div class="profile-item">
-<span>Traffic Used</span>
-<strong>{{ user.traffic_usage|round(2) }} GB</strong>
-</div>
-
-<div class="profile-item">
-<span>Traffic Limit</span>
-
-{% if user.traffic_limit == 0 %}
-<strong>Unlimited</strong>
-{% else %}
-<strong>{{ user.traffic_limit }} GB</strong>
-{% endif %}
-
-</div>
-
-</div>
-
-<div class="profile-actions">
-
-    <div class="dropdown d-inline-block">
-        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 12px; background: rgba(96, 165, 250, 0.2); border: 1px solid rgba(96, 165, 250, 0.4); color: #60a5fa; padding: 10px 20px;">
-            <i class="fa fa-download"></i> Download Config
-        </button>
-        
-        <ul class="dropdown-menu dropdown-menu-dark" style="background: rgba(0,0,0,0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px 0;">
-            <li>
-                <a class="dropdown-item text-success" href="{{ panel_path }}/users/download/{{ user.username }}" style="padding: 10px 16px;">
-                    <i class="fa fa-globe"></i> Multi-Location (VIP)
-                </a>
-            </li>
-            
-            <li><hr class="dropdown-divider" style="border-color: rgba(255,255,255,0.1);"></li>
-            
-            {% for node in assigned_nodes %}
-            <li>
-                <a class="dropdown-item text-light" href="{{ panel_path }}/users/download/{{ user.username }}?node_id={{ node.id }}" style="padding: 10px 16px;">
-                    <i class="fa fa-server"></i> {{ node.name }}
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+<main class="ac-page">
+  <header class="ac-heading">
+    <div><span class="ac-eyebrow">ACCOUNTS / PROFILE #{{ user.id }}</span><h1>{{ user.username }}</h1><p>Connection details, usage and renewal controls for this account.</p></div>
+    <div class="ac-actions"><a class="ac-btn ac-btn-subtle" href="{{ panel_path }}/users">All accounts</a><a class="ac-btn ac-btn-primary" href="{{ panel_path }}/users/edit/{{ user.id }}">Edit account</a></div>
+  </header>
+  {% if request.args.get('notice') == 'created' %}<div class="ac-alert ac-notice" role="status">Account created. Download the VPN profile below.</div>{% elif request.args.get('notice') == 'updated' %}<div class="ac-alert ac-notice" role="status">Account changes saved.</div>{% endif %}
+  {% if request.args.get('sync_warning') %}<div class="ac-alert" role="alert">The account was saved, but a remote node did not confirm the update. Check the panel service log and update Beeny Agent on that node.</div>{% endif %}
+  <section class="ac-stat-grid" aria-label="Account overview">
+    <div class="ac-stat"><span>Account status</span><strong><span class="ac-status {{ 'off' if user.status != 'active' else '' }}">{{ user.status }}</span></strong><small>{{ 'Connected' if user.online_status == 'online' else 'Offline' }}</small></div>
+    <div class="ac-stat"><span>Data used</span><strong>{{ '%.2f'|format(used_gb) }} GB</strong><small>{{ ('%.2f GB remaining'|format(remaining_gb)) if remaining_gb is not none else 'Unlimited plan' }}</small></div>
+    <div class="ac-stat"><span>Time remaining</span><strong>{{ days_left }}</strong><small>{{ 'Expires ' ~ user.expire_date if user.expire_date and user.expire_date != '-' and not user.expire_date.isdigit() else 'Validity period' }}</small></div>
+    <div class="ac-stat"><span>Active devices</span><strong>{{ user.current_devices or 0 }} / {{ user.max_devices }}</strong><small>{{ user.protocol|upper }} connection</small></div>
+  </section>
+  <div class="ac-profile-grid">
+    <div>
+      <section class="ac-panel"><h2>Usage and access</h2><p class="ac-panel-desc">Live account details from this panel.</p>
+        <div class="ac-meter" role="progressbar" aria-valuenow="{{ usage_percent }}" aria-valuemin="0" aria-valuemax="100" aria-label="Data usage"><i style="width:{{ usage_percent }}%"></i></div>
+        <div class="ac-meter-row"><span>{{ '%.2f'|format(used_gb) }} GB used</span><span>{{ (user.traffic_limit|string ~ ' GB limit') if user.traffic_limit else 'Unlimited data' }}</span></div>
+        <div class="ac-meta">
+          <div><span>Username</span><strong>{{ user.username }}</strong></div><div><span>Protocol</span><strong>{{ user.protocol|upper }}</strong></div>
+          <div><span>Expiry</span><strong>{{ user.expire_date if user.expire_date and user.expire_date != '-' else 'Unlimited' }}</strong></div><div><span>Connection</span><strong>{{ user.online_status|capitalize }}</strong></div>
+          <div><span>Simultaneous devices</span><strong>{{ user.max_devices }}</strong></div><div><span>Allowed nodes</span><strong>{{ assigned_nodes|length }}</strong></div>
+        </div>
+      </section>
+      <section class="ac-panel"><h2>Renew this account</h2><p class="ac-panel-desc">Add days or data, reset usage, and update the account status. Empty fields keep their current values.</p>
+        <form class="ac-profile-form" method="post" action="{{ panel_path }}/users/edit/{{ user.id }}">
+          <input type="hidden" name="protocol" value="openvpn"><input type="hidden" name="max_devices" value="{{ user.max_devices }}"><input type="hidden" name="traffic_limit" value="{{ user.traffic_limit }}">
+          {% for node in assigned_nodes %}<input type="hidden" name="nodes" value="{{ node.id }}">{% endfor %}
+          <div class="ac-field"><label for="quick_days">Add days</label><input id="quick_days" name="renewal_days" type="number" min="1" max="3650" placeholder="e.g. 30"></div>
+          <div class="ac-field"><label for="quick_mode">Count from</label><select id="quick_mode" name="renewal_mode"><option value="extend">Current expiry</option><option value="from_today">Today</option></select></div>
+          <div class="ac-field"><label for="quick_data">Add data · GB</label><input id="quick_data" name="traffic_add" type="number" min="1" max="100000" placeholder="e.g. 10"></div>
+          <div class="ac-field"><label for="quick_status">Account status</label><select id="quick_status" name="status"><option value="active" {% if user.status == 'active' %}selected{% endif %}>Active</option><option value="disabled" {% if user.status != 'active' %}selected{% endif %}>Disabled</option></select></div>
+          <label class="ac-check"><input type="checkbox" name="reset_traffic" value="1"><span>Reset used data</span></label>
+          <div class="ac-submitbar"><button class="ac-btn ac-btn-primary" type="submit">Apply changes <span aria-hidden="true">→</span></button></div>
+        </form>
+      </section>
     </div>
-    </div>
-<a
-href="/users/reset_traffic/{{ user.id }}"
-class="glass-btn">
-Reset Traffic
-</a>
-
-<a
-href="/users/edit/{{ user.id }}"
-class="glass-btn">
-Edit User
-</a>
-
-</div>
-
-</div>
-
-</div>
-
+    <aside>
+      <section class="ac-panel"><h2>Private customer page</h2><p class="ac-panel-desc">Create a secret link for this account. Creating another link immediately revokes the old one.</p>
+        {% if portal_url %}<div class="ac-field"><label for="customer_link">Share this link now</label><input id="customer_link" readonly value="{{ portal_url }}" onclick="this.select()"></div><a class="ac-btn" href="{{ portal_url }}" target="_blank" rel="noreferrer">Preview customer page</a>{% elif portal_exists %}<p class="ac-hint">A link is active. Generate a new one to copy it again.</p>{% endif %}
+        <form method="post" action="{{ panel_path }}/users/view/{{ user.id }}/portal"><button class="ac-btn ac-btn-primary" type="submit">{{ 'Regenerate private link' if portal_exists else 'Create private link' }}</button></form>
+      </section>
+      <section class="ac-panel"><h2>VPN configuration</h2><p class="ac-panel-desc">Choose the combined profile or download one of this account's allowed nodes.</p>
+        <div class="ac-stack">{% if assigned_nodes|length > 1 %}<a class="ac-btn ac-btn-primary" href="{{ panel_path }}/users/download/{{ user.username|urlencode }}">Download multi-location .ovpn</a>{% endif %}
+          {% for node in assigned_nodes %}<a class="ac-btn {{ 'ac-btn-primary' if assigned_nodes|length == 1 else '' }}" href="{{ panel_path }}/users/download/{{ user.username|urlencode }}?node_id={{ node.id }}">{{ node.name }} · Download .ovpn</a>{% endfor %}
+          {% if not assigned_nodes %}<p class="ac-hint">No node is assigned to this account. Select a node in Edit account.</p>{% endif %}
+        </div>
+      </section>
+      <section class="ac-panel"><h2>Account actions</h2><p class="ac-panel-desc">Change limits, validity, nodes or device allowance.</p>
+        <div class="ac-stack"><a class="ac-btn" href="{{ panel_path }}/users/edit/{{ user.id }}">Open full account settings</a><a class="ac-btn ac-btn-subtle" href="{{ panel_path }}/users">Back to accounts</a></div>
+      </section>
+    </aside>
+  </div>
+</main>
 {% endblock %}

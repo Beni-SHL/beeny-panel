@@ -1,37 +1,50 @@
-# Beeny Panel: نصب روی Ubuntu تازه
+# Beeny Panel
 
-این مخزن برای Ubuntu Server 22.04/24.04 تازه است. نصب‌کننده ابتدا OpenVPN و CA جدید می‌سازد، سپس پنل، دیتابیس تازه، سرویس systemd و قوانین مسیریابی را نصب می‌کند. اگر دامنهٔ پنل بدهید، گواهی Let's Encrypt و Nginx را نیز راه‌اندازی می‌کند. دامنه باید پیش از نصب به IP همین VPS اشاره کند و پورت 80 برای صدور گواهی باز باشد. بدون دامنه، پنل تنها از `127.0.0.1` قابل‌دسترسی است. پوشهٔ اصلی ZIP سرور قبلی را در گیت‌هاب منتشر نکنید؛ آن حاوی دیتابیس و کلید خصوصی بوده است.
+OpenVPN management panel for a **fresh Ubuntu 22.04 / 24.04 VPS**. The installer creates a new CA, VPN server, admin account, database, and service. Do not run it on a server containing a VPN or panel that must be preserved.
 
-## نصب از مخزن خودتان
+## Install from GitHub
 
-این پوشه را به عنوان محتوای یک مخزن GitHub قرار دهید، سپس روی VPS تازه اجرا کنید:
+Upload this repository's source files to `https://github.com/Beni-SHL/beeny-panel` first. Put `install.sh` and `app.py` at the **root**, with the `templates/`, `static/`, `scripts/`, and `node_agent/` folders intact. Do not publish the old VPS database, `panel.env`, CA keys, or user private keys.
 
 ```bash
-git clone https://github.com/OWNER/REPOSITORY.git
-cd REPOSITORY
+GIT_TERMINAL_PROMPT=0 git -c credential.helper= clone https://github.com/Beni-SHL/beeny-panel.git
+cd beeny-panel
 bash install.sh --check
-bash install.sh --demo    # پیش‌نمایش مراحل، بدون تغییر سرور
+bash install.sh --demo
 sudo bash install.sh
 ```
 
-در نصب، آدرس عمومی VPN، پورت TCP آن، پورت داخلی پنل، مسیر پنل (پس‌کد موردنظر)، نام و رمز مدیر و دامنهٔ اختیاری HTTPS پرسیده می‌شوند. رمز در تاریخچهٔ ترمینال چاپ نمی‌شود. برای آدرس پنل بدون دامنه، از تونل SSH یا HTTPS reverse proxy استفاده کنید؛ سرویس HTTP عمومی باز نمی‌شود.
+The installer asks for the public VPS IPv4 address, VPN TCP port, panel port, panel path, admin credentials and an optional panel domain. If the domain resolves and Let's Encrypt can issue a certificate, Nginx serves HTTPS and Certbot renews it. If the domain is unavailable, it falls back to `http://VPS_IP:PANEL_PORT/PANEL_PATH/login`. Allow the selected port in the VPS provider firewall as well as UFW. The IP fallback is **unencrypted HTTP**: do not share secret customer links or use sensitive admin credentials there until HTTPS is configured. For certificate issuance the domain must point to the VPS and inbound port 80 must work. The same public IPv4 address is used for the VPN and IP fallback.
 
-## رفتار حساب‌ها
+The primary server appears as a selectable node, and its name and two-letter country code can be edited. The panel uses the flag emoji for that code. For each customer, an admin can create a random private link from the account profile; regenerating revokes the old link. The Persian, RTL customer page uses a bundled Vazirmatn font and offers account details, daily usage, individual and multi-location OpenVPN profiles, and platform-specific setup links. The customer link does not authenticate to admin routes. Protect the link as a credential because it also permits profile downloads.
 
-در صفحهٔ ویرایش، روزهای تمدید **به اعتبار موجود اضافه می‌شوند**؛ اگر تاریخ قبلی گذشته باشد، محاسبه از امروز است. انتخاب «از امروز» اعتبار را از امروز جایگزین می‌کند. فعال کردن حسابی که زمان یا حجمش تمام است خطای روشن نشان می‌دهد؛ اعتبار یا حجم را افزایش دهید یا با انتخاب صریح، شمارندهٔ مصرف را صفر کنید. فرم فقط OpenVPN را نمایش می‌دهد، چون نصب خودکار WireGuard در این بسته وجود ندارد.
+## Traffic accounting
 
-## عملیات و محدودیت‌ها
+The dashboard and Traffic page read a durable SQLite ledger of OpenVPN session bytes. It records daily per-node totals independently of user rows, so deleting a user or resetting a quota does not subtract historical traffic. User daily totals are retained across quota resets for the personal page. Tracking begins when this release first runs: previous, unrecorded usage cannot be reconstructed. Values are OpenVPN client bytes (received + sent), not total host interface traffic; polling can miss a connection that begins and ends entirely between samples. Day buckets use UTC.
+
+Remote nodes need a compatible Beeny Agent at the configured API endpoint. `node_agent/agent.py` contains the `/api/node/set-user-state` endpoint needed to unblock renewed accounts, plus the status-log endpoint needed for remote traffic. Install that updated agent on each remote node using its own service configuration and API key; the primary server requires no agent. A remote update failure is shown on the user's admin profile and in the panel service log.
+
+## Update an existing installed panel
 
 ```bash
+cd ~/beeny-panel
+# After publishing this source to GitHub:
+git pull --ff-only
+bash scripts/update_panel.sh --check
+sudo bash scripts/update_panel.sh
+sudo bash scripts/update_panel.sh --verify
+```
+
+The updater backs up the application files and preserves `instance/`, `config.json`, `panel.env`, and VPN certificates. It checks the running login and the primary node. New traffic figures start at the moment this version begins collecting them.
+
+## Verify
+
+```bash
+python3 -m unittest discover -s tests -v
 sudo systemctl status openvpn-server@server beeny-panel beeny-vpn-firewall
-sudo journalctl -u openvpn-server@server -n 100 --no-pager
 sudo journalctl -u beeny-panel -n 100 --no-pager
 ```
 
-- نصب‌کننده روی سیستم دارای پنل یا گواهی OpenVPN قبلی متوقف می‌شود تا داده‌های قبلی را تغییر ندهد. این بسته **مهاجرت کاربران و CA قبلی نیست**.
-- برای دسترسی VPN، پورت TCP انتخابی باید در فایروال پنل VPS نیز باز باشد. سرویس UFW، اگر فعال باشد، هنگام نصب تنظیم می‌شود.
-- Agent نودها در ZIP کامل ارسالی نبود؛ نصب خودکار فعلاً سرور اصلی را پوشش می‌دهد.
-- نسخهٔ اصلی پنل هنوز نیازمند بازبینی امنیتی برای CSRF در فرم‌ها، اعمال محدودیت‌های چندنودی و بعضی عملیات پشتیبان‌گیری است. پورت پنل فقط روی loopback باز می‌شود و پرتال مشتری که صرفاً با نام کاربری وارد می‌شد، در نصب تازه غیرفعال است.
-- پیش از استفادهٔ عملی روی VPS مهم، نصب و اتصال یک کاربر آزمایشی را بررسی کنید. تست حاضر نصب واقعی روی VPS را شامل نمی‌شود.
+Create a disposable account, connect with its `.ovpn` profile, verify dashboard online status and Traffic after the next status poll, extend its expiry, and try its private link from an unauthenticated browser. Test a remote node separately after updating its agent.
 
-مراجع تنظیم OpenVPN و Easy-RSA: [Ubuntu Server](https://ubuntu.com/server/docs/how-to/security/install-openvpn/)، [OpenVPN 2.6 manual](https://openvpn.net/community-docs/community-articles/openvpn-2-6-manual.html)، [Easy-RSA](https://easy-rsa.readthedocs.io/).
+The admin UI inherits legacy routes that should be audited for CSRF and destructive GET requests before deployment beyond a trusted test environment.

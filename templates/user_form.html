@@ -1,39 +1,53 @@
 {% extends "layout.html" %}
 {% block content %}
-<style>
-.bu-page{--ink:#f1f6ff;--muted:#aabbd0;--surface:rgba(19,34,60,.82);--edge:rgba(189,216,255,.15);--accent:#68d9fa;max-width:1080px;margin:20px auto 70px;color:var(--ink);direction:rtl;font-family:Vazirmatn,Tahoma,sans-serif}
-body.light .bu-page{--ink:#15233c;--muted:#64738a;--surface:rgba(255,255,255,.86);--edge:rgba(28,62,106,.13);--accent:#087bba}
-.bu-hero{background:linear-gradient(112deg,rgba(13,39,75,.95),rgba(25,50,89,.78) 58%,rgba(14,103,130,.6));border:1px solid var(--edge);border-radius:26px;padding:28px 34px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:18px;box-shadow:0 18px 50px rgba(4,12,28,.18)}
-.bu-eyebrow{color:#8ce8f9;font-size:12px;font-weight:700;letter-spacing:.06em;margin:0 0 9px}.bu-hero h1{font-size:clamp(24px,3vw,35px);font-weight:800;color:#fff;margin:0 0 8px}.bu-hero p{color:#c3d4eb;margin:0;font-size:13px}.bu-back{border:1px solid rgba(255,255,255,.26);border-radius:12px;padding:11px 17px;color:#fff;text-decoration:none;white-space:nowrap}.bu-back:hover{color:white;background:rgba(255,255,255,.12)}
-.bu-card{background:var(--surface);border:1px solid var(--edge);box-shadow:0 22px 60px rgba(3,12,29,.12);backdrop-filter:blur(22px);border-radius:24px;padding:27px;margin-bottom:17px}
-.bu-card h2{color:var(--ink);font-size:19px;font-weight:750;margin:0 0 5px}.bu-card .bu-caption{font-size:13px;color:var(--muted);margin:0 0 22px}.bu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:19px}.bu-field label{display:block;color:var(--ink);font-size:13px;font-weight:650;margin-bottom:9px}.bu-field input,.bu-field select{width:100%;min-height:46px;padding:10px 13px;border-radius:12px;color:var(--ink);background:rgba(127,168,221,.08);border:1px solid var(--edge);outline:0;font:inherit}.bu-field input:focus,.bu-field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(61,188,240,.16)}.bu-field select option{color:#122038;background:#edf6ff}body:not(.light) .bu-field select option{color:#fff;background:#21344e}.bu-field input:disabled{opacity:.62}.bu-help{display:block;color:var(--muted);font-size:12px;line-height:1.8;margin-top:6px}.bu-status{display:inline-block;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:700;background:#183e47;color:#84ead7}.bu-status.off{background:#4d2938;color:#ffc0c8}.bu-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px}.bu-node,.bu-check{display:flex;align-items:center;gap:10px;border:1px solid var(--edge);border-radius:13px;padding:13px;color:var(--ink);cursor:pointer;background:rgba(129,161,209,.06)}.bu-node:has(input:checked),.bu-check:has(input:checked){border-color:var(--accent);background:rgba(59,190,236,.12)}.bu-node input,.bu-check input{accent-color:#26b8df;width:17px;height:17px;flex:none}.bu-check{margin-top:20px}.bu-alert{border:1px solid #ec7787;color:#ffe3e7;background:rgba(142,24,58,.28);padding:14px 17px;border-radius:14px;margin:0 0 17px}.bu-actions{display:flex;align-items:center;gap:16px}.bu-save{border:0;border-radius:14px;background:linear-gradient(110deg,#34c1de,#4179ed);color:white;font-weight:750;padding:14px 26px;cursor:pointer;box-shadow:0 12px 25px rgba(28,108,192,.24)}.bu-save:hover{filter:brightness(1.1);transform:translateY(-1px)}.bu-actions span{font-size:12px;color:var(--muted)}
-@media(max-width:670px){.bu-page{margin:12px 0 45px}.bu-hero{padding:22px;align-items:flex-start;flex-direction:column}.bu-card{padding:21px}.bu-grid{grid-template-columns:1fr}.bu-actions{align-items:stretch;flex-direction:column}.bu-save{width:100%}}
-</style>
-<div class="bu-page">
-  <header class="bu-hero">
-    <div><p class="bu-eyebrow">BEENY PANEL / ACCOUNT</p><h1>{{ 'ویرایش حساب' if mode == 'edit' else 'ساخت حساب جدید' }}</h1><p>{{ user.username if mode == 'edit' else 'تنظیم اعتبار، حجم و دسترسی در یک مرحله' }}</p></div>
-    <a class="bu-back" href="{{ panel_path }}/users">بازگشت به کاربران</a>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+<main class="ac-page">
+  <header class="ac-heading">
+    <div><span class="ac-eyebrow">ACCOUNTS / {{ 'EDIT' if mode == 'edit' else 'CREATE' }}</span>
+      <h1>{{ 'Edit account' if mode == 'edit' else 'Create account' }}</h1>
+      <p>{{ 'Update access and limits for ' ~ user.username if mode == 'edit' else 'Set up an OpenVPN account and its access rules.' }}</p></div>
+    <div class="ac-actions">
+      {% if mode == 'edit' %}<a class="ac-btn" href="{{ panel_path }}/users/view/{{ user.id }}">View profile</a>{% endif %}
+      <a class="ac-btn ac-btn-subtle" href="{{ panel_path }}/users">All accounts</a>
+    </div>
   </header>
-  {% if error %}<div role="alert" class="bu-alert">{{ error }}</div>{% endif %}
-  <form action="{{ panel_path }}/users/{{ 'edit/' ~ user.id if mode == 'edit' else 'add' }}" method="post">
-    <section class="bu-card"><h2>اطلاعات حساب</h2><p class="bu-caption">نام کاربری و نوع اتصال</p>
-      <div class="bu-grid">
-        <div class="bu-field"><label for="username">نام کاربری</label><input id="username" name="username" value="{{ user.username if mode == 'edit' else '' }}" pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" autocomplete="off" {{ 'disabled' if mode == 'edit' else 'required' }}></div>
-        <div class="bu-field"><label for="protocol">پروتکل</label><select id="protocol" name="protocol"><option value="openvpn" {% if mode == 'edit' and user.protocol == 'openvpn' %}selected{% endif %}>OpenVPN</option></select><small class="bu-help">این نصب‌کننده فعلاً OpenVPN را راه‌اندازی می‌کند.</small></div>
-        <div class="bu-field"><label for="max_devices">حداکثر اتصال هم‌زمان</label><input id="max_devices" type="number" min="1" max="100" name="max_devices" value="{{ user.max_devices if mode == 'edit' else 1 }}" required></div>
-        <div class="bu-field"><label for="traffic_limit">سقف مصرف (گیگابایت)</label><input id="traffic_limit" type="number" min="0" step="1" name="traffic_limit" value="{{ user.traffic_limit if mode == 'edit' else 0 }}" required><small class="bu-help">صفر یعنی بدون محدودیت.</small></div>
+  {% if error %}<div role="alert" class="ac-alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ panel_path }}/users/{{ 'edit/' ~ user.id if mode == 'edit' else 'add' }}">
+    <section class="ac-panel">
+      <h2>Account details</h2><p class="ac-panel-desc">Connection identity and device allowance.</p>
+      <div class="ac-grid">
+        <div class="ac-field"><label for="username">Username</label><input id="username" name="username" value="{{ user.username if mode == 'edit' else request.form.get('username', '') }}" pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" autocomplete="off" {{ 'disabled' if mode == 'edit' else 'required' }}><small class="ac-hint">Letters, numbers, underscore and hyphen.</small></div>
+        <div class="ac-field"><label for="protocol">Protocol</label><select id="protocol" name="protocol"><option value="openvpn">OpenVPN · TCP</option></select><small class="ac-hint">OpenVPN is the available protocol on this server.</small></div>
+        <div class="ac-field"><label for="max_devices">Simultaneous devices</label><input id="max_devices" type="number" min="1" max="100" name="max_devices" value="{{ user.max_devices if mode == 'edit' else request.form.get('max_devices', 1) }}" required></div>
+        <div class="ac-field"><label for="status">Account status</label><select id="status" name="status"><option value="active" {% if mode == 'edit' and user.status == 'active' %}selected{% endif %}>Active</option><option value="disabled" {% if mode == 'edit' and user.status == 'disabled' %}selected{% endif %}>Disabled</option></select><small class="ac-hint">Activation requires available time and data.</small></div>
       </div>
     </section>
-    <section class="bu-card"><h2>اعتبار و تمدید</h2><p class="bu-caption">{% if mode == 'edit' %}اعتبار فعلی: {% if user.expire_date and user.expire_date.isdigit() %}{{ user.expire_date }} روز پس از اولین اتصال{% elif user.expire_date and user.expire_date != '-' %}تا {{ user.expire_date }}{% else %}بدون تاریخ انقضا{% endif %}{% else %}روزهای آغازین از اولین اتصال محاسبه می‌شود.{% endif %}</p>
-      <div class="bu-grid">
-        <div class="bu-field"><label for="days">{{ 'افزودن روز به اعتبار' if mode == 'edit' else 'مدت اعتبار (روز)' }}</label><input id="days" type="number" min="1" max="3650" name="{{ 'renewal_days' if mode == 'edit' else 'expire_days' }}" placeholder="مثلاً ۳۰"><small class="bu-help">{% if mode == 'edit' %}خالی بگذارید تا تاریخ فعلی حفظ شود.{% else %}خالی یعنی بدون محدودیت زمانی.{% endif %}</small></div>
-        {% if mode == 'edit' %}<div class="bu-field"><label for="renewal_mode">روش محاسبهٔ تمدید</label><select id="renewal_mode" name="renewal_mode"><option value="extend">از پایان اعتبار فعلی</option><option value="from_today">از امروز</option></select><small class="bu-help">اگر حساب منقضی شده باشد، تمدید از امروز شروع می‌شود.</small></div>{% endif %}
-        {% if mode == 'edit' %}<div class="bu-field"><label for="status">وضعیت حساب</label><select id="status" name="status"><option value="active" {% if user.status == 'active' %}selected{% endif %}>فعال</option><option value="disabled" {% if user.status == 'disabled' %}selected{% endif %}>غیرفعال</option></select><small class="bu-help">برای فعال‌سازی، زمان و حجم باید کافی باشد.</small></div>{% endif %}
+    <section class="ac-panel">
+      <h2>Data allowance</h2><p class="ac-panel-desc">Set a total allowance, or add data to an existing account.</p>
+      <div class="ac-grid">
+        <div class="ac-field"><label for="traffic_limit">Total data limit · GB</label><input id="traffic_limit" type="number" min="0" max="100000" step="1" name="traffic_limit" value="{{ user.traffic_limit if mode == 'edit' else request.form.get('traffic_limit', 10) }}" required><small class="ac-hint">0 means unlimited data.</small></div>
+        {% if mode == 'edit' %}<div class="ac-field"><label for="traffic_add">Add data · GB</label><input id="traffic_add" type="number" min="1" max="100000" step="1" name="traffic_add" placeholder="Leave blank to keep current allowance"><small class="ac-hint">Adds to the current limit. If unlimited, starts from used data.</small></div>{% endif %}
       </div>
-      {% if mode == 'edit' %}<label class="bu-check"><input type="checkbox" name="reset_traffic" value="1"><span>مصرف ثبت‌شده را صفر کن <small class="bu-help">برای فعال کردن حسابی که حجمش تمام شده، این گزینه یا سقف بالاتر لازم است.</small></span></label>{% endif %}
+      {% if mode == 'edit' %}<label class="ac-check" style="margin-top:17px"><input type="checkbox" name="reset_traffic" value="1"><span>Reset recorded usage to zero <small class="ac-hint">Use when starting a new billing cycle.</small></span></label>{% endif %}
     </section>
-    <section class="bu-card"><h2>نودهای مجاز</h2><p class="bu-caption">{% if nodes %}سرورهایی که این کاربر می‌تواند به آن‌ها متصل شود{% else %}نودی ثبت نشده؛ اتصال روی سرور اصلی برقرار می‌شود.{% endif %}</p><div class="bu-nodes">{% for node in nodes %}<label class="bu-node"><input type="checkbox" name="nodes" value="{{ node.id }}" {% if mode == 'edit' and node.id in current_nodes %}checked{% endif %}>{{ node.name }}</label>{% endfor %}</div></section>
-    <div class="bu-actions"><button type="submit" class="bu-save">{{ 'ذخیرهٔ تغییرات' if mode == 'edit' else 'ساخت حساب' }}</button><span>تنظیمات پس از ذخیره اعمال می‌شوند.</span></div>
+    <section class="ac-panel">
+      <h2>Validity</h2><p class="ac-panel-desc">{% if mode == 'edit' %}Current expiry: {{ user.expire_date if user.expire_date and user.expire_date != '-' else 'Unlimited' }}{% else %}Choose when the validity period begins.{% endif %}</p>
+      <div class="ac-grid">
+        {% if mode == 'edit' %}
+          <div class="ac-field"><label for="renewal_days">Extend validity · days</label><input id="renewal_days" type="number" min="1" max="3650" name="renewal_days" placeholder="e.g. 30"><small class="ac-hint">Leave blank to keep the current date.</small></div>
+          <div class="ac-field"><label for="renewal_mode">Start renewal from</label><select id="renewal_mode" name="renewal_mode"><option value="extend">Current expiry</option><option value="from_today">Today</option></select><small class="ac-hint">An expired account starts from today.</small></div>
+          <div class="ac-field"><label for="set_expiry_date">Or set an exact expiry</label><input id="set_expiry_date" type="date" name="set_expiry_date"><small class="ac-hint">If filled, this date takes priority over renewal days.</small></div>
+        {% else %}
+          <div class="ac-field"><label for="expire_days">Validity period · days</label><input id="expire_days" type="number" min="1" max="3650" name="expire_days" placeholder="Leave blank for unlimited"><small class="ac-hint">Maximum 3,650 days.</small></div>
+          <div class="ac-field"><label for="expiry_start">Begin counting</label><select id="expiry_start" name="expiry_start"><option value="first_use">On first connection</option><option value="today">Today</option></select></div>
+        {% endif %}
+      </div>
+      {% if mode == 'edit' %}<label class="ac-check" style="margin-top:17px"><input type="checkbox" name="unlimited_time" value="1"><span>Remove expiry date <small class="ac-hint">Takes priority over the date and renewal fields.</small></span></label>{% endif %}
+    </section>
+    <section class="ac-panel"><h2>Allowed nodes</h2><p class="ac-panel-desc">Select where this account may connect. The primary server is a selectable node, just like every other location.</p>
+      {% if nodes %}<div class="ac-node-list">{% for node in nodes %}<label class="ac-check ac-node"><input type="checkbox" name="nodes" value="{{ node.id }}" {% if (request.method == 'POST' and node.id|string in request.form.getlist('nodes')) or (request.method == 'GET' and ((mode == 'edit' and node.id in current_nodes) or (mode == 'add' and node.api_key == '__beeny_local_primary__'))) %}checked{% endif %}><span class="ac-node-flag">{% if node.country and node.country|length == 2 %}<span class="flag" data-code="{{ node.country|upper }}"></span>{% else %}<img src="{{ url_for('static', filename='beeny-mark.svg') }}" alt="">{% endif %}</span><span class="ac-node-label"><b>{{ node.name }}</b> {% if node.api_key == '__beeny_local_primary__' %}<small class="ac-hint">This server</small>{% else %}<small class="ac-hint">{{ node.country or node.ip }}</small>{% endif %}</span></label>{% endfor %}</div>{% else %}<p class="ac-hint">No nodes available. Restart the panel service to register the primary server.</p>{% endif %}
+    </section>
+    <div class="ac-submitbar"><p class="ac-hint">Changes are applied when you save.</p><button class="ac-btn ac-btn-primary" type="submit">{{ 'Save changes' if mode == 'edit' else 'Create account' }} <span aria-hidden="true">→</span></button></div>
   </form>
-</div>
+</main><script>document.querySelectorAll('.ac-node .flag').forEach(el=>{const code=el.dataset.code;if(/^[A-Z]{2}$/.test(code))el.textContent=String.fromCodePoint(...[...code].map(c=>127397+c.charCodeAt(0)))});</script>
 {% endblock %}

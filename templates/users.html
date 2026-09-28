@@ -720,8 +720,8 @@ function renderPage() {
 }
 
 function getFlag(countryCode) {
-    if(!countryCode) return '<i class="fa fa-server"></i>';
-    return `<img src="https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png" style="border-radius:3px; width:14px;">`;
+    if(!/^[A-Za-z]{2}$/.test(countryCode || '')) return '<i class="fa fa-server"></i>';
+    return String.fromCodePoint(...[...countryCode.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
 }
 
 function compactDays(text) {
@@ -749,11 +749,14 @@ function renderUsers(users) {
     let pctClass = isUnlimited ? 'pill-unlimited' : (user.traffic_percent > 80 ? 'pill-bad' : (user.traffic_percent > 60 ? 'pill-warn' : ''));
 
     let nodeFlagChips = '';
-    const configLinks = [{ label: 'Smart Multi-Location', flag: '<i class="fa fa-bolt" style="color:var(--orange)"></i>', href: `{{ panel_path }}/users/download/${user.username}` }];
+    const configLinks = [];
+    if (user.nodes_list && user.nodes_list.length > 1) {
+        configLinks.push({ label: 'Smart Multi-Location', flag: '<i class="fa fa-bolt" style="color:var(--orange)"></i>', href: `{{ panel_path }}/users/download/${encodeURIComponent(user.username)}` });
+    }
     
     if(user.nodes_list && user.nodes_list.length > 0) {
         user.nodes_list.forEach(n => {
-            configLinks.push({ label: n.name, flag: getFlag(n.country), href: `{{ panel_path }}/users/download/${user.username}?node_id=${n.id}` });
+            configLinks.push({ label: n.name, flag: getFlag(n.country), href: `{{ panel_path }}/users/download/${encodeURIComponent(user.username)}?node_id=${n.id}` });
             nodeFlagChips += `<span class="node-flag-chip">${getFlag(n.country)} ${n.name}</span>`;
         });
     } else {

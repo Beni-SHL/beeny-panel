@@ -129,8 +129,25 @@ def delete_user_on_node(node, username):
         
         # Fallback to kill-user if delete is not supported by older node agents
         if response.status_code == 404:
-            requests.post(f"{host_url}/api/node/kill-user", json=payload, headers=headers, timeout=3)
-            
-        return True
+            response = requests.post(f"{host_url}/api/node/kill-user", json=payload, headers=headers, timeout=3)
+        return response.status_code == 200
     except Exception as e:
         return False
+
+
+def set_user_state_on_node(node, username, active):
+    """Ask a compatible Beeny Agent to apply renewal/disable immediately."""
+    target = (node.host or node.ip or '').strip()
+    if not target:
+        return False, 'Node address is missing'
+    address = target if target.startswith(('http://', 'https://')) else f'http://{target}'
+    if ':' not in address.split('//', 1)[-1]:
+        address += ':5001'
+    try:
+        response = requests.post(f'{address}/api/node/set-user-state',
+                                 json={'username': username, 'active': active},
+                                 headers={'Authorization': f'Bearer {node.api_key}'}, timeout=5)
+        response.raise_for_status()
+        return True, ''
+    except requests.RequestException as exc:
+        return False, str(exc)

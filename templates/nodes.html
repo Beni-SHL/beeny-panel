@@ -170,7 +170,7 @@
     font-family: monospace;
     font-size: 11px;
     word-break: break-all;
-    white-space: normal; 
+    white-space: normal;
 }
 .blur-text:hover { filter: blur(0); }
 
@@ -270,7 +270,7 @@
         {% for node in nodes %}
         <div class="node-card">
             <div class="node-header">
-                <h4>{{ node.name }}</h4>
+                <h4>{% if node.country and node.country|length == 2 %}<span class="flag" data-code="{{ node.country|upper }}"></span>{% endif %} {{ node.name }}</h4>
                 {% if node.status == 'online' %}
                     <span class="status-badge online"><i class="fa fa-plug-circle-check"></i> Online</span>
                 {% else %}
@@ -280,24 +280,24 @@
             <div class="node-body">
                 <p><i class="fa fa-globe"></i> <strong>Address:</strong> {{ node.ip }}</p>
                 <p>
-    <i class="fa fa-map-location-dot"></i> <strong>Country:</strong> 
+    <i class="fa fa-map-location-dot"></i> <strong>Country:</strong>
     {% if node.country %}
-        <span class="fi fi-{{ node.country | lower }}" style="border-radius: 3px; margin-right: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span> 
+        <span class="flag" data-code="{{ node.country | upper }}"></span>
         {{ node.country | upper }}
     {% else %}
         -
     {% endif %}
 </p>
                 <p><i class="fa fa-shield-halved"></i> <strong>Protocol:</strong> {{ node.protocol }}</p>
-                <p><i class="fa fa-key"></i> <strong>API Key:</strong> <span class="blur-text" title="Hover to view">{{ node.api_key }}</span></p>
+                {% if node.api_key != "__beeny_local_primary__" %}<p><i class="fa fa-key"></i> <strong>API Key:</strong> <span class="blur-text" title="Hover to view">{{ node.api_key }}</span></p>{% else %}<p><i class="fa fa-server"></i> Managed locally by this panel</p>{% endif %}
             </div>
             <div class="node-actions">
                 <button type="button" class="glass-btn" data-bs-toggle="modal" data-bs-target="#editNodeModal{{ node.id }}">
                     <i class="fa fa-pen"></i> Edit
                 </button>
-                <a href="{{ panel_path }}/settings/nodes/delete/{{ node.id }}" class="glass-btn danger" onclick="return confirm('Delete this node? All users assigned to this node will lose access to it.')">
+                {% if node.api_key != "__beeny_local_primary__" %}<a href="{{ panel_path }}/settings/nodes/delete/{{ node.id }}" class="glass-btn danger" onclick="return confirm('Delete this node? All users assigned to this node will lose access to it.')">
                     <i class="fa fa-trash"></i> Delete
-                </a>
+                </a>{% endif %}
             </div>
         </div>
 
@@ -314,15 +314,15 @@
                                 <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Node Name</label>
                                 <input type="text" name="name" class="glass-input" value="{{ node.name }}" required>
                             </div>
-                            <div class="mb-3">
+                            {% if node.api_key != "__beeny_local_primary__" %}<div class="mb-3">
                                 <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Address (IP or Domain:Port)</label>
                                 <input type="text" name="ip" class="glass-input" value="{{ node.ip }}" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Country</label>
-                                <input type="text" name="country" class="glass-input" value="{{ node.country }}">
+                            {% endif %}<div class="mb-3">
+                                <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Country code (e.g. DE, GB)</label>
+                                <input type="text" name="country" class="glass-input" value="{{ node.country }}" maxlength="2" pattern="[A-Za-z]{2}">
                             </div>
-                            <div class="mb-3">
+                            {% if node.api_key != "__beeny_local_primary__" %}<div class="mb-3">
                                 <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">Protocol</label>
                                 <select name="protocol" class="glass-input">
                                     <option value="OpenVPN" {% if node.protocol == 'OpenVPN' %}selected{% endif %}>OpenVPN</option>
@@ -333,6 +333,7 @@
                                 <label class="form-label" style="color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;">API Key</label>
                                 <input type="text" name="api_key" class="glass-input" value="{{ node.api_key }}" required>
                             </div>
+                            {% endif %}
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="glass-btn" data-bs-dismiss="modal">Cancel</button>
@@ -353,5 +354,7 @@
     </div>
 
 </div>
+
+<style>.nodes-page .flag{font-size:24px;vertical-align:middle}.nodes-page .node-card .node-actions{display:flex}.nodes-page .node-header h4{display:flex;align-items:center;gap:9px}body.light .nodes-page .glass-toolbar,body.light .nodes-page .node-card{background:#fff;border-color:#d9e2f1;color:#192840;box-shadow:0 12px 30px #2039600a}body.light .nodes-page .section-title,body.light .nodes-page .node-card h4,body.light .nodes-page .node-body{color:#172940}body.light .nodes-page .glass-input{background:#f4f7fc;border-color:#cbd6e7;color:#172940}body.light .nodes-page .form-label{color:#364967!important}</style><script>document.querySelectorAll('.nodes-page .flag').forEach(el=>{const code=el.dataset.code;if(/^[A-Z]{2}$/.test(code))el.textContent=String.fromCodePoint(...[...code].map(c=>127397+c.charCodeAt(0)))});</script>
 
 {% endblock %}

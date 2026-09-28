@@ -67,20 +67,20 @@ demo() {
   phase 3 'Create VPN certificates'; ok 'New CA and server certificates'
   phase 4 'Configure the VPN'; ok 'Routing, firewall and OpenVPN service'
   phase 5 'Install Beeny Panel'; ok 'Database, admin account and panel service'
-  phase 6 'Secure panel access'; ok 'HTTPS domain or local-only access'
+  phase 6 'Panel access'; ok 'HTTPS domain with automatic certificate or public IP fallback'
   printf '\n%s✔ Installation complete%s\n\n' "$GREEN$BOLD" "$RESET"
   info 'Preview only: no changes were made.'
 }
 
 check_source() {
   local needed
-  for needed in app.py cluster.py renewal.py serve.py requirements.txt beeny-panel.service beeny-vpn-firewall.service templates/login.html templates/user_form.html templates/dashboard.html static/css/style.css scripts/create_vpn_user.sh scripts/vpn-firewall.sh scripts/init_admin.py; do
+  for needed in app.py cluster.py renewal.py traffic_ledger.py serve.py requirements.txt beeny-panel.service beeny-vpn-firewall.service templates/login.html templates/layout.html templates/user_form.html templates/customer_portal.html templates/dashboard.html templates/traffic.html static/css/style.css static/css/brand.css static/css/login.css static/css/portal.css static/fonts/Vazirmatn-variable.woff2 static/beeny-mark.svg scripts/create_vpn_user.sh scripts/vpn-firewall.sh scripts/init_admin.py; do
     [[ -f "$ROOT_DIR/$needed" ]] || { echo "Missing: $needed" >&2; exit 1; }
   done
   python3 - "$ROOT_DIR" <<'PY'
 import ast, pathlib, sys
 root=pathlib.Path(sys.argv[1])
-for p in [root/'app.py',root/'cluster.py',root/'renewal.py',root/'serve.py',root/'scripts/init_admin.py']:
+for p in [root/'app.py',root/'cluster.py',root/'renewal.py',root/'traffic_ledger.py',root/'serve.py',root/'scripts/init_admin.py']:
     ast.parse(p.read_text())
 PY
 }
@@ -167,8 +167,13 @@ else
   }
 fi
 [[ -t 0 ]] || { echo 'Run interactively to enter credentials.' >&2; exit 1; }
-ask vpn_host 'Public VPS IP or VPN domain:'
-[[ "$vpn_host" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || { echo 'Invalid host' >&2; exit 1; }
+ask vpn_host 'Public VPS IPv4 address:'
+python3 - "$vpn_host" <<'PY' || { echo 'Enter a valid public IPv4 address.' >&2; exit 1; }
+import ipaddress,sys
+address=ipaddress.IPv4Address(sys.argv[1])
+if not address.is_global:
+    raise ValueError('Address must be public')
+PY
 ask vpn_port 'VPN TCP port [110]:'; vpn_port="${vpn_port:-110}"
 [[ "$vpn_port" =~ ^[0-9]{1,5}$ ]] && (( vpn_port >= 1 && vpn_port <= 65535 )) || { echo 'Invalid VPN port' >&2; exit 1; }
 ask panel_port 'Panel local port [8080]:'; panel_port="${panel_port:-8080}"
@@ -181,7 +186,7 @@ ask admin_user 'Admin username:'
 printf '%s  › Admin password (12+ characters): %s' "$CYAN" "$RESET"
 IFS= read -rs admin_pass; echo
 [[ ${#admin_pass} -ge 12 ]] || { echo 'Password too short' >&2; exit 1; }
-ask panel_domain 'Panel domain for HTTPS (empty = local only):'
+ask panel_domain 'Panel HTTPS domain (empty = public IP access):'
 if [[ -n "$panel_domain" ]]; then
   [[ "$panel_domain" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,}$ ]] || { echo 'Invalid domain' >&2; exit 1; }
   [[ ! -e /etc/nginx/sites-enabled/default && ! -e /etc/nginx/sites-enabled/beeny-panel ]] || {
@@ -192,7 +197,10 @@ iface="$(ip -4 route show default | awk '/default/ {print $5; exit}')"
 [[ "$iface" =~ ^[a-zA-Z0-9_.:-]+$ ]] || { echo 'Cannot identify outbound network interface' >&2; exit 1; }
 if [[ -n "$panel_domain" ]]; then
   resolved="$(getent ahostsv4 "$panel_domain" | awk 'NR==1{print $1}')"
-  [[ -n "$resolved" ]] || { echo 'Panel domain must resolve in public DNS before installation.' >&2; exit 1; }
+  if [[ -z "$resolved" ]]; then
+    info 'Domain DNS is not ready. Continuing with IP access.'
+    panel_domain=''
+  fi
 fi
 
 ok 'All settings validated'
@@ -275,8 +283,10 @@ chmod 700 "$DEST/instance" "$DEST/backups"
 python3 -m venv "$DEST/venv"
 run_quiet 'Update Python package manager' "$DEST/venv/bin/python" -m pip install --upgrade pip
 run_quiet 'Install panel dependencies' "$DEST/venv/bin/python" -m pip install -r "$DEST/requirements.txt"
+panel_bind=127.0.0.1
+[[ -n "$panel_domain" ]] || panel_bind=0.0.0.0
 secret="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
-printf 'BEENY_SECRET_KEY=%s\nBEENY_PUBLIC_HOST=%s\nBEENY_VPN_PORT=%s\nBEENY_BIND=127.0.0.1\nBEENY_PORT=%s\nBEENY_PUBLIC_HTTPS=%s\n' "$secret" "$vpn_host" "$vpn_port" "$panel_port" "${panel_domain:+1}" > "$ENV_FILE"
+printf 'BEENY_SECRET_KEY=%s\nBEENY_PUBLIC_HOST=%s\nBEENY_VPN_PORT=%s\nBEENY_BIND=%s\nBEENY_PORT=%s\nBEENY_PUBLIC_HTTPS=%s\n' "$secret" "$vpn_host" "$vpn_port" "$panel_bind" "$panel_port" "${panel_domain:+1}" > "$ENV_FILE"
 chmod 600 "$ENV_FILE"
 python3 - "$DEST/config.json" "$panel_path" "$panel_port" <<'PY'
 import json,sys
@@ -302,7 +312,16 @@ if [[ -n "$panel_domain" ]]; then
     ufw allow 80/tcp
     ufw allow 443/tcp
   fi
-  run_quiet 'Request HTTPS certificate' certbot certonly --standalone --non-interactive --agree-tos --register-unsafely-without-email -d "$panel_domain"
+  if certbot certonly --standalone --non-interactive --agree-tos --register-unsafely-without-email \
+      --pre-hook 'systemctl stop nginx' --post-hook 'systemctl start nginx' \
+      --deploy-hook 'systemctl reload nginx' -d "$panel_domain" >> "$LOG" 2>&1; then
+    ok 'Request HTTPS certificate'
+  else
+    fail 'Domain certificate was unavailable; opening the panel on its IP instead.'
+    panel_domain=''
+  fi
+fi
+if [[ -n "$panel_domain" ]]; then
   cat > /etc/nginx/sites-available/beeny-panel <<CONF
 server {
     listen 80;
@@ -322,15 +341,22 @@ server {
     }
 }
 CONF
-  ln -s /etc/nginx/sites-available/beeny-panel /etc/nginx/sites-enabled/beeny-panel
+  ln -sfn /etc/nginx/sites-available/beeny-panel /etc/nginx/sites-enabled/beeny-panel
   rm -f /etc/nginx/sites-enabled/default
   nginx -t
-  systemctl enable --now nginx
+  systemctl enable nginx
+  systemctl restart nginx
   panel_url="https://$panel_domain$panel_path/login"
 else
-  panel_url="http://127.0.0.1:$panel_port$panel_path/login"
-  info 'Panel listens locally; use an SSH tunnel or configure HTTPS.'
+  sed -i 's/^BEENY_BIND=.*/BEENY_BIND=0.0.0.0/; s/^BEENY_PUBLIC_HTTPS=.*/BEENY_PUBLIC_HTTPS=0/' "$ENV_FILE"
+  systemctl restart beeny-panel
+  if command -v ufw >/dev/null && ufw status | grep -q '^Status: active'; then ufw allow "$panel_port/tcp"; fi
+  panel_url="http://$vpn_host:$panel_port$panel_path/login"
+  info 'IP access uses HTTP; add a domain and HTTPS before sharing private account links.'
 fi
+printf 'BEENY_PANEL_BASE_URL=%s\n' "${panel_url%$panel_path/login}" >> "$ENV_FILE"
+systemctl restart beeny-panel
+systemctl is-active --quiet beeny-panel || { echo 'Panel service failed after public URL configuration.' >&2; exit 1; }
 printf '\n%s╭───────────────── INSTALLATION COMPLETE ─────────────────╮%s\n' "$GREEN" "$RESET"
 printf '  Panel:   %s\n  OpenVPN: %s:%s/TCP\n  Logs:    %s\n' "$panel_url" "$vpn_host" "$vpn_port" "$LOG"
 printf '%s╰─────────────────────────────────────────────────────────╯%s\n\n' "$GREEN" "$RESET"

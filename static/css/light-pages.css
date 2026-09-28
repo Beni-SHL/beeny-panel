@@ -1,0 +1,22 @@
+/* The page templates use literal dark colors. These overrides keep a genuine light UI readable. */
+body.light .users-page .glass-toolbar,body.light .users-page .user-row,body.light .users-page .stat-chip,body.light .nodes-page .glass-toolbar,body.light .nodes-page .node-card{background:#fff;border-color:#d6e1ef;box-shadow:0 15px 40px #203c650a;color:#172840}
+body.light .users-page .section-title,body.light .users-page .username,body.light .users-page .user-name,body.light .users-page h1,body.light .users-page h2,body.light .nodes-page h1,body.light .nodes-page h2,body.light .nodes-page h4,body.light .nodes-page .section-title,body.light .nodes-page .node-body{color:#172840}
+body.light .users-page .glass-input,body.light .nodes-page .glass-input{background:#f4f7fc;border-color:#cbd8e8;color:#172840}
+body.light .users-page .glass-input::placeholder,body.light .nodes-page .glass-input::placeholder{color:#667b98}
+body.light .users-page .glass-btn,body.light .nodes-page .glass-btn{background:#f1f4fb;color:#233858;border-color:#d2ddec}
+body.light .users-page .glass-btn:hover,body.light .nodes-page .glass-btn:hover{background:#e8e6fb;color:#423387}
+body.light .users-page .stat-chip span,body.light .users-page .user-meta,body.light .nodes-page .node-body p{color:#4b5e79}
+body.light .users-page .configs-menu{background:#fff;border:1px solid #d4deeb;box-shadow:0 20px 45px #34456b2e}
+body.light .users-page .configs-menu-item,body.light .users-page .configs-menu-label{color:#263a59}
+body.light .users-page .configs-menu-item:hover{background:#e9e8f8;color:#34277a}
+body.light .modal-content{background:#fff;color:#1b2a42;border:1px solid #d8e1ef}
+body.light .modal-header,body.light .modal-footer{border-color:#dce4ef}
+body.light .modal-title{color:#172840}
+body.light .nodes-page .form-label{color:#344964!important}
+body.light .ac-page{--ac-teal:#6451be;--ac-blue:#4475bb;--ac-surface:#fff;--ac-surface-2:#f2f5fb;--ac-line:#d5dfed;--ac-muted:#576c89;--ac-ink:#172840}
+body.light .ac-page .ac-node:has(input:checked){background:#eeeafd;border-color:#8e7ce0}
+body.light .content{color:#1d2e47}
+/* Secondary system tools keep their deliberate dark surfaces on a light canvas. */
+body.light :is(.general-page,.settings-v3,.system-center,.backup-center,.settings-page){background:#111b33;color:#eef3ff;border:1px solid #344263;border-radius:23px;padding:18px;box-shadow:0 16px 44px #3443651d}
+body.light :is(.general-page,.settings-v3,.system-center,.backup-center,.settings-page) :is(.glass-card,.hero-panel,.system-hero,.backup-hero){color:#f2f5ff}
+@media(max-width:600px){body.light :is(.general-page,.settings-v3,.system-center,.backup-center,.settings-page){padding:10px}}
