@@ -74,13 +74,13 @@ demo() {
 
 check_source() {
   local needed
-  for needed in app.py cluster.py renewal.py traffic_ledger.py serve.py requirements.txt beeny-panel.service beeny-vpn-firewall.service templates/login.html templates/layout.html templates/user_form.html templates/customer_portal.html templates/dashboard.html templates/traffic.html static/css/style.css static/css/brand.css static/css/login.css static/css/portal.css static/fonts/Vazirmatn-variable.woff2 static/beeny-mark.svg scripts/create_vpn_user.sh scripts/vpn-firewall.sh scripts/init_admin.py; do
+  for needed in app.py cluster.py renewal.py traffic_ledger.py serve.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-customer-worker.service beeny-panel.service beeny-vpn-firewall.service templates/login.html templates/layout.html templates/user_form.html templates/customer_portal.html templates/customer_login.html templates/customer_sessions.html templates/customer_settings.html templates/renewal_inbox.html templates/update.html static/js/portal.js static/js/flags.js static/css/customer-admin.css templates/dashboard.html templates/traffic.html static/css/style.css static/css/brand.css static/css/login.css static/css/portal.css static/fonts/Vazirmatn-variable.woff2 static/beeny-mark.svg scripts/create_vpn_user.sh scripts/vpn-firewall.sh scripts/init_admin.py; do
     [[ -f "$ROOT_DIR/$needed" ]] || { echo "Missing: $needed" >&2; exit 1; }
   done
   python3 - "$ROOT_DIR" <<'PY'
 import ast, pathlib, sys
 root=pathlib.Path(sys.argv[1])
-for p in [root/'app.py',root/'cluster.py',root/'renewal.py',root/'traffic_ledger.py',root/'serve.py',root/'scripts/init_admin.py']:
+for p in [root/'app.py',root/'cluster.py',root/'renewal.py',root/'traffic_ledger.py',root/'serve.py',root/'customer_features.py',root/'customer_worker.py',root/'vpn_sessions.py',root/'migrations.py',root/'scripts/init_admin.py']:
     ast.parse(p.read_text())
 PY
 }
@@ -133,6 +133,8 @@ PY
   printf '%s  › Admin password (12+ characters): %s' "$CYAN" "$RESET"
   IFS= read -rs admin_pass; echo
   [[ ${#admin_pass} -ge 12 ]] || { echo 'Password too short' >&2; exit 1; }
+  rsync -a --exclude='venv/' --exclude='.venv-releases/' --exclude='instance/' --exclude='backups/' --exclude='ca/' --exclude='config.json' --exclude='*.key' --exclude='*.db*' --exclude='.git/' "$ROOT_DIR/" "$DEST/"
+  run_quiet 'Refresh panel dependencies' "$DEST/venv/bin/python" -m pip install -r "$DEST/requirements.txt"
   install -m 644 "$ROOT_DIR/scripts/init_admin.py" "$DEST/scripts/init_admin.py"
   printf '%s\n' "$admin_pass" | PYTHONPATH="$DEST${PYTHONPATH:+:$PYTHONPATH}" "$DEST/venv/bin/python" "$DEST/scripts/init_admin.py" "$admin_user"
   unset admin_pass
@@ -289,7 +291,7 @@ ok 'OpenVPN service is running'
 
 phase 5 'Install Beeny Panel'
 mkdir -p "$DEST"
-rsync -a --exclude='venv/' --exclude='instance/' --exclude='backups/' --exclude='ca/' --exclude='config.json' --exclude='*.key' --exclude='*.db*' --exclude='.git/' "$ROOT_DIR/" "$DEST/"
+rsync -a --exclude='venv/' --exclude='.venv-releases/' --exclude='instance/' --exclude='backups/' --exclude='ca/' --exclude='config.json' --exclude='*.key' --exclude='*.db*' --exclude='.git/' "$ROOT_DIR/" "$DEST/"
 chmod 700 "$DEST/scripts/create_vpn_user.sh"
 mkdir -p "$DEST/instance" "$DEST/backups"
 chmod 700 "$DEST/instance" "$DEST/backups"
@@ -316,6 +318,11 @@ systemctl daemon-reload
 systemctl enable --now beeny-panel
 systemctl is-active --quiet beeny-panel || { echo 'Panel failed. Check: journalctl -u beeny-panel -n 100' >&2; exit 1; }
 ok 'Beeny Panel service is running'
+install -m 644 "$DEST/beeny-customer-worker.service" /etc/systemd/system/beeny-customer-worker.service
+systemctl daemon-reload
+systemctl enable --now beeny-customer-worker
+systemctl is-active --quiet beeny-customer-worker || { echo 'Customer worker failed. Check its journal.' >&2; exit 1; }
+ok 'Customer portal, renewal notifications and Telegram worker are running'
 
 phase 6 'Secure panel access'
 if [[ -n "$panel_domain" ]]; then

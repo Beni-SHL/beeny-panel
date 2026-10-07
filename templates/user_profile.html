@@ -4,7 +4,7 @@
 <main class="ac-page">
   <header class="ac-heading">
     <div><span class="ac-eyebrow">ACCOUNTS / PROFILE #{{ user.id }}</span><h1>{{ user.username }}</h1><p>Connection details, usage and renewal controls for this account.</p></div>
-    <div class="ac-actions"><a class="ac-btn ac-btn-subtle" href="{{ panel_path }}/users">All accounts</a><a class="ac-btn ac-btn-primary" href="{{ panel_path }}/users/edit/{{ user.id }}">Edit account</a></div>
+    <div class="ac-actions"><a class="ac-btn ac-btn-subtle" href="{{ panel_path }}/users">All accounts</a><a class="ac-btn ac-btn-subtle" href="{{ panel_path }}/users/view/{{ user.id }}/sessions">Active connections</a><a class="ac-btn ac-btn-primary" href="{{ panel_path }}/users/edit/{{ user.id }}">Edit account</a></div>
   </header>
   {% if request.args.get('notice') == 'created' %}<div class="ac-alert ac-notice" role="status">Account created. Download the VPN profile below.</div>{% elif request.args.get('notice') == 'updated' %}<div class="ac-alert ac-notice" role="status">Account changes saved.</div>{% endif %}
   {% if request.args.get('sync_warning') %}<div class="ac-alert" role="alert">The account was saved, but a remote node did not confirm the update. Check the panel service log and update Beeny Agent on that node.</div>{% endif %}
@@ -39,9 +39,20 @@
       </section>
     </div>
     <aside>
+      <section class="ac-panel"><h2>Customer page login</h2><p class="ac-panel-desc">Separate credentials for the customer page. These never grant admin access. Changing the password revokes previous sessions and bot bindings.</p>
+        {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="ac-alert" role="status">{{ message }}</div>{% endfor %}{% endwith %}
+        {% set access = customer_login_config(user.id) %}
+        <p class="ac-hint">{{ 'Login is configured.' if access.configured else 'Access is locked until you set a password.' }}</p>
+        <form method="post" action="{{ customer_base }}/users/view/{{ user.id }}/portal-access" class="ac-profile-form">
+          <input type="hidden" name="csrf" value="{{ customer_csrf() }}">
+          <div class="ac-field"><label for="portal_username">Customer login username</label><input id="portal_username" name="portal_username" value="{{ access.username or user.username }}" minlength="3" maxlength="100" autocomplete="off" required></div>
+          <div class="ac-field"><label for="portal_password">New customer password</label><input id="portal_password" type="password" name="portal_password" minlength="12" maxlength="256" autocomplete="new-password" required placeholder="At least 12 characters"></div>
+          <button class="ac-btn ac-btn-primary" type="submit">Save customer credentials</button>
+        </form>
+      </section>
       <section class="ac-panel"><h2>Private customer page</h2><p class="ac-panel-desc">Create a secret link for this account. Creating another link immediately revokes the old one.</p>
         {% if portal_url %}<div class="ac-field"><label for="customer_link">Share this link now</label><input id="customer_link" readonly value="{{ portal_url }}" onclick="this.select()"></div><a class="ac-btn" href="{{ portal_url }}" target="_blank" rel="noreferrer">Preview customer page</a>{% elif portal_exists %}<p class="ac-hint">A link is active. Generate a new one to copy it again.</p>{% endif %}
-        <form method="post" action="{{ panel_path }}/users/view/{{ user.id }}/portal"><button class="ac-btn ac-btn-primary" type="submit">{{ 'Regenerate private link' if portal_exists else 'Create private link' }}</button></form>
+        <form method="post" action="{{ panel_path }}/users/view/{{ user.id }}/portal"><input type="hidden" name="csrf" value="{{ customer_csrf() }}"><button class="ac-btn ac-btn-primary" type="submit">{{ 'Regenerate private link' if portal_exists else 'Create private link' }}</button></form>
       </section>
       <section class="ac-panel"><h2>VPN configuration</h2><p class="ac-panel-desc">Choose the combined profile or download one of this account's allowed nodes.</p>
         <div class="ac-stack">{% if assigned_nodes|length > 1 %}<a class="ac-btn ac-btn-primary" href="{{ panel_path }}/users/download/{{ user.username|urlencode }}">Download multi-location .ovpn</a>{% endif %}

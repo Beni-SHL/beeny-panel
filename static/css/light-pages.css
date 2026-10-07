@@ -1,22 +1,180 @@
-/* The page templates use literal dark colors. These overrides keep a genuine light UI readable. */
-body.light .users-page .glass-toolbar,body.light .users-page .user-row,body.light .users-page .stat-chip,body.light .nodes-page .glass-toolbar,body.light .nodes-page .node-card{background:#fff;border-color:#d6e1ef;box-shadow:0 15px 40px #203c650a;color:#172840}
-body.light .users-page .section-title,body.light .users-page .username,body.light .users-page .user-name,body.light .users-page h1,body.light .users-page h2,body.light .nodes-page h1,body.light .nodes-page h2,body.light .nodes-page h4,body.light .nodes-page .section-title,body.light .nodes-page .node-body{color:#172840}
-body.light .users-page .glass-input,body.light .nodes-page .glass-input{background:#f4f7fc;border-color:#cbd8e8;color:#172840}
-body.light .users-page .glass-input::placeholder,body.light .nodes-page .glass-input::placeholder{color:#667b98}
-body.light .users-page .glass-btn,body.light .nodes-page .glass-btn{background:#f1f4fb;color:#233858;border-color:#d2ddec}
-body.light .users-page .glass-btn:hover,body.light .nodes-page .glass-btn:hover{background:#e8e6fb;color:#423387}
-body.light .users-page .stat-chip span,body.light .users-page .user-meta,body.light .nodes-page .node-body p{color:#4b5e79}
-body.light .users-page .configs-menu{background:#fff;border:1px solid #d4deeb;box-shadow:0 20px 45px #34456b2e}
-body.light .users-page .configs-menu-item,body.light .users-page .configs-menu-label{color:#263a59}
-body.light .users-page .configs-menu-item:hover{background:#e9e8f8;color:#34277a}
-body.light .modal-content{background:#fff;color:#1b2a42;border:1px solid #d8e1ef}
-body.light .modal-header,body.light .modal-footer{border-color:#dce4ef}
-body.light .modal-title{color:#172840}
-body.light .nodes-page .form-label{color:#344964!important}
-body.light .ac-page{--ac-teal:#6451be;--ac-blue:#4475bb;--ac-surface:#fff;--ac-surface-2:#f2f5fb;--ac-line:#d5dfed;--ac-muted:#576c89;--ac-ink:#172840}
-body.light .ac-page .ac-node:has(input:checked){background:#eeeafd;border-color:#8e7ce0}
-body.light .content{color:#1d2e47}
-/* Secondary system tools keep their deliberate dark surfaces on a light canvas. */
-body.light :is(.general-page,.settings-v3,.system-center,.backup-center,.settings-page){background:#111b33;color:#eef3ff;border:1px solid #344263;border-radius:23px;padding:18px;box-shadow:0 16px 44px #3443651d}
-body.light :is(.general-page,.settings-v3,.system-center,.backup-center,.settings-page) :is(.glass-card,.hero-panel,.system-hero,.backup-hero){color:#f2f5ff}
-@media(max-width:600px){body.light :is(.general-page,.settings-v3,.system-center,.backup-center,.settings-page){padding:10px}}
+/* One light palette for every legacy page, with translucent white surfaces. */
+body.light{--light-ink:#26344c;--light-muted:#66748c;--bg:#f2f4fa;--text:#26344c;--glass:rgba(255,255,255,.68);--glass-bg:rgba(255,255,255,.68);--glass-border:rgba(117,130,165,.16);--glass-border-top:rgba(255,255,255,.9);--border:rgba(117,130,165,.16);--muted:#66748c;--text-primary:#26344c;--text-secondary:#66748c;--green:#249975;--red:#c95e75;--blue:#547ec4;--orange:#b08435;--bs-body-color:#26344c;--bs-body-bg:#f3f5fc;--bs-secondary-color:#66748c;background:#f2f4fa!important;color:#26344c;color-scheme:light}
+body.light #react-bg-root{background:radial-gradient(ellipse at 12% 5%,#e2dcf9,transparent 50%),radial-gradient(ellipse at 85% 65%,#ddefee,transparent 55%),#f2f4fa!important}
+body.light #react-bg-root canvas{opacity:0!important;pointer-events:none!important}
+body.light :is(.sidebar,.mobile-menu,.glass-navbar){background:rgba(255,255,255,.69)!important;backdrop-filter:blur(28px) saturate(135%)!important;-webkit-backdrop-filter:blur(28px) saturate(135%)!important;border-color:rgba(123,136,169,.17)!important;box-shadow:0 8px 32px #28365405!important}
+body.light .content{color:var(--light-ink)}
+body.light .content :is(.general-page,.settings-v3,.system-center,.backup-center,.settings-page){background:transparent!important;color:var(--light-ink)!important;border:0!important;box-shadow:none!important}
+body.light :is(.glass-card,.glass-toolbar,.user-row,.user-card,.stat-chip,.stat-card,.node-card,.hero-card,.hero-stat,.system-hero,.backup-hero,.hero-panel,.glass-panel,.modal-content,.ac-panel,.ac-stat,.tr-card,.tr-hero,.tr-stat){background:rgba(255,255,255,.68)!important;border-color:rgba(115,128,164,.16)!important;backdrop-filter:blur(26px) saturate(135%);-webkit-backdrop-filter:blur(26px) saturate(135%);color:var(--light-ink)!important;box-shadow:inset 0 1px 0 #ffffffa8,0 10px 32px #39426505!important}
+body.light :is(.glass-input,.filter-select,.form-control,.form-select,.ac-field input,.ac-field select,.ac-field textarea){background-color:rgba(248,250,255,.76)!important;border-color:rgba(110,130,164,.2)!important;color:var(--light-ink)!important}
+body.light :is(input,textarea)::placeholder{color:#8994a8!important}
+body.light option{background:#f8f9ff!important;color:var(--light-ink)!important}
+body.light :is(.glass-btn,.glass-action,.action-btn,.refresh-btn,.expand-btn,.btn-add-user){color:var(--light-ink)!important;background:rgba(255,255,255,.56)!important;border-color:rgba(115,128,164,.18)!important}
+body.light :is(.glass-btn,.glass-action,.action-btn,.expand-btn):hover{background:rgba(226,221,246,.68)!important;color:#6754a0!important}
+body.light :is(.configs-menu,.dropdown-menu){background:rgba(255,255,255,.91)!important;color:var(--light-ink)!important;border:1px solid #7f8fab25!important;backdrop-filter:blur(24px);box-shadow:0 18px 48px #253f6320!important}
+body.light :is(.configs-menu-item,.configs-menu-label){color:var(--light-ink)!important}
+body.light .configs-menu-item:hover{background:#ede8fa!important}
+body.light .ac-page{--ac-teal:#7260ba;--ac-blue:#527bbe;--ac-surface:rgba(255,255,255,.68);--ac-surface-2:rgba(245,247,253,.7);--ac-line:#7c8eaa2c;--ac-muted:#66748c;--ac-ink:#26344c}
+body.light .ac-page .ac-node:has(input:checked){background:#e9e3fb!important;border-color:#a494dc!important}
+body.light .content :is(.text-white,.text-light){color:var(--light-ink)!important}
+body.light .content :is(.text-muted,.text-secondary){color:var(--light-muted)!important}
+body.light .ac-btn-primary,
+body.light .ac-login-card .ac-field input,
+body.light .avatar,
+body.light .brand-lockup,
+body.light .content .glass-btn:hover,
+body.light .form-label,
+body.light .mobile-menu .menu-header,
+body.light .mobile-toggle,
+body.light .nav-title,
+body.light .offcanvas,
+body.light .offcanvas a,
+body.light .page-title,
+body.light .protocol,
+body.light .sidebar nav a.active,
+body.light .sidebar nav a:hover{color:var(--light-ink)!important}
+body.light .btn-cancel-glass:hover,
+body.light .btn-primary-glass:hover,
+body.light .chart-tooltip,
+body.light .dash-header-left h1,
+body.light .donut-center .dc-val,
+body.light .glass-input,
+body.light .glass-input option,
+body.light .mini-avatar,
+body.light .mini-name,
+body.light .proto-count,
+body.light .proto-name,
+body.light .refresh-btn:hover,
+body.light .section-title,
+body.light .stat-value,
+body.light .tsummary-item strong{color:var(--light-ink)!important}
+body.light .action-tile:hover,
+body.light .btn-add:hover,
+body.light .close-menu,
+body.light .close-menu:hover,
+body.light .detail-card strong,
+body.light .filter-select,
+body.light .filter-select option,
+body.light .hamburger,
+body.light .mobile-menu a.active,
+body.light .mobile-menu a:hover,
+body.light .pill,
+body.light .search-wrap input,
+body.light .toolbar-title h1,
+body.light .user-name-block h3,
+body.light .view-all:hover{color:var(--light-ink)!important}
+body.light .card-header h3,
+body.light .form-group label,
+body.light .general-hero h1,
+body.light .general-hero p,
+body.light .glass-btn,
+body.light .glass-btn:hover,
+body.light .glass-dropdown-menu .dropdown-item,
+body.light .glass-dropdown-menu .dropdown-item:hover,
+body.light .glass-modal h2,
+body.light .hero-badge,
+body.light .modal-btn-submit:hover,
+body.light .modal-close:hover,
+body.light .status-card span,
+body.light .status-card strong,
+body.light .traffic-label-row strong{color:var(--light-ink)!important}
+body.light .action-box,
+body.light .action-btn,
+body.light .form-group input,
+body.light .hero-card h1,
+body.light .hero-card p,
+body.light .hero-value,
+body.light .info-row strong,
+body.light .mini-stat strong,
+body.light .monitor-title,
+body.light .page-header h1,
+body.light .readonly-field,
+body.light .save-btn,
+body.light .security-box h4,
+body.light .setting-card h3,
+body.light .system-hero h1{color:var(--light-ink)!important}
+body.light .filter-select:hover,
+body.light .glass-btn.primary:hover,
+body.light .glass-card .value,
+body.light .hero-stat span,
+body.light .hero-stat strong,
+body.light .modal-content,
+body.light .node-body,
+body.light .node-body strong,
+body.light .node-header h4,
+body.light .primary-btn:hover,
+body.light .section-title h2,
+body.light .services-header h3,
+body.light .stat-chip .si-total,
+body.light .stat-chip-text strong,
+body.light .system-hero p{color:var(--light-ink)!important}
+body.light .card-header,
+body.light .chart-card h3,
+body.light .configs-menu-item,
+body.light .configs-menu-item:hover,
+body.light .hero-panel h1,
+body.light .hero-panel p,
+body.light .node-flag-chip,
+body.light .pagination-btn,
+body.light .pagination-btn:disabled:hover,
+body.light .pagination-btn:hover,
+body.light .quick-card,
+body.light .resource-value,
+body.light .stats-grid strong,
+body.light .toast,
+body.light .user-row:hover .expand-btn{color:var(--light-ink)!important}
+body.light .backup-hero h1,
+body.light .backup-hero p,
+body.light .node-label,
+body.light .primary-btn{color:var(--light-ink)!important}
+body.light .btn-cancel-glass,
+body.light .chart-tooltip span,
+body.light .dash-header-left p,
+body.light .donut-center .dc-label,
+body.light .empty-state,
+body.light .helper-text,
+body.light .hero-caption,
+body.light .hero-caption b,
+body.light .hero-chip,
+body.light .mini-sub,
+body.light .refresh-btn,
+body.light .section-sub,
+body.light .stat-label,
+body.light .stat-sub,
+body.light .tsummary-item span{color:var(--light-muted)!important}
+body.light .action-tile,
+body.light .detail-card span,
+body.light .filter-count,
+body.light .glass-input::placeholder,
+body.light .hero-label,
+body.light .info-row span,
+body.light .mobile-menu a,
+body.light .modal-close,
+body.light .node-body i,
+body.light .page-header p,
+body.light .search-wrap i,
+body.light .stat-chip-text span,
+body.light .toolbar-title span,
+body.light .traffic-label-row span,
+body.light .view-all{color:var(--light-muted)!important}
+body.light .configs-menu-item .dl-icon,
+body.light .configs-menu-label,
+body.light .expand-btn,
+body.light .node-flag-chip-empty,
+body.light .nodes-section-label,
+body.light .pagination-ellipsis,
+body.light .pagination-info{color:var(--light-muted)!important}
+body.light .filter-select option,
+body.light .glass-input option,
+body.light .glass-toolbar{background:rgba(255,255,255,.7)!important;color:var(--light-ink)!important}
+body.light .ac-btn-primary,body.light .admin-button.primary{background:#8270d5!important;color:white!important;border-color:#8270d5!important}
+body.light .admin-glass,body.light .customer-admin .admin-plan{color:#26344c!important}
+body.light .customer-admin :is(.admin-hint,p,label,.delivery-status){color:#66748c!important}
+body.light .sidebar nav a{color:#596882!important}body.light .sidebar nav a.active,body.light .sidebar nav a:hover{background:#e9e4f8!important;color:#7660b9!important}
+body.light .content .stat-chip-text strong,body.light .content .user-name-block h3{color:#26344c!important}
+body.light .content :is(.stat-chip-text span,.filter-count,.ud-label,.stat-label,.hero-label,.info-label,.detail-label){color:#66748c!important}
+body.light .content :is([style*="color: white"],[style*="color:white"],[style*="color: #fff"],[style*="color:#fff"]){color:#26344c!important}
+body.light .content :is(.success,.online,.status-active,.status-running){color:#249975!important}body.light .content :is(.danger,.status-disabled,.status-stopped){color:#c95e75!important}
+body.light .content :is(.progress,.traffic-bar,.ac-meter){background:#c7c1e326!important}
+body.light .hamburger{background:#ffffffb3!important;color:#26344c!important;border-color:#8090ab26!important}
+@media(prefers-reduced-motion:reduce){body.light *{transition:none!important}}

@@ -3,10 +3,11 @@ import os
 from threading import Thread
 from waitress import serve
 from app import app, db, background_updater, ensure_primary_node
+from migrations import upgrade
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+        upgrade(db)
         ensure_primary_node()
     Thread(target=background_updater, daemon=True).start()
     serve(app, host=os.environ.get('BEENY_BIND', '127.0.0.1'),

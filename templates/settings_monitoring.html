@@ -471,7 +471,7 @@ let historyData = [];
 function initCharts() {
     const ctx1 = document.getElementById('resourceChart').getContext('2d');
     const ctx2 = document.getElementById('networkChart').getContext('2d');
-    
+
     resourceChart = new Chart(ctx1, {
         type: 'line',
         data: {
@@ -492,7 +492,7 @@ function initCharts() {
         },
         options: { responsive: true, maintainAspectRatio: true }
     });
-    
+
     networkChart = new Chart(ctx2, {
         type: 'line',
         data: {
@@ -520,13 +520,13 @@ function updateCharts() {
                 network: data.network
             });
             if (historyData.length > 20) historyData.shift();
-            
+
             if (resourceChart) {
                 resourceChart.data.datasets[0].data = historyData.map(d => d.cpu);
                 resourceChart.data.datasets[1].data = historyData.map(d => d.ram);
                 resourceChart.update();
             }
-            
+
             if (networkChart) {
                 networkChart.data.datasets[0].data = historyData.map(d => d.network);
                 networkChart.update();

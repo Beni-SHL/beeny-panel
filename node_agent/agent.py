@@ -24,7 +24,7 @@ def bootstrap_openvpn():
     try:
         os.makedirs("/etc/openvpn/server", exist_ok=True)
         os.makedirs("/etc/openvpn/ccd", exist_ok=True)
-        
+
         if data.get("ca_crt"):
             with open("/etc/openvpn/ca.crt", "w") as f: f.write(data.get("ca_crt"))
         if data.get("ta_key"):
@@ -39,7 +39,7 @@ def bootstrap_openvpn():
             with open("/etc/openvpn/crl.pem", "w") as f: f.write(data.get("crl_pem"))
         if data.get("server_conf"):
             with open("/etc/openvpn/server/server.conf", "w") as f: f.write(data.get("server_conf"))
-        
+
         # ðŸ”¥ Ø§ØµÙ„Ø§Ø­: Ø§Ø³ØªÙØ§Ø¯Ù‡ Ø§Ø² Ù†Ø§Ù… Ø¯Ø±Ø³Øª Ø³Ø±ÙˆÛŒØ³
         subprocess.run(["systemctl", "daemon-reload"], check=False)
         subprocess.run(["systemctl", "enable", "openvpn-server@server"], check=False)
@@ -64,7 +64,7 @@ def install_cert():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-        
+
 @app.route("/api/node/status-log", methods=["GET"])
 def get_status_log():
     if not verify_api_key(): return jsonify({"error": "Unauthorized"}), 401
@@ -89,7 +89,7 @@ def kill_user():
         os.makedirs("/etc/openvpn/ccd", exist_ok=True)
         with open(f"/etc/openvpn/ccd/{username}", "w") as f:
             f.write("disable\n")
-        
+
         # ۲. شوت کردنِ آنی کاربر از تونل (از طریق پورت مدیریت اوپن‌وی‌پی‌ان)
         try:
             with socket.create_connection(("127.0.0.1", 7505), timeout=1) as conn:
@@ -97,7 +97,7 @@ def kill_user():
         except OSError: pass
         return jsonify({"success": True})
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500        
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 
@@ -146,5 +146,36 @@ def delete_user():
     except OSError as exc:
         return jsonify({'error': str(exc)}), 500
 
+# Account-scoped session controls. This module must ship with the updated agent.
+@app.post('/api/node/sessions')
+def account_sessions():
+    if not verify_api_key(): return jsonify({'error': 'Unauthorized'}), 401
+    from vpn_sessions import local_sessions
+    data = request.get_json(silent=True) or {}
+    username = data.get('username', '')
+    if not isinstance(username, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,100}', username):
+        return jsonify({'error': 'Invalid username'}), 400
+    try:
+        return jsonify(sessions=local_sessions(username))
+    except (OSError, RuntimeError):
+        return jsonify(error='Management interface unavailable'), 503
+
+@app.post('/api/node/disconnect-session')
+def account_disconnect():
+    if not verify_api_key(): return jsonify({'error': 'Unauthorized'}), 401
+    from vpn_sessions import disconnect_session
+    data = request.get_json(silent=True) or {}
+    username = data.get('username', '')
+    if not isinstance(username, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,100}', username):
+        return jsonify({'error': 'Invalid username'}), 400
+    try:
+        disconnect_session(username, data.get('id', ''), data.get('fingerprint', ''))
+        return jsonify(success=True)
+    except ValueError:
+        return jsonify(error='Session changed; refresh the list'), 409
+    except (OSError, RuntimeError):
+        return jsonify(error='Management interface unavailable'), 503
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=AGENT_PORT)
+

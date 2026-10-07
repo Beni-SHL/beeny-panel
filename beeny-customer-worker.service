@@ -1,0 +1,19 @@
+[Unit]
+Description=Beeny customer notifications and Telegram bot
+After=network-online.target beeny-panel.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/beeny-panel
+EnvironmentFile=/etc/beeny-panel/panel.env
+ExecStart=/opt/beeny-panel/venv/bin/python /opt/beeny-panel/customer_worker.py
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

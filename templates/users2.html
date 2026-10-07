@@ -306,7 +306,7 @@ function renderUsers(users, total) {
 
   container.innerHTML = users.map(user => {
     let trafficStr = user.traffic_limit === 0 ? 'Unlimited' : `${user.traffic_usage} / ${user.traffic_limit} GB`;
-    
+
     // Build Config Dropdown with Flags
     let configDrops = `<li><a class="dropdown-item" href="{{ panel_path }}/users/download/${user.username}"><i class="fa fa-globe text-primary"></i> Multi-Location Config</a></li>`;
     configDrops += `<li><hr class="dropdown-divider" style="border-color:rgba(255,255,255,0.1); margin:4px 0;"></li>`;
@@ -338,7 +338,7 @@ function renderUsers(users, total) {
               <div class="detail-card"><span>Devices</span><strong>${user.current_devices}/${user.max_devices}</strong></div>
               <div class="detail-card"><span>Allowed Nodes</span><strong>${user.nodes_list.length} Node(s)</strong></div>
             </div>
-            
+
             <div class="traffic-section">
               <div class="traffic-label-row"><span>Traffic Usage</span><strong>${trafficStr} (${user.traffic_percent}%)</strong></div>
               <div class="progress-track"><div class="progress-fill ${user.traffic_percent > 80 ? 'warn' : ''}" style="width: ${Math.min(user.traffic_percent, 100)}%"></div></div>
@@ -347,7 +347,7 @@ function renderUsers(users, total) {
             <div class="action-row">
               <a href="{{ panel_path }}/users/view/${user.id}" class="glass-btn"><i class="fa fa-id-card"></i> Profile</a>
               <button onclick="openEdit(${user.id}, '${user.username}', '${user.protocol}', ${user.max_devices}, ${user.traffic_limit}, '${user.expire_days_val}', '${user.status}')" class="glass-btn"><i class="fa fa-pen"></i> Edit</button>
-              
+
               <div class="dropdown d-inline-block">
                   <button class="glass-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-color:rgba(96,165,250,0.3); color:#93c5fd;"><i class="fa fa-download"></i> Configs</button>
                   <ul class="dropdown-menu glass-dropdown-menu">${configDrops}</ul>

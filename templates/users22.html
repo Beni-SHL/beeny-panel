@@ -245,7 +245,7 @@ body.light .configs-menu{ background:rgba(255,255,255,0.82); }
         <h1>Users</h1>
         <div class="count-line"><strong id="totalUsersCount">0</strong><span>accounts provisioned</span></div>
       </div>
-      
+
       <div class="search-action-wrap">
         <div class="search-wrap">
           <i class="fa fa-search"></i>
@@ -306,7 +306,7 @@ const statWarn = document.getElementById('statWarn');
 const configsPortalRoot = document.getElementById('configsPortalRoot');
 
 let currentPage = 1;
-let allUsersCache = []; 
+let allUsersCache = [];
 
 function showToast(message, type) {
   const stack = document.getElementById('toastStack');
@@ -338,7 +338,7 @@ function getFilterParams() {
   if(protocolSelect.value) p.append('protocol', protocolSelect.value);
   if(statusSelect.value) p.append('status', statusSelect.value);
   if(sortSelect.value) p.append('sort', sortSelect.value);
-  p.append('page', 1); p.append('per_page', 500); 
+  p.append('page', 1); p.append('per_page', 500);
   return p.toString();
 }
 
@@ -361,7 +361,7 @@ function renderPage() {
   const total = allUsersCache.length;
   updateStats(allUsersCache, total);
   totalSpan.textContent = total;
-  
+
   if (!total) {
     container.innerHTML = `<div style="text-align:center; padding: 40px; color:#aaa;">هیچ کاربری یافت نشد.</div>`;
     return;
@@ -377,7 +377,7 @@ function getFlag(countryCode) {
 function compactDays(text) {
     if (text == null) return '—';
     const match = String(text).match(/-?\d+/);
-    if (!match) return text; 
+    if (!match) return text;
     return `${match[0]}D`;
 }
 
@@ -400,7 +400,7 @@ function renderUsers(users) {
 
     let nodeFlagChips = '';
     const configLinks = [{ label: 'مولتی لوکیشن هوشمند', flag: '<i class="fa fa-bolt" style="color:var(--warn)"></i>', href: `{{ panel_path }}/users/download/${user.username}` }];
-    
+
     if(user.nodes_list && user.nodes_list.length > 0) {
         user.nodes_list.forEach(n => {
             configLinks.push({ label: n.name, flag: getFlag(n.country), href: `{{ panel_path }}/users/download/${user.username}?node_id=${n.id}` });
@@ -443,7 +443,7 @@ function renderUsers(users) {
             <div class="action-row">
               <a href="{{ panel_path }}/users/view/${user.id}" class="glass-btn"><i class="fa fa-id-card"></i> <span class="btn-label">Profile</span></a>
               <a href="{{ panel_path }}/users/edit/${user.id}" class="glass-btn"><i class="fa fa-pen"></i> <span class="btn-label">Edit</span></a>
-              
+
               <button type="button" class="glass-btn configs-trigger" onclick="toggleConfigsMenu(this)" style="background: linear-gradient(135deg, rgba(60,212,255,0.2), rgba(60,212,255,0.05)); border-color:rgba(60,212,255,0.5); color:#fff;">
                 <i class="fa fa-cloud-arrow-down"></i> <span class="btn-label">دانلود کانفیگ</span> <i class="fa fa-chevron-down" style="font-size:9px; margin-left:4px;"></i>
               </button>

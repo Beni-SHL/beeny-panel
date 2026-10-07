@@ -34,7 +34,7 @@
 
 <div class="glass-form-card">
     <form method="post">
-        
+
         <div class="row" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
             <div style="flex: 1; min-width: 200px;">
                 <label class="form-label">Username</label>
@@ -70,8 +70,8 @@
             <div style="flex: 1; min-width: 200px;">
                 <label class="form-label">Status</label>
                 <select name="status" class="glass-input">
-                    <option value="active" {% if user.status == "active" %}selected{% endif %}>í ½í¿¢ Active</option>
-                    <option value="disabled" {% if user.status == "disabled" %}selected{% endif %}>í ½í´´ Disabled</option>
+                    <option value="active" {% if user.status == "active" %}selected{% endif %}> Active</option>
+                    <option value="disabled" {% if user.status == "disabled" %}selected{% endif %}> Disabled</option>
                 </select>
             </div>
         </div>

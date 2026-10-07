@@ -270,7 +270,7 @@
         {% for node in nodes %}
         <div class="node-card">
             <div class="node-header">
-                <h4>{% if node.country and node.country|length == 2 %}<span class="flag" data-code="{{ node.country|upper }}"></span>{% endif %} {{ node.name }}</h4>
+                <h4>{% if node.country and node.country|length == 2 %}<span class="flag" data-code="{{ node.country|upper }}">◈</span>{% endif %} {{ node.name }}</h4>
                 {% if node.status == 'online' %}
                     <span class="status-badge online"><i class="fa fa-plug-circle-check"></i> Online</span>
                 {% else %}
@@ -282,7 +282,7 @@
                 <p>
     <i class="fa fa-map-location-dot"></i> <strong>Country:</strong>
     {% if node.country %}
-        <span class="flag" data-code="{{ node.country | upper }}"></span>
+        <span class="flag" data-code="{{ node.country | upper }}">◈</span>
         {{ node.country | upper }}
     {% else %}
         -
@@ -355,6 +355,6 @@
 
 </div>
 
-<style>.nodes-page .flag{font-size:24px;vertical-align:middle}.nodes-page .node-card .node-actions{display:flex}.nodes-page .node-header h4{display:flex;align-items:center;gap:9px}body.light .nodes-page .glass-toolbar,body.light .nodes-page .node-card{background:#fff;border-color:#d9e2f1;color:#192840;box-shadow:0 12px 30px #2039600a}body.light .nodes-page .section-title,body.light .nodes-page .node-card h4,body.light .nodes-page .node-body{color:#172940}body.light .nodes-page .glass-input{background:#f4f7fc;border-color:#cbd6e7;color:#172940}body.light .nodes-page .form-label{color:#364967!important}</style><script>document.querySelectorAll('.nodes-page .flag').forEach(el=>{const code=el.dataset.code;if(/^[A-Z]{2}$/.test(code))el.textContent=String.fromCodePoint(...[...code].map(c=>127397+c.charCodeAt(0)))});</script>
+<style>.nodes-page .flag{font-size:24px;vertical-align:middle}.nodes-page .node-card .node-actions{display:flex}.nodes-page .node-header h4{display:flex;align-items:center;gap:9px}body.light .nodes-page .glass-toolbar,body.light .nodes-page .node-card{background:#fff;border-color:#d9e2f1;color:#192840;box-shadow:0 12px 30px #2039600a}body.light .nodes-page .section-title,body.light .nodes-page .node-card h4,body.light .nodes-page .node-body{color:#172940}body.light .nodes-page .glass-input{background:#f4f7fc;border-color:#cbd6e7;color:#172940}body.light .nodes-page .form-label{color:#364967!important}</style>
 
 {% endblock %}

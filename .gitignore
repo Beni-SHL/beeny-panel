@@ -16,3 +16,7 @@ __pycache__/
 *.pyc
 .env
 *.env
+
+/.venv-releases/
+/customer_notification_secrets.json
+/customer_uploads/

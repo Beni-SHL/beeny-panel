@@ -701,10 +701,10 @@ async function loadUsers() {
 function renderPage() {
   const total = allUsersCache.length;
   updateStats(allUsersCache, total);
-  
+
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
   if (currentPage > totalPages) currentPage = totalPages;
-  
+
   const start = (currentPage - 1) * PAGE_SIZE;
   const end = Math.min(start + PAGE_SIZE, total);
   const pageUsers = allUsersCache.slice(start, end);
@@ -753,7 +753,7 @@ function renderUsers(users) {
     if (user.nodes_list && user.nodes_list.length > 1) {
         configLinks.push({ label: 'Smart Multi-Location', flag: '<i class="fa fa-bolt" style="color:var(--orange)"></i>', href: `{{ panel_path }}/users/download/${encodeURIComponent(user.username)}` });
     }
-    
+
     if(user.nodes_list && user.nodes_list.length > 0) {
         user.nodes_list.forEach(n => {
             configLinks.push({ label: n.name, flag: getFlag(n.country), href: `{{ panel_path }}/users/download/${encodeURIComponent(user.username)}?node_id=${n.id}` });

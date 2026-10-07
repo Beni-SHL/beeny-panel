@@ -61,7 +61,7 @@ body::before {
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border-right: 1px solid var(--border);
-  
+
   /* GPU Fix for WebGL */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
@@ -117,7 +117,7 @@ body::before {
   -webkit-backdrop-filter: blur(40px);
   border: 1px solid var(--border);
   margin-bottom: 35px;
-  
+
   /* GPU Fix for WebGL */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
@@ -177,7 +177,7 @@ body::before {
   border-radius: 28px;
   padding: 25px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  
+
   /* GPU Fix */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
@@ -199,7 +199,7 @@ body::before {
   backdrop-filter: blur(20px);
   transition: 0.2s ease;
   font-size: 12px;
-  
+
   /* GPU Fix */
   transform: translateZ(0);
   will-change: transform, backdrop-filter;
@@ -262,7 +262,7 @@ body::before {
   flex-direction: column;
   gap: 8px;
   transition: 0.2s ease;
-  
+
   /* GPU Fix */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
@@ -421,7 +421,7 @@ body.light .glass-btn:hover {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  
+
   /* GPU Fix */
   transform: translateZ(0);
   will-change: transform, backdrop-filter;
@@ -501,7 +501,7 @@ body.light .btn-add-user:hover {
   border-radius: 12px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  
+
   /* GPU Fix */
   transform: translateZ(0);
   will-change: transform, backdrop-filter;
@@ -512,7 +512,7 @@ body.light .btn-add-user:hover {
   backdrop-filter: blur(35px);
   -webkit-backdrop-filter: blur(35px);
   color: white;
-  
+
   /* GPU Fix */
   transform: translateZ(0);
   will-change: transform, backdrop-filter;
@@ -538,7 +538,7 @@ body.light .btn-add-user:hover {
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border: 1px solid var(--border);
-  
+
   /* GPU Fix */
   transform: translateZ(0);
   will-change: transform, backdrop-filter;
@@ -594,7 +594,7 @@ body.light .profile-item {
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border: 1px solid var(--border);
-  
+
   /* GPU Fix */
   transform: translateZ(0);
   will-change: transform, backdrop-filter;
@@ -691,18 +691,18 @@ body.light .stat-card {
 .user-row {
   padding: 0;
   border-radius: 20px; /* گرد کردن گوشه‌های باکس */
-  
+
   /* افکت شیشه‌ای اپل */
   background: rgba(255, 255, 255, 0.04); /* پس‌زمینه بسیار محو */
   backdrop-filter: blur(25px) saturate(200%); /* بلور قوی + اشباع رنگ زیرین */
   -webkit-backdrop-filter: blur(25px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.1); /* حاشیه شیشه‌ای */
-  
+
   /* فورس کردن پردازش GPU برای رفع باگ WebGL */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   will-change: transform, backdrop-filter;
-  
+
   overflow: hidden;
   transition: all 0.3s ease;
 }
