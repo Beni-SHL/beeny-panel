@@ -149,6 +149,27 @@ class CustomerFlowTests(unittest.TestCase):
         self.assertEqual(json.loads(row.plan)['price'],340000)
         self.assertEqual(row.status,'pending')
 
+    def test_legacy_first_snapshot_does_not_double_count_old_account_usage(self):
+        from test_traffic import SNAPSHOT
+        from unittest.mock import mock_open
+        node=panel.Node(name='Main',ip='185.208.172.91',api_key=panel.PRIMARY_NODE_KEY)
+        panel.db.session.add(node);panel.db.session.flush()
+        panel.db.session.add(panel.TrafficBaseline(node_id=node.id,pending=True))
+        self.user.username='alice'
+        self.user.traffic_used=25*1073741824
+        self.user.traffic_usage=25
+        panel.db.session.commit()
+        with patch('builtins.open',mock_open(read_data=SNAPSHOT)):
+            panel.update_openvpn_status()
+        self.assertEqual(self.user.traffic_usage,25)
+        self.assertEqual(panel.TrafficDaily.query.count(),0)
+        self.assertFalse(panel.db.session.get(panel.TrafficBaseline,node.id).pending)
+        newer=SNAPSHOT.replace('1048576,2097152','2097152,2097152')
+        with patch('builtins.open',mock_open(read_data=newer)):
+            panel.update_openvpn_status()
+        self.assertEqual(self.user.traffic_used,25*1073741824+1048576)
+        self.assertEqual(panel.TrafficDaily.query.one().bytes_total,1048576)
+
     def tearDown(self):
         panel.db.session.remove()
         self.context.pop()

@@ -9,12 +9,22 @@ if [[ "${1:-}" == --github ]]; then
   checkout="$(mktemp -d /tmp/beeny-release.XXXXXXXX)"
   trap 'rm -rf -- "$checkout"' EXIT
   GIT_TERMINAL_PROMPT=0 git -c credential.helper= clone --depth 1 --branch main https://github.com/Beni-SHL/beeny-panel.git "$checkout"
-  bash "$checkout/scripts/update_panel.sh"
+  if [[ "${2:-}" == --legacy ]]; then
+    bash "$checkout/scripts/update_panel.sh" --legacy
+  elif [[ -z "${2:-}" ]]; then
+    bash "$checkout/scripts/update_panel.sh"
+  else
+    echo 'Usage: --github [--legacy]' >&2; exit 2
+  fi
   exit
 fi
 MODE="${1:-}"
-[[ "$MODE" == '' || "$MODE" == --check || "$MODE" == --verify ]] || { echo 'Usage: sudo bash scripts/update_panel.sh [--github|--check|--verify]' >&2; exit 2; }
-FILES=(app.py cluster.py renewal.py traffic_ledger.py serve.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-panel.service beeny-customer-worker.service scripts/create_vpn_user.sh scripts/check_users.py scripts/init_admin.py scripts/manage_user_config.py scripts/update_panel.sh)
+if [[ "$MODE" == --legacy ]]; then
+  python3 "$ROOT_DIR/scripts/upgrade_legacy.py"
+  exit
+fi
+[[ "$MODE" == '' || "$MODE" == --check || "$MODE" == --verify ]] || { echo 'Usage: sudo bash scripts/update_panel.sh [--github [--legacy]|--legacy|--check|--verify]' >&2; exit 2; }
+FILES=(app.py cluster.py renewal.py traffic_ledger.py serve.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-panel.service beeny-customer-worker.service scripts/create_vpn_user.sh scripts/check_users.py scripts/init_admin.py scripts/manage_user_config.py scripts/update_panel.sh scripts/upgrade_legacy.py)
 while IFS= read -r -d '' path; do FILES+=("${path#"$ROOT_DIR/"}"); done < <(find "$ROOT_DIR/templates" "$ROOT_DIR/static" -type f ! -name '*.pyc' -print0)
 for rel in "${FILES[@]}"; do [[ -f "$ROOT_DIR/$rel" ]] || { echo "Missing update source: $rel" >&2; exit 1; }; done
 [[ -f "$DEST/app.py" && -f "$DEST/config.json" && -f /etc/beeny-panel/panel.env && -f "$DEST/instance/beeny.db" && -d "$DEST/instance" && -x "$DEST/venv/bin/python" ]] || { echo 'Compatible installed panel not found at /opt/beeny-panel.' >&2; exit 1; }
@@ -54,7 +64,11 @@ if [[ "$MODE" == --verify ]]; then verify_deployed; systemctl is-active --quiet 
 if [[ "$MODE" == --check ]]; then echo 'Update source and compatible installation found.'; exit; fi
 [[ $EUID == 0 ]] || { echo 'Run with sudo or as root.' >&2; exit 1; }
 # Serialize upgrades, including GitHub invocations from multiple terminals.
-exec 9>/run/beeny-panel-update.lock
+if [[ "${BEENY_UPDATE_LOCK_FD:-}" == 9 ]]; then
+  [[ "$(readlink /proc/self/fd/9)" == /run/beeny-panel-update.lock ]] || { echo 'Invalid inherited update lock.' >&2; exit 1; }
+else
+  exec 9>/run/beeny-panel-update.lock
+fi
 flock -n 9 || { echo 'Another Beeny update is running.' >&2; exit 1; }
 stamp="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 backup="$DEST/backups/update-$stamp"

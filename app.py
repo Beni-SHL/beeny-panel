@@ -120,6 +120,12 @@ class TrafficSample(db.Model):
     __table_args__ = (db.UniqueConstraint('node_id', 'session_key'),)
 
 
+class TrafficBaseline(db.Model):
+    """First legacy snapshot must not re-count traffic in existing customer quotas."""
+    node_id = db.Column(db.Integer, primary_key=True)
+    pending = db.Column(db.Boolean, nullable=False, default=True)
+
+
 class TrafficDaily(db.Model):
     """VPN bytes measured per day and server; independent of user accounts."""
     id = db.Column(db.Integer, primary_key=True)
@@ -269,12 +275,14 @@ def update_openvpn_status():
             clients = parse_status(log)
             node.status = 'online'
             seen = set()
+            baseline = db.session.get(TrafficBaseline, node.id)
+            baseline_only = bool(baseline and baseline.pending)
             for username, session_key, received, sent, address in clients:
                 if session_key in seen:
                     continue
                 seen.add(session_key)
                 sample = TrafficSample.query.filter_by(node_id=node.id, session_key=session_key).first()
-                legacy_baseline = sample and (sample.last_received < 0 or sample.last_sent < 0)
+                legacy_baseline = baseline_only or (sample and (sample.last_received < 0 or sample.last_sent < 0))
                 diff_received = 0 if legacy_baseline else usage_delta(sample.last_received if sample else None, received)
                 diff_sent = 0 if legacy_baseline else usage_delta(sample.last_sent if sample else None, sent)
                 diff = diff_received + diff_sent
@@ -307,6 +315,8 @@ def update_openvpn_status():
                         db.session.add(user_daily)
                         db.session.flush()
                     user_daily.bytes_total += diff
+            if baseline:
+                baseline.pending = False
             db.session.commit()
         except Exception:
             app.logger.exception("Could not collect VPN status from node %s", node.name)

@@ -68,6 +68,20 @@ The **Update panel** admin section shows the command, version and recovery infor
 
 Updates create private code/config/unit/SQLite backups under `/opt/beeny-panel/backups/update-*`, prepare dependencies in a separate Python environment, apply additive schema migrations and verify the running login and database before starting the customer worker. Accounts, certificates, domain/IP settings, private links, uploaded images and notification secrets are preserved. Failure restores old application files, Python environment and services. Additive database columns remain; the consistent SQLite snapshot is available for manual recovery. Keep backups until you have verified VPN connectivity and customer workflows. The updater never rebuilds the CA or recreates users.
 
+## Pre-env legacy installations (v2.1.1)
+
+An installation running `app.py` directly without `panel.env` needs the legacy adapter. Publish v2.1.1 first, then run:
+
+```bash
+wget -qO /tmp/beeny-update.sh https://raw.githubusercontent.com/Beni-SHL/beeny-panel/main/scripts/update_panel.sh && sudo bash /tmp/beeny-update.sh --github --legacy
+```
+
+This mode checks the original `nodes` table, admin password hash format, fixed panel port, CA layout, TCP VPN, tls-auth key and localhost management interface before making changes. It asks you to select the **existing local node ID**, enter that VPS’s public VPN hostname/IP, and indicate whether your current panel URL uses HTTPS. Select the local node, never a remote England node. It preserves the exact panel path (including `@`), ports, user IDs, remote node API keys, and node assignments. It links the existing tls-auth key to the canonical path; the key and server config are never rewritten and OpenVPN is not restarted. Status-version 1 logs are supported without changing VPN config.
+
+The adapter backs up the original SQLite database, service unit, config and selected node state privately, stops only the panel, prepares its environment, promotes the existing local node, and calls the normal updater. Both steps share an update lock. On failure, preparation restores the old local node key/service, removes the newly created environment/link, and restarts the old panel if it was previously running; the normal updater restores code and dependencies. Additive database tables remain. Fresh traffic baselines prevent currently connected users’ old bytes from being charged again. New per-server traffic history begins after the first successful snapshot; old unrecorded history cannot be reconstructed.
+
+Legacy admin usernames/password hashes are retained, but browser sessions expire because a new session secret is generated. Unknown installation layouts, unsupported password hashes, or conflicting TLS keys are rejected without attempting a fresh install. This adapter has automated migration/rollback tests; your VPS still needs an actual connectivity check after updating.
+
 ## Verify
 
 ```bash
