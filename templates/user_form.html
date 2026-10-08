@@ -22,6 +22,15 @@
         <div class="ac-field"><label for="status">Account status</label><select id="status" name="status"><option value="active" {% if mode == 'edit' and user.status == 'active' %}selected{% endif %}>Active</option><option value="disabled" {% if mode == 'edit' and user.status == 'disabled' %}selected{% endif %}>Disabled</option></select><small class="ac-hint">Activation requires available time and data.</small></div>
       </div>
     </section>
+    {% if mode == 'add' %}
+    <section class="ac-panel">
+      <h2>Customer page login</h2><p class="ac-panel-desc">Optional credentials for the private customer page. OpenVPN connects using the account certificate.</p>
+      <div class="ac-grid">
+        <div class="ac-field"><label for="portal_username">Customer login username</label><input id="portal_username" name="portal_username" minlength="3" maxlength="100" autocomplete="off" value="{{ request.form.get('portal_username', '') }}" placeholder="Leave blank to use the VPN username"></div>
+        <div class="ac-field"><label for="portal_password">Customer password</label><input id="portal_password" type="password" name="portal_password" minlength="12" maxlength="256" autocomplete="new-password" placeholder="Leave blank to configure later">{% include 'partials/password_controls.html' %}</div>
+      </div>
+    </section>
+    {% endif %}
     <section class="ac-panel">
       <h2>Data allowance</h2><p class="ac-panel-desc">Set a total allowance, or add data to an existing account.</p>
       <div class="ac-grid">
@@ -50,4 +59,5 @@
     <div class="ac-submitbar"><p class="ac-hint">Changes are applied when you save.</p><button class="ac-btn ac-btn-primary" type="submit">{{ 'Save changes' if mode == 'edit' else 'Create account' }} <span aria-hidden="true">→</span></button></div>
   </form>
 </main>
-{% endblock %}
+<script src="{{ url_for('static', filename='js/password-controls.js') }}" defer></script>
+<script src="{{ url_for('static',filename='js/share-access.js') }}" defer></script>{% endblock %}

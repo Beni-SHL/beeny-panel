@@ -13,6 +13,13 @@ namespace = {'os': os, 'socket': socket}
 exec(compile(ast.Module(body=[node], type_ignores=[]), '<access>', 'exec'), namespace)
 
 class AccessTests(unittest.TestCase):
+    def test_personal_pause_remains_blocked_during_admin_renewal(self):
+        user = types.SimpleNamespace(username='alice', status='active', customer_paused=True)
+        with patch('os.makedirs'), patch('builtins.open') as handle, patch('os.remove') as remove, patch('socket.create_connection', side_effect=OSError):
+            namespace['sync_primary_access'](user, True)
+        handle.assert_called_once_with('/etc/openvpn/ccd/alice', 'w')
+        remove.assert_not_called()
+
     def test_active_renewal_removes_local_deny_file(self):
         user = types.SimpleNamespace(username='alice', status='active')
         with patch('os.path.exists', return_value=True), patch('os.remove') as remove:

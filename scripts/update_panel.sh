@@ -24,14 +24,14 @@ if [[ "$MODE" == --legacy ]]; then
   exit
 fi
 [[ "$MODE" == '' || "$MODE" == --check || "$MODE" == --verify ]] || { echo 'Usage: sudo bash scripts/update_panel.sh [--github [--legacy]|--legacy|--check|--verify]' >&2; exit 2; }
-FILES=(app.py cluster.py renewal.py traffic_ledger.py serve.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-panel.service beeny-customer-worker.service scripts/create_vpn_user.sh scripts/check_users.py scripts/init_admin.py scripts/manage_user_config.py scripts/update_panel.sh scripts/upgrade_legacy.py)
+FILES=(app.py cluster.py renewal.py traffic_ledger.py serve.py experience.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-panel.service beeny-customer-worker.service scripts/create_vpn_user.sh scripts/check_users.py scripts/init_admin.py scripts/manage_user_config.py scripts/update_panel.sh scripts/upgrade_legacy.py scripts/configure_uploads.py)
 while IFS= read -r -d '' path; do FILES+=("${path#"$ROOT_DIR/"}"); done < <(find "$ROOT_DIR/templates" "$ROOT_DIR/static" -type f ! -name '*.pyc' -print0)
 for rel in "${FILES[@]}"; do [[ -f "$ROOT_DIR/$rel" ]] || { echo "Missing update source: $rel" >&2; exit 1; }; done
 [[ -f "$DEST/app.py" && -f "$DEST/config.json" && -f /etc/beeny-panel/panel.env && -f "$DEST/instance/beeny.db" && -d "$DEST/instance" && -x "$DEST/venv/bin/python" ]] || { echo 'Compatible installed panel not found at /opt/beeny-panel.' >&2; exit 1; }
 python3 - "$ROOT_DIR" "$DEST/config.json" <<'PY'
 import ast, json, pathlib, sys
 root = pathlib.Path(sys.argv[1])
-for name in ('app.py','customer_features.py','customer_worker.py','migrations.py','serve.py'):
+for name in ('app.py','experience.py','customer_features.py','customer_worker.py','migrations.py','serve.py'):
     ast.parse((root/name).read_text())
 config = json.loads(pathlib.Path(sys.argv[2]).read_text())
 assert 'panel_path' in config, 'Existing configuration is incompatible'
@@ -56,7 +56,7 @@ for attempt in range(10):
 with sqlite3.connect(f'file:{root/"instance/beeny.db"}?mode=ro',uri=True) as db:
     assert db.execute('PRAGMA quick_check').fetchone()[0]=='ok'
     tables={r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    assert {'customer_profiles','renewal_requests','telegram_accounts','customer_settings'}.issubset(tables)
+    assert {'customer_profiles','renewal_requests','telegram_accounts','customer_settings','account_notifications','admin_notification_reads'}.issubset(tables)
 print('Running login and database upgrade verified.')
 PY
 }
@@ -151,6 +151,7 @@ import datetime,json,pathlib,sys
 pathlib.Path(sys.argv[1]).write_text(json.dumps(dict(commit=sys.argv[2],updated_at=datetime.datetime.now(datetime.timezone.utc).isoformat())))
 PY
 trap - ERR INT TERM
+python3 "$DEST/scripts/configure_uploads.py" || echo 'Panel updated; configure Nginx upload limit 24M manually.' >&2
 printf 'Panel updated successfully. Backup: %s\n' "$backup"
 echo 'VPN certificates, user data, panel settings, avatars and receipts were preserved.'
 echo 'Next: set customer passwords and configure Customer & payments.'

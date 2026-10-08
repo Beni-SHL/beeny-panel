@@ -58,18 +58,18 @@
     document.getElementById('pay-price').textContent=new Intl.NumberFormat('fa-IR').format(Number(el.dataset.price))+' تومان';
   }));
   const copy=document.getElementById('copy-card');
-  copy.addEventListener('click',async()=>{
+  copy?.addEventListener('click',async()=>{
     try {await navigator.clipboard.writeText(copy.dataset.card);copy.textContent='کپی شد ✓';}
     catch(_){copy.textContent='شماره را انتخاب و کپی کنید';}
   });
   const file=document.getElementById('receipt-file');
   file.addEventListener('change',()=>{
     const chosen=file.files[0];if(!chosen)return;
-    if(chosen.size>5*1024*1024){file.value='';document.getElementById('receipt-label').textContent='حجم تصویر باید کمتر از ۵ مگابایت باشد';return;}
+    if(chosen.size>20*1024*1024){file.value='';document.getElementById('receipt-label').textContent='حجم تصویر باید حداکثر ۲۰ مگابایت باشد';return;}
     document.getElementById('receipt-label').textContent=chosen.name;
     const preview=document.getElementById('receipt-preview');const reader=new FileReader();
     reader.onload=()=>{preview.src=reader.result;preview.hidden=false;};reader.readAsDataURL(chosen);
   });
-  document.getElementById('avatar-file').addEventListener('change',function(){if(this.files[0]&&this.files[0].size<=5*1024*1024)this.form.requestSubmit();});
+  document.getElementById('avatar-file').addEventListener('change',function(){if(!this.files[0])return;if(this.files[0].size>20*1024*1024){this.value='';window.alert('حجم عکس پروفایل باید حداکثر ۲۰ مگابایت باشد.');return;}this.form.requestSubmit();});
   document.getElementById('renewal-form').addEventListener('submit',function(){const button=this.querySelector('[type=submit]');button.disabled=true;button.textContent='در حال ثبت درخواست…';});
 })();

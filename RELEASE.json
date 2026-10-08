@@ -1,0 +1,18 @@
+{
+  "version": "2.2.0",
+  "checks": [
+    "39 integration/unit tests",
+    "Database and health-failure rollback scenarios",
+    "Chromium desktop and mobile flows; no script errors"
+  ],
+  "features": [
+    "20 customer-selectable generated avatars",
+    "Customer/admin notifications and Telegram delivery",
+    "One-time renewal approval",
+    "Personal VPN pause",
+    "Multiple bank cards and discount badges",
+    "Continuous alphabetical account list",
+    "Single-copy access message"
+  ],
+  "live_server_tested": false
+}

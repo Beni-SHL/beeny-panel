@@ -133,8 +133,8 @@ class OpenVPNClientManager:
                 pass
 
             # اعمال وضعیت
-            if should_disable or user.status != "active":
-                if user.status != "expired":
+            if should_disable or user.status != "active" or getattr(user, "customer_paused", False):
+                if should_disable and user.status != "expired":
                     user.status = "expired"
                 self.disable_user(user.username)
             else:
@@ -161,7 +161,7 @@ def sync_user_openvpn_status(user):
     except:
         pass
 
-    if should_disable or user.status != "active":
+    if should_disable or user.status != "active" or getattr(user, "customer_paused", False):
         if user.status != "expired":
             user.status = "expired"
         manager.disable_user(user.username)
@@ -196,8 +196,8 @@ if __name__ == "__main__":
             except:
                 pass
 
-            if should_disable:
-                if user.status != "expired":
+            if should_disable or user.status != "active" or getattr(user, "customer_paused", False):
+                if should_disable and user.status != "expired":
                     user.status = "expired"
                 manager.disable_user(user.username)
                 print(f"🔴 {user.username}: DISABLED (traffic/expired)")

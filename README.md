@@ -1,3 +1,53 @@
+## Release 2.2.0 — customer experience
+
+- 20 original fluffy monster avatars; a stable random default, customer choice and private photo uploads (20 MiB).
+- Animated blue Telegram card, larger profile, a notification bell for customers and admins, low-data and low-time warnings, and smooth feedback dialogs.
+- Approve & renew applies the saved plan once: add days/data, set device allowance, preserve usage and personal pause, and notify the paired customer through the portal and Telegram.
+- Delete renewal requests and their receipt files. Notification delivery supports one primary and up to 10 additional admin chat IDs and retries only failed recipients.
+- Multiple payment cards in six colors with a swipeable selector; optional plan discount badges and original prices.
+- Customer pause enforces local/remote VPN access without overriding administrator restrictions. Failed node confirmations remain visible and are retried.
+- Searchable continuous account list, batches up to 200, alphabetical sorting, login password visibility, and one-copy customer access messages.
+
+### Upgrade an existing 2.1.x panel manually
+
+Upload the full release ZIP to `/root` using MobaXterm, then run:
+
+```bash
+unzip -q /root/beeny-panel-manual-update-2.2.0.zip -d /root/beeny-update-2.2.0
+cd /root/beeny-update-2.2.0
+sudo bash scripts/update_panel.sh --check
+sudo bash scripts/apply_experience_update.sh
+```
+
+The updater backs up code, database, environment and service files before switching. Accounts, node IDs/assignments, VPN certificates, admin/customer credentials, settings, uploads and traffic history are preserved. Failed health checks restore the prior application and Python environment. The existing panel URL is retained. Do not run the new-server installer on an existing server.
+
+### GitHub release and new installation
+
+Extract the GitHub-ready ZIP into your repository checkout, then run `git add -A`, `git commit -m "Release Beeny Panel 2.2.0"` and `git push origin main` on separate lines. After publishing, existing 2.1.x panels can use `sudo bash /opt/beeny-panel/scripts/update_panel.sh --github`.
+
+```bash
+git clone https://github.com/Beni-SHL/beeny-panel.git
+cd beeny-panel
+bash install.sh --check
+sudo bash install.sh
+```
+
+### Configure after updating
+
+In **Customer portal & payments**, save extra bank cards, colors, plan badges/original prices and numeric Telegram admin IDs. Every admin must start the bot. Customers connect from their private page. Notifications about renewals are sent to the currently linked Telegram account; invalidated bindings never receive them.
+
+To share account access in one message, save/generate a customer password and generate its private link in the **same browser tab within 10 minutes**. Copy the ready Persian message. Passwords are hashed on the server; the short-lived draft stays in browser session storage and can be cleared. Existing passwords cannot be retrieved.
+
+Personal pause does not freeze expiry time. An admin-disabled, expired or quota-blocked account cannot be reactivated by the customer. Remote enforcement needs the compatible agent endpoint `/api/node/set-user-state`; lack of confirmation is shown and retried. Renewal requests are approved only after independently verifying the bank transfer. Approvals add purchased GB to the limit, retain already consumed GB, and extend validity from the current expiry (or today when expired).
+
+## Release 2.1.2
+
+- Generate, show and copy secure 20-character customer portal passwords when creating accounts or configuring an existing customer login.
+- Photo and receipt uploads now accept up to 20 MiB (JPG, PNG, WebP; at most 40 million pixels). Photos are resized and metadata is removed before private storage.
+- Installer configures Nginx for 24 MiB request bodies. Updates adjust the Beeny site with a backup and restore it if Nginx validation or reload fails.
+- Telegram worker uses IPv4 by default. Set BEENY_WORKER_FORCE_IPV4=0 in panel.env if your network supports IPv6 and you want dual-stack HTTP connections.
+- Existing upgraded 2.1.x servers can apply the smaller package with `bash scripts/apply_account_photo_patch.sh`. Existing users, settings, passwords and VPN certificates are preserved.
+
 # Beeny Panel
 
 OpenVPN management panel for a **fresh Ubuntu 22.04 / 24.04 VPS**. The installer creates a new CA, VPN server, admin account, database, and service. Do not run it on a server containing a VPN or panel that must be preserved.

@@ -29,18 +29,18 @@ DEFAULT_PLANS = [
     dict(id='two', title='۲ ماهه', days=60, devices=1, quota=200, price=450000),
     dict(id='three', title='۳ ماهه', days=90, devices=1, quota=300, price=650000),
 ]
-MAX_UPLOAD = 5 * 1024 * 1024
+MAX_UPLOAD = 20 * 1024 * 1024
 FA_DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
 
 
 def clean_image(data, avatar=False):
     if not data or len(data) > MAX_UPLOAD:
-        raise ValueError('تصویر باید حداکثر ۵ مگابایت باشد.')
+        raise ValueError('تصویر باید حداکثر ۲۰ مگابایت باشد.')
     try:
         with warnings.catch_warnings():
             warnings.simplefilter('error', Image.DecompressionBombWarning)
             with Image.open(io.BytesIO(data)) as source:
-                if source.format not in {'JPEG', 'PNG', 'WEBP'} or source.width * source.height > 16000000:
+                if source.format not in {'JPEG', 'PNG', 'WEBP'} or source.width * source.height > 40000000:
                     raise ValueError('تصویر JPG، PNG یا WebP با ابعاد مناسب انتخاب کنید.')
                 source.load()
                 image = ImageOps.exif_transpose(source).convert('RGB')
@@ -70,6 +70,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         __tablename__ = 'customer_profiles'
         user_id = db.Column(db.Integer, primary_key=True)
         avatar = db.Column(db.String(80))
+        avatar_choice = db.Column(db.Integer, default=lambda: secrets.randbelow(20) + 1)
         login_username = db.Column(db.String(100))
         password_hash = db.Column(db.String(255))
         auth_version = db.Column(db.String(64))
@@ -96,6 +97,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         reviewed_at = db.Column(db.DateTime)
         email_state = db.Column(db.String(20), default='pending')
         telegram_state = db.Column(db.String(20), default='pending')
+        telegram_sent_ids = db.Column(db.Text, default='[]')
         attempts = db.Column(db.Integer, default=0)
         next_attempt = db.Column(db.DateTime, default=datetime.utcnow)
         __table_args__ = (db.Index('uq_pending_renewal_user', 'user_id', unique=True, sqlite_where=db.text("status = 'pending'")),)
@@ -130,13 +132,20 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
     def settings():
         raw = get_setting('plans')
         plans = json.loads(raw) if raw else [dict(plan) for plan in DEFAULT_PLANS]
+        cards = json.loads(get_setting('bank_cards', '[]'))
+        if not cards and get_setting('card_number'):
+            cards = [dict(id='primary', bank=get_setting('bank_name'), number=get_setting('card_number'), holder=get_setting('card_holder'), color='violet')]
         return dict(bank_name=get_setting('bank_name'), card_number=get_setting('card_number'),
                     card_holder=get_setting('card_holder'), admin_phone=get_setting('admin_phone'),
                     admin_telegram=get_setting('admin_telegram'), admin_email=get_setting('admin_email'),
                     bot_username=get_setting('bot_username'), admin_chat_id=get_setting('admin_chat_id'),
                     smtp_host=get_setting('smtp_host'), smtp_port=get_setting('smtp_port', '465'),
                     smtp_security=get_setting('smtp_security', 'ssl'), smtp_user=get_setting('smtp_user'),
-                    smtp_from=get_setting('smtp_from'), plans=plans)
+                    smtp_from=get_setting('smtp_from'), plans=plans, bank_cards=cards,
+                    card_color=get_setting('card_color', 'violet'), admin_chat_ids=get_setting('admin_chat_ids'))
+
+    def admin_recipients(cfg):
+        return list(dict.fromkeys(value for value in [cfg['admin_chat_id']]+cfg['admin_chat_ids'].split(',') if value))
 
     def read_secrets():
         try:
@@ -225,14 +234,20 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             handle.write(cleaned)
         return name
 
-    def create_request(user, plan_id, receipt_data, name='', contact='', note='', source='web'):
+    def create_request(user, plan_id, receipt_data, name='', contact='', note='', source='web', card_id=None):
         cfg = settings()
         plan = next((p for p in cfg['plans'] if p['id'] == plan_id), None)
         if not plan:
             raise ValueError('سرویس انتخاب‌شده معتبر نیست.')
+        plan = dict(plan)
+        if card_id:
+            card = next((c for c in cfg['bank_cards'] if c['id'] == card_id), None)
+            if not card:
+                raise ValueError('کارت بانکی انتخاب‌شده معتبر نیست.')
+            plan['payment_card'] = dict(card)
         if len(cfg['card_number']) != 16 or not cfg['card_holder'] or not cfg['bank_name']:
             raise ValueError('اطلاعات پرداخت هنوز توسط مدیر ثبت نشده است.')
-        if not cfg['admin_email'] and not cfg['admin_chat_id']:
+        if not cfg['admin_email'] and not admin_recipients(cfg):
             raise ValueError('دریافت درخواست‌ها هنوز توسط مدیر فعال نشده است.')
         if RenewalRequest.query.filter_by(user_id=user.id, status='pending').first():
             raise ValueError('یک درخواست در انتظار بررسی دارید؛ ابتدا با مدیر پیگیری کنید.')
@@ -270,7 +285,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
 
     @app.before_request
     def customer_login_gate():
-        if request.endpoint not in {'customer_portal', 'customer_config', 'avatar', 'upload_avatar', 'submit_renewal', 'pair_telegram', 'customer_sessions', 'customer_disconnect'}:
+        if request.endpoint not in {'customer_portal', 'customer_config', 'avatar', 'upload_avatar', 'select_avatar', 'submit_renewal', 'pair_telegram', 'customer_sessions', 'customer_disconnect', 'customer_notifications', 'customer_notifications_read', 'customer_pause'}:
             return
         token = (request.view_args or {}).get('token', '')
         user = resolve_account(token)
@@ -343,6 +358,8 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         profile.auth_version = secrets.token_hex(24)
         TelegramAccount.query.filter_by(user_id=user.id).delete()
         TelegramPair.query.filter_by(user_id=user.id).delete()
+        from app import experience
+        experience.notify(user.id, 'مشخصات ورود به‌روز شد', 'مدیر مشخصات ورود صفحه شخصی را تغییر داد؛ نشست‌های قبلی و اتصال قدیمی ربات لغو شدند.')
         db.session.commit()
         flash('Customer login saved. Previous customer sessions and bot bindings have been revoked.', 'success')
         return redirect(base+'/users/view/'+str(user_id))
@@ -355,10 +372,14 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
     def fromjson(value):
         return json.loads(value)
 
+    @app.template_filter('cardgroups')
+    def cardgroups(value):
+        return ' '.join(value[index:index+4] for index in range(0, len(value), 4))
+
     @app.before_request
     def upload_limit():
         if request.endpoint in {'upload_avatar', 'submit_renewal'}:
-            request.max_content_length = 6 * 1024 * 1024
+            request.max_content_length = MAX_UPLOAD + 1024 * 1024
 
     @app.context_processor
     def customer_context():
@@ -368,12 +389,15 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         cfg = settings()
         nodes = [db.session.get(Node, rel.node_id) for rel in UserNode.query.filter_by(user_id=user.id).all()]
         profile = db.session.get(CustomerProfile, user.id)
+        if profile and not profile.avatar_choice:
+            profile.avatar_choice = secrets.randbelow(20) + 1
+            db.session.commit()
         renewals = RenewalRequest.query.filter_by(user_id=user.id).order_by(RenewalRequest.id.desc()).limit(5).all()
         return render_template('customer_portal.html', user=user, token=token, panel_path=panel_path,
                 portal_base=base+'/c/'+token, nodes=[n for n in nodes if n], data=account_data(user),
                 profile=profile, customer_settings=cfg, renewals=renewals,
                 payment_ready=len(cfg['card_number']) == 16 and bool(cfg['card_holder'] and cfg['bank_name'])
-                              and bool(cfg['admin_email'] or cfg['admin_chat_id']),
+                              and bool(cfg['admin_email'] or admin_recipients(cfg)),
                 has_pending=any(r.status == 'pending' for r in renewals))
 
     def session_target(node, username, disconnect=None):
@@ -500,6 +524,23 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             abort(404)
         return private_image(row.avatar)
 
+    @app.post(base+'/c/<token>/avatar/select')
+    def select_avatar(token):
+        user = resolve_account(token)
+        verify_csrf()
+        choice = request.form.get('avatar_choice', '')
+        if not re.fullmatch(r'[0-9]{1,2}', choice) or not 1 <= int(choice) <= 20:
+            abort(400)
+        row = db.session.get(CustomerProfile, user.id)
+        old = row.avatar
+        row.avatar = None
+        row.avatar_choice = int(choice)
+        db.session.commit()
+        if old:
+            (storage / old).unlink(missing_ok=True)
+        flash('آواتار دلخواه شما ذخیره شد.', 'success')
+        return redirect(base+'/c/'+token+'#profile')
+
     def private_image(filename):
         response = send_file(storage / filename, mimetype='image/jpeg')
         response.headers['Cache-Control'] = 'no-store'
@@ -518,7 +559,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             if not name or not contact or not receipt:
                 raise ValueError('نام، راه ارتباطی و تصویر رسید را کامل کنید.')
             row = create_request(user, request.form.get('plan_id'), receipt.stream.read(MAX_UPLOAD+1),
-                                 name, contact, request.form.get('note', ''))
+                                 name, contact, request.form.get('note', ''), card_id=request.form.get('card_id'))
             flash(f'درخواست شماره {row.id} ثبت شد؛ پس از تأیید واریز توسط مدیر تمدید می‌شود.', 'success')
         except ValueError as exc:
             flash(str(exc), 'error')
@@ -546,7 +587,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         if request.method == 'POST':
             verify_csrf()
             try:
-                values = {key: request.form.get(key, '').strip() for key in cfg if key != 'plans'}
+                values = {key: request.form.get(key, '').strip() for key in cfg if key not in {'plans','bank_cards','admin_chat_ids'}}
                 for key, value in values.items():
                     if len(value) > 255 or '\n' in value or '\r' in value:
                         raise ValueError('Invalid settings value.')
@@ -561,6 +602,41 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                     raise ValueError('Enter a valid support phone number.')
                 if values['admin_chat_id'] and not re.fullmatch(r'-?\d{1,20}', values['admin_chat_id']):
                     raise ValueError('Use the numeric Telegram chat ID, not the username.')
+                recipients = list(dict.fromkeys(re.split(r'[\s,;]+', request.form.get('admin_chat_ids', '').strip())))
+                recipients = [value for value in recipients if value]
+                if len(recipients) > 10 or any(not re.fullmatch(r'-?\d{1,20}', value) for value in recipients):
+                    raise ValueError('Enter up to 10 numeric Telegram chat IDs, separated by commas.')
+                values['admin_chat_ids'] = ','.join(recipients)
+                colors = {'violet','blue','emerald','sunset','rose','midnight'}
+                if values['card_color'] not in colors:
+                    values['card_color'] = 'violet'
+                cards = []
+                if values['card_number']:
+                    if not values['bank_name'] or not values['card_holder']:
+                        raise ValueError('Bank name and card holder are required.')
+                    cards.append(dict(id='primary', bank=values['bank_name'], number=values['card_number'], holder=values['card_holder'], color=values['card_color']))
+                extra_numbers = request.form.getlist('extra_card_number')
+                extra_banks = request.form.getlist('extra_bank_name')
+                extra_holders = request.form.getlist('extra_card_holder')
+                extra_colors = request.form.getlist('extra_card_color')
+                if len(extra_numbers) > 7 or not len(extra_numbers) == len(extra_banks) == len(extra_holders) == len(extra_colors):
+                    raise ValueError('Add at most 7 additional bank cards.')
+                for i, number in enumerate(extra_numbers):
+                    number = re.sub(r'[\s-]', '', number.translate(FA_DIGITS))
+                    if not number:
+                        if extra_banks[i].strip() or extra_holders[i].strip():
+                            raise ValueError('Complete the number of every added card, or remove the card.')
+                        continue
+                    if not re.fullmatch(r'\d{16}', number) or not extra_banks[i].strip() or not extra_holders[i].strip() or extra_colors[i] not in colors:
+                        raise ValueError('Complete every added card and use a 16 digit number.')
+                    if any(len(value) > 100 or '\n' in value or '\r' in value for value in (extra_banks[i], extra_holders[i])):
+                        raise ValueError('Invalid bank card details.')
+                    cards.append(dict(id='extra-'+str(i), bank=extra_banks[i].strip(), number=number, holder=extra_holders[i].strip(), color=extra_colors[i]))
+                values['bank_cards'] = json.dumps(cards, ensure_ascii=False)
+                if cards and not values['card_number']:
+                    values.update(bank_name=cards[0]['bank'], card_number=cards[0]['number'], card_holder=cards[0]['holder'], card_color=cards[0]['color'])
+                    cards[0]['id'] = 'primary'
+                    values['bank_cards'] = json.dumps(cards, ensure_ascii=False)
                 for key in ('admin_email', 'smtp_from'):
                     if values[key] and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', values[key]):
                         raise ValueError('Enter a valid email address.')
@@ -581,6 +657,11 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                         if not value.isdigit() or not 1 <= int(value) <= upper:
                             raise ValueError('Plan days, devices, fair-use quota and price must be positive integers.')
                         plan[key] = int(value)
+                    plan['badge'] = request.form.get(prefix+'badge', '').strip()[:40]
+                    original = request.form.get(prefix+'original_price', '').strip().translate(FA_DIGITS)
+                    if original and (not original.isdigit() or not plan['price'] <= int(original) <= 1000000000):
+                        raise ValueError('Original price must be at least the current price.')
+                    plan['original_price'] = int(original) if original else 0
                     plans.append(plan)
                 secrets_cfg = read_secrets()
                 bot_secret = request.form.get('bot_token', '').strip()
@@ -650,11 +731,20 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             for channel in ('email', 'telegram'):
                 if getattr(row, channel+'_state') != 'sent':
                     setattr(row, channel+'_state', 'pending')
+        elif action == 'completed':
+            from app import experience
+            failures = experience.approve_renewal(row)
+            flash('Account renewed. Node confirmation pending: '+', '.join(failures) if failures else 'Account renewed and request completed.', 'warning' if failures else 'success')
+            return redirect(base+'/renewals?status=all')
         else:
+            if row.status != 'pending':
+                abort(409, 'This request has already been reviewed.')
             row.status = action
             row.reviewed_at = datetime.utcnow()
+            from app import experience
+            experience.notify(row.user_id, 'درخواست تمدید رد شد', f'درخواست #{row.id} تأیید نشد؛ برای پیگیری با مدیر تماس بگیرید.')
         db.session.commit()
-        flash('Request updated. Account renewal is applied from Edit account.', 'success')
+        flash('Request updated.', 'success')
         return redirect(base+'/renewals?status=all')
 
     def telegram(method, payload=None, files=None):
@@ -672,7 +762,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         return (f'درخواست تمدید #{row.id}\nکاربر: {row.username}\nسرویس: {plan["title"]}\n'
                 f'مبلغ: {plan["price"]:,} تومان\nروز: {plan["days"]} | دستگاه: {plan["devices"]} | حد مصرف: {plan["quota"]} GB\n'
                 f'نام: {row.name}\nتماس: {row.contact}\nتوضیح: {row.note}\nمنبع: {row.source}\n'
-                'رسید نیاز به تأیید مدیر دارد؛ تمدید حساب از صفحه Edit account انجام می‌شود.')
+                'رسید نیاز به تأیید مدیر دارد؛ تأیید و تمدید از صندوق درخواست‌ها انجام می‌شود.')
 
     def deliver_notifications():
         cfg = settings()
@@ -696,11 +786,25 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                     continue
                 try:
                     if channel == 'telegram':
-                        if not cfg['admin_chat_id'] or not read_secrets().get('bot_token'):
+                        recipients = admin_recipients(cfg)
+                        if not recipients or not read_secrets().get('bot_token'):
                             setattr(row, channel+'_state', 'unconfigured')
                             continue
-                        telegram('sendDocument', dict(chat_id=cfg['admin_chat_id'], caption=message[:1024]),
-                                 files={'document': ('receipt-'+str(row.id)+'.jpg', attachment, 'image/jpeg')})
+                        delivered = json.loads(row.telegram_sent_ids or '[]')
+                        failures = False
+                        for recipient in recipients:
+                            if recipient in delivered:
+                                continue
+                            try:
+                                telegram('sendDocument', dict(chat_id=recipient, caption=message[:1024]),
+                                         files={'document': ('receipt-'+str(row.id)+'.jpg', attachment, 'image/jpeg')})
+                                delivered.append(recipient)
+                                row.telegram_sent_ids = json.dumps(delivered)
+                                db.session.commit()
+                            except Exception:
+                                failures = True
+                        if failures:
+                            raise RuntimeError('One or more Telegram deliveries failed.')
                     else:
                         if not cfg['admin_email'] or not cfg['smtp_host'] or not cfg['smtp_from']:
                             setattr(row, channel+'_state', 'unconfigured')
@@ -750,6 +854,11 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             db.session.commit()
             return None, None
         return user, binding
+
+    def is_linked(user_id):
+        binding = TelegramAccount.query.filter_by(user_id=user_id).first()
+        link = db.session.get(AccountLink, user_id)
+        return bool(binding and link and hmac.compare_digest(binding.link_hash, link.token_hash))
 
     def process_update(event):
         message = event.get('message') or {}
@@ -830,7 +939,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             try:
                 photo = message['photo'][-1]
                 if photo.get('file_size', 0) > MAX_UPLOAD:
-                    raise ValueError('رسید باید حداکثر ۵ مگابایت باشد.')
+                    raise ValueError('رسید باید حداکثر ۲۰ مگابایت باشد.')
                 info = telegram('getFile', dict(file_id=photo['file_id']))
                 file_path = info['file_path']
                 if not re.fullmatch(r'[A-Za-z0-9_./-]+', file_path) or '..' in file_path:
@@ -843,7 +952,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                     for chunk in response.iter_content(65536):
                         content.extend(chunk)
                         if len(content) > MAX_UPLOAD:
-                            raise ValueError('رسید باید حداکثر ۵ مگابایت باشد.')
+                            raise ValueError('رسید باید حداکثر ۲۰ مگابایت باشد.')
                 row = create_request(user, binding.selected_plan, bytes(content),
                           message['from'].get('first_name', ''), 'Telegram chat '+str(chat),
                           message.get('caption', ''), source='telegram')
@@ -884,6 +993,8 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         profile = db.session.get(CustomerProfile, user_id)
         if profile and profile.avatar:
             (storage / profile.avatar).unlink(missing_ok=True)
+        from app import experience
+        experience.Notification.query.filter_by(user_id=user_id).delete()
         CustomerProfile.query.filter_by(user_id=user_id).delete()
         TelegramAccount.query.filter_by(user_id=user_id).delete()
         TelegramPair.query.filter_by(user_id=user_id).delete()
@@ -895,4 +1006,5 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             deliver_notifications=deliver_notifications, poll_bot=poll_bot, process_update=process_update,
             settings=settings, set_setting=set_setting, save_secrets=save_secrets, create_request=create_request,
             RenewalRequest=RenewalRequest, CustomerSetting=CustomerSetting, CustomerProfile=CustomerProfile,
+            get_setting=get_setting, telegram=telegram, bound_user=bound_user, storage=storage, resolve_account=resolve_account, is_linked=is_linked,
             TelegramPair=TelegramPair, TelegramAccount=TelegramAccount, account_data=account_data, CustomerLoginAttempt=CustomerLoginAttempt)

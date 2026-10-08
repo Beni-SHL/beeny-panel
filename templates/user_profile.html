@@ -46,7 +46,7 @@
         <form method="post" action="{{ customer_base }}/users/view/{{ user.id }}/portal-access" class="ac-profile-form">
           <input type="hidden" name="csrf" value="{{ customer_csrf() }}">
           <div class="ac-field"><label for="portal_username">Customer login username</label><input id="portal_username" name="portal_username" value="{{ access.username or user.username }}" minlength="3" maxlength="100" autocomplete="off" required></div>
-          <div class="ac-field"><label for="portal_password">New customer password</label><input id="portal_password" type="password" name="portal_password" minlength="12" maxlength="256" autocomplete="new-password" required placeholder="At least 12 characters"></div>
+          <div class="ac-field"><label for="portal_password">New customer password</label><input id="portal_password" type="password" name="portal_password" minlength="12" maxlength="256" autocomplete="new-password" required placeholder="At least 12 characters">{% include 'partials/password_controls.html' %}</div>
           <button class="ac-btn ac-btn-primary" type="submit">Save customer credentials</button>
         </form>
       </section>
@@ -54,7 +54,7 @@
         {% if portal_url %}<div class="ac-field"><label for="customer_link">Share this link now</label><input id="customer_link" readonly value="{{ portal_url }}" onclick="this.select()"></div><a class="ac-btn" href="{{ portal_url }}" target="_blank" rel="noreferrer">Preview customer page</a>{% elif portal_exists %}<p class="ac-hint">A link is active. Generate a new one to copy it again.</p>{% endif %}
         <form method="post" action="{{ panel_path }}/users/view/{{ user.id }}/portal"><input type="hidden" name="csrf" value="{{ customer_csrf() }}"><button class="ac-btn ac-btn-primary" type="submit">{{ 'Regenerate private link' if portal_exists else 'Create private link' }}</button></form>
       </section>
-      <section class="ac-panel"><h2>VPN configuration</h2><p class="ac-panel-desc">Choose the combined profile or download one of this account's allowed nodes.</p>
+      <section class="ac-panel" data-share-user="{{ user.username }}"><h2>Share access in one message</h2><p class="ac-panel-desc">New passwords are held temporarily in this tab for up to 10 minutes. After generating the link, copy this ready-to-send Persian message.</p><textarea readonly class="share-message" aria-label="Complete customer access message"></textarea><div class="share-actions"><button type="button" class="ac-btn ac-btn-primary" data-share-copy>Copy complete message</button><button type="button" class="ac-btn" data-share-clear>Clear private draft</button></div><p class="ac-hint" data-share-status></p></section><section class="ac-panel"><h2>VPN configuration</h2><p class="ac-panel-desc">Choose the combined profile or download one of this account's allowed nodes.</p>
         <div class="ac-stack">{% if assigned_nodes|length > 1 %}<a class="ac-btn ac-btn-primary" href="{{ panel_path }}/users/download/{{ user.username|urlencode }}">Download multi-location .ovpn</a>{% endif %}
           {% for node in assigned_nodes %}<a class="ac-btn {{ 'ac-btn-primary' if assigned_nodes|length == 1 else '' }}" href="{{ panel_path }}/users/download/{{ user.username|urlencode }}?node_id={{ node.id }}">{{ node.name }} · Download .ovpn</a>{% endfor %}
           {% if not assigned_nodes %}<p class="ac-hint">No node is assigned to this account. Select a node in Edit account.</p>{% endif %}
@@ -66,4 +66,5 @@
     </aside>
   </div>
 </main>
-{% endblock %}
+<script src="{{ url_for('static', filename='js/password-controls.js') }}" defer></script>
+<script src="{{ url_for('static',filename='js/share-access.js') }}" defer></script>{% endblock %}

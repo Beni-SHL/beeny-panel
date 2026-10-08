@@ -76,6 +76,9 @@ class User(db.Model):
     current_devices = db.Column(db.Integer, default=0)
     expire_date = db.Column(db.String(20))
     status = db.Column(db.String(20), default="active")
+    customer_paused = db.Column(db.Boolean, default=False, nullable=False)
+    pause_sync_pending = db.Column(db.Boolean, default=False, nullable=False)
+    notification_revision = db.Column(db.Integer, default=0, nullable=False)
     online = db.Column(db.Boolean, default=False)
     online_status = db.Column(db.String(20), default="offline")
     traffic_limit = db.Column(db.Integer, default=10)
@@ -184,7 +187,7 @@ def ensure_primary_node():
 def sync_primary_access(user, primary_selected):
     """Apply the local node selection using OpenVPN's per-client CCD."""
     ccd_file = f"/etc/openvpn/ccd/{user.username}"
-    if user.status != "active" or not primary_selected:
+    if user.status != "active" or getattr(user, 'customer_paused', False) or not primary_selected:
         os.makedirs("/etc/openvpn/ccd", exist_ok=True)
         with open(ccd_file, "w") as handle:
             handle.write("disable\n")
@@ -481,6 +484,13 @@ def add_user():
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="Only OpenVPN is supported by this installation."), 400
 
+    portal_password = request.form.get("portal_password", "")
+    portal_username = request.form.get("portal_username", "").strip() or request.form["username"]
+    if portal_password and (not 12 <= len(portal_password) <= 256 or
+                            not re.fullmatch(r"[A-Za-z0-9_.-]{3,100}", portal_username)):
+        return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
+                               error="Customer login needs a 3+ character username and a 12+ character password."), 400
+
     expire_days = request.form.get("expire_days", "").strip()
     if expire_days and (not expire_days.isdigit() or not 1 <= int(expire_days) <= 3650):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
@@ -533,6 +543,12 @@ def add_user():
 
     db.session.add(user)
     db.session.flush()
+
+    if portal_password:
+        profile = customer_features.CustomerProfile(
+            user_id=user.id, login_username=portal_username,
+            password_hash=generate_password_hash(portal_password), auth_version=secrets.token_hex(24))
+        db.session.add(profile)
 
     for node_id in selected_ids:
         db.session.add(UserNode(user_id=user.id, node_id=node_id))
@@ -674,11 +690,15 @@ def edit_user(user_id):
     for nid in new_node_ids:
         node = Node.query.get(nid)
         if node and not is_primary_node(node):
-            synced, reason = set_user_state_on_node(node, user.username, user.status == 'active')
+            synced, reason = set_user_state_on_node(node, user.username, user.status == 'active' and not user.customer_paused)
             if not synced:
                 node_sync_failed = True
                 app.logger.error('Node status sync failed for %s on %s: %s', user.username, node.name, reason)
     base = PANEL_PATH.rstrip('/')
+    db.session.refresh(user)
+    sync_primary_access(user, primary_id in new_node_ids)
+    user.pause_sync_pending = node_sync_failed
+    db.session.commit()
     return redirect(f"{base}/users/view/{user.id}?notice=updated" + ('&sync_warning=1' if node_sync_failed else ''))
 
 @app.route(f"{PANEL_PATH}/users/delete/<int:user_id>" if PANEL_PATH != '/' else "/users/delete/<int:user_id>")
@@ -917,7 +937,8 @@ def api_users_search():
     sort_by = request.args.get('sort', 'newest').strip()
 
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = max(1, min(200, request.args.get('per_page', 100, type=int)))
+    page = max(1, page)
 
     query = User.query
 
@@ -928,6 +949,8 @@ def api_users_search():
     if sort_by == 'traffic_desc': query = query.order_by(User.traffic_usage.desc())
     elif sort_by == 'traffic_asc': query = query.order_by(User.traffic_usage.asc())
     elif sort_by == 'oldest': query = query.order_by(User.id.asc())
+    elif sort_by == 'name_asc': query = query.order_by(db.func.lower(User.username).asc(), User.id.asc())
+    elif sort_by == 'name_desc': query = query.order_by(db.func.lower(User.username).desc(), User.id.asc())
     else: query = query.order_by(User.id.desc())
 
     paginated = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -952,7 +975,7 @@ def api_users_search():
 
         users_data.append({
             'id': u.id, 'username': u.username, 'protocol': u.protocol, 'status': u.status,
-            'online_status': u.online_status, 'current_devices': u.current_devices, 'max_devices': u.max_devices,
+            'customer_paused': bool(u.customer_paused), 'online_status': u.online_status, 'current_devices': u.current_devices, 'max_devices': u.max_devices,
             'expire_days_val': u.expire_date if (u.expire_date and u.expire_date.isdigit()) else '',
             'days_left_text': days_left_text, 'traffic_usage': round(u.traffic_usage or 0, 1), 'traffic_limit': u.traffic_limit or 0,
             'traffic_percent': round(((u.traffic_usage or 0) / u.traffic_limit * 100), 1) if u.traffic_limit and u.traffic_limit > 0 else 0,
@@ -1532,6 +1555,9 @@ def openvpn_info():
 from customer_features import register as register_customer_features
 customer_features = register_customer_features(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode,
                                               account_from_token, build_config, PANEL_PATH, is_primary_node)
+from experience import register as register_experience
+experience = register_experience(app, db, User, Node, UserNode, customer_features, PANEL_PATH, is_primary_node)
+
 
 if __name__ == "__main__":
     with app.app_context():

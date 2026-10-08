@@ -286,7 +286,7 @@
 <div class="content">
     <div class="glass-navbar">
         <span class="nav-title"><img src="{{ url_for('static', filename='beeny-mark.svg') }}" alt=""> <span>BEENY <b>PANEL</b></span></span>
-        <button id="themeToggle" class="glass-btn">
+        {% with notification_url=customer_base+'/notifications', notification_locale='en' %}{% include 'partials/notification_bell.html' %}{% endwith %}<button id="themeToggle" class="glass-btn">
             <i class="fa fa-moon"></i>
         </button>
     </div>
@@ -345,7 +345,7 @@
     });
 </script>
 
-<script type="module" src="{{ url_for('static', filename='js/index-CmGPzBYL.js') }}?v=6"></script>
+<script src="{{ url_for('static', filename='js/ambient.js') }}" defer></script>
 
-<script src="{{ url_for('static',filename='js/flags.js') }}"></script></body>
+<script src="{{ url_for('static',filename='js/flags.js') }}"></script><link rel="stylesheet" href="{{ url_for('static',filename='css/experience.css') }}"><script src="{{ url_for('static',filename='js/experience.js') }}" defer></script></body>
 </html>
