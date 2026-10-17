@@ -1,3 +1,4 @@
+from pricing import quote, DEFAULT_PRICING
 """Customer workspace, private uploads, renewal inbox and Telegram workflow."""
 import hashlib
 import hmac
@@ -6,6 +7,7 @@ import json
 import os
 import re
 import secrets
+import time
 import smtplib
 import ssl
 import warnings
@@ -16,8 +18,8 @@ from types import SimpleNamespace
 from urllib.parse import urlsplit
 
 import requests
-from flask import abort, flash, redirect, render_template, request, send_file, session, url_for
-from flask_login import login_required
+from flask import abort, flash, redirect, render_template, request, send_file, session, url_for, jsonify
+from flask_login import login_required,current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer, BadSignature
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -33,7 +35,7 @@ MAX_UPLOAD = 20 * 1024 * 1024
 FA_DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
 
 
-def clean_image(data, avatar=False):
+def clean_image(data, avatar=False, cover=False):
     if not data or len(data) > MAX_UPLOAD:
         raise ValueError('تصویر باید حداکثر ۲۰ مگابایت باشد.')
     try:
@@ -44,12 +46,19 @@ def clean_image(data, avatar=False):
                     raise ValueError('تصویر JPG، PNG یا WebP با ابعاد مناسب انتخاب کنید.')
                 source.load()
                 image = ImageOps.exif_transpose(source).convert('RGB')
-                if avatar:
+                if cover:
+                    image = ImageOps.pad(image,(1280,720),method=Image.Resampling.LANCZOS,color='#101827')
+                elif avatar:
                     image = ImageOps.fit(image, (320, 320))
                 else:
                     image.thumbnail((1800, 1800))
                 output = io.BytesIO()
-                image.save(output, 'JPEG', quality=88)
+                if cover:
+                    image.save(output,'WEBP',quality=82,method=6)
+                elif avatar:
+                    image.save(output, 'WEBP', quality=72, method=6)
+                else:
+                    image.save(output, 'JPEG', quality=88)
                 return output.getvalue()
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning) as exc:
         raise ValueError('فایل تصویر قابل خواندن نیست.') from exc
@@ -70,7 +79,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         __tablename__ = 'customer_profiles'
         user_id = db.Column(db.Integer, primary_key=True)
         avatar = db.Column(db.String(80))
-        avatar_choice = db.Column(db.Integer, default=lambda: secrets.randbelow(20) + 1)
+        avatar_choice = db.Column(db.Integer, default=lambda: secrets.randbelow(29) + 1)
         login_username = db.Column(db.String(100))
         password_hash = db.Column(db.String(255))
         auth_version = db.Column(db.String(64))
@@ -83,6 +92,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
 
     class RenewalRequest(db.Model):
         __tablename__ = 'renewal_requests'
+        billing_reference=db.Column(db.String(64),default=lambda:secrets.token_hex(16))
         id = db.Column(db.Integer, primary_key=True)
         user_id = db.Column(db.Integer, nullable=False, index=True)
         username = db.Column(db.String(100), nullable=False)
@@ -101,6 +111,21 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         attempts = db.Column(db.Integer, default=0)
         next_attempt = db.Column(db.DateTime, default=datetime.utcnow)
         __table_args__ = (db.Index('uq_pending_renewal_user', 'user_id', unique=True, sqlite_where=db.text("status = 'pending'")),)
+
+    class ReceiptGrant(db.Model):
+        __tablename__ = 'receipt_grants'
+        request_id = db.Column(db.Integer, primary_key=True)
+        user_id = db.Column(db.Integer, nullable=False, index=True)
+        base_limit = db.Column(db.Integer)
+        base_expiry = db.Column(db.String(20))
+        applied_limit = db.Column(db.Integer, nullable=False)
+        applied_expiry = db.Column(db.String(20))
+        start_usage = db.Column(db.Float, nullable=False)
+        temporary_only = db.Column(db.Boolean, default=False, nullable=False)
+        active = db.Column(db.Boolean, default=True, nullable=False)
+        state = db.Column(db.String(20), default='pending', nullable=False)
+        created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+        expires_at = db.Column(db.DateTime, nullable=False)
 
     class TelegramPair(db.Model):
         __tablename__ = 'telegram_pairs'
@@ -132,6 +157,10 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
     def settings():
         raw = get_setting('plans')
         plans = json.loads(raw) if raw else [dict(plan) for plan in DEFAULT_PLANS]
+        for plan in plans:
+            plan.setdefault('quota_mode','metered')
+            plan.setdefault('throttle_down_kbps',2000)
+            plan.setdefault('throttle_up_kbps',2000)
         cards = json.loads(get_setting('bank_cards', '[]'))
         if not cards and get_setting('card_number'):
             cards = [dict(id='primary', bank=get_setting('bank_name'), number=get_setting('card_number'), holder=get_setting('card_holder'), color='violet')]
@@ -142,7 +171,8 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                     smtp_host=get_setting('smtp_host'), smtp_port=get_setting('smtp_port', '465'),
                     smtp_security=get_setting('smtp_security', 'ssl'), smtp_user=get_setting('smtp_user'),
                     smtp_from=get_setting('smtp_from'), plans=plans, bank_cards=cards,
-                    card_color=get_setting('card_color', 'violet'), admin_chat_ids=get_setting('admin_chat_ids'))
+                    coupons_enabled=get_setting('coupons_enabled','1')=='1', card_color=get_setting('card_color', 'violet'), admin_chat_ids=get_setting('admin_chat_ids'),
+                    custom_pricing=json.loads(get_setting('custom_pricing', json.dumps(DEFAULT_PRICING))))
 
     def admin_recipients(cfg):
         return list(dict.fromkeys(value for value in [cfg['admin_chat_id']]+cfg['admin_chat_ids'].split(',') if value))
@@ -225,21 +255,116 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                     today=round(measured.get(today.isoformat(), 0), 3),
                     month=round(sum(measured.values()), 3), days_left=days_left, expiry_text=expiry_text)
 
-    def store_image(data, avatar=False):
-        cleaned = clean_image(data, avatar)
+    def store_image(data, avatar=False, cover=False):
+        cleaned = clean_image(data, avatar, cover)
         storage.mkdir(parents=True, exist_ok=True, mode=0o700)
-        name = secrets.token_hex(24) + '.jpg'
+        name = secrets.token_hex(24) + ('.webp' if avatar or cover else '.jpg')
         fd = os.open(storage / name, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         with os.fdopen(fd, 'wb') as handle:
             handle.write(cleaned)
         return name
 
-    def create_request(user, plan_id, receipt_data, name='', contact='', note='', source='web', card_id=None):
+    @app.template_filter('usage_size')
+    def usage_size(gb):
+        gb=float(gb or 0)
+        return (f'{gb*1024:,.1f} MB' if gb<1 else f'{gb:,.2f} GB')
+
+    def start_receipt_grant(user, row):
+        # Legacy disable causes are ambiguous; only a new automatic expiry/quota
+        # block may be temporarily lifted. Manager-disabled accounts stay blocked.
+        if row.source not in {'web','portal','telegram'} or not (user.status=='active' or (user.status=='disabled' and getattr(user,'disable_reason','legacy')=='automatic')) or user.customer_paused:
+            return None
+        if ReceiptGrant.query.filter(ReceiptGrant.user_id==user.id,ReceiptGrant.created_at>=datetime.utcnow()-timedelta(days=30)).first():
+            return None
+        from datetime import date
+        import math
+        expiry=user.expire_date
+        expired=False
+        if expiry and expiry not in {'-',''}:
+            if expiry.isdigit():expired=int(expiry)<1
+            else:
+                try: expired=date.fromisoformat(expiry)<datetime.utcnow().date()
+                except ValueError: return None
+        usage=float(user.traffic_usage or 0);limit=int(user.traffic_limit or 0)
+        if not limit and not expired:
+            return None  # Never cap an already unlimited active account.
+        temporary=expired or (limit>0 and usage>=limit)
+        if user.status=='disabled' and not temporary:return None
+        new_limit=math.ceil(usage)+5 if temporary else limit+5
+        if expiry and expiry.isdigit():new_expiry=str(max(0,int(expiry))+1)
+        elif expiry and expiry not in {'-',''}:
+            new_expiry=(max(datetime.utcnow().date(),date.fromisoformat(expiry))+timedelta(days=1)).isoformat()
+        else:new_expiry=expiry
+        grant=ReceiptGrant(request_id=row.id,user_id=user.id,base_limit=user.traffic_limit,base_expiry=expiry,
+            applied_limit=new_limit,applied_expiry=new_expiry,start_usage=usage,temporary_only=temporary,
+            expires_at=datetime.utcnow()+timedelta(hours=24))
+        db.session.add(grant)
+        user.traffic_limit=new_limit;user.expire_date=new_expiry
+        if user.status=='disabled':user.status='active'
+        user.pause_sync_pending=True;user.speed_sync_pending=True
+        from app import experience
+        experience.notify(user.id,'اعتبار موقت رسید فعال شد','۵ گیگ حجم و یک روز اعتبار هدیه برای بررسی رسید اضافه شد. با رد یا پایان مهلت، فقط روز هدیه حذف می‌شود؛ مانده حجم تا انقضای اصلی باقی می‌ماند.')
+        return grant
+
+    def finish_receipt_grant(row, state):
+        grant=db.session.get(ReceiptGrant,row.id)
+        if not grant or not grant.active:return False
+        from sqlalchemy import update
+        changed=db.session.execute(update(ReceiptGrant).where(ReceiptGrant.request_id==row.id,ReceiptGrant.active==True).values(active=False,state=state)).rowcount
+        if changed!=1:return False
+        user=db.session.get(User,grant.user_id)
+        if user:
+            # Preserve manager edits made while the receipt was waiting.
+            if state=='approved' and user.traffic_limit==grant.applied_limit:user.traffic_limit=grant.base_limit
+            if user.expire_date==grant.applied_expiry:user.expire_date=grant.base_expiry
+            from renewal import activation_error
+            if user.status=='active' and activation_error(user.expire_date,user.traffic_limit or 0,user.traffic_usage or 0,quota_mode=user.quota_mode):
+                user.status='disabled';user.disable_reason='automatic'
+            user.pause_sync_pending=True;user.speed_sync_pending=True
+            if state!='approved':
+                from app import experience
+                experience.notify(user.id,'اعتبار موقت پایان یافت','روز هدیه رسید پایان یافت؛ مانده حجم، شامل مانده حجم هدیه، تا تاریخ انقضای اصلی حفظ می‌شود. مصرف صفر نشده است.')
+        return True
+
+    def receipt_counter_started(user, pending_days, new_expiry):
+        grant=ReceiptGrant.query.filter_by(user_id=user.id,active=True).first()
+        if grant and grant.base_expiry and grant.base_expiry.isdigit() and grant.applied_expiry==pending_days:
+            from datetime import date
+            grant.applied_expiry=new_expiry
+            grant.base_expiry=(date.fromisoformat(new_expiry)-timedelta(days=1)).isoformat()
+
+    def expire_receipt_grants():
+        grants=ReceiptGrant.query.outerjoin(User,User.id==ReceiptGrant.user_id).filter(ReceiptGrant.active==True,db.or_(ReceiptGrant.expires_at<=datetime.utcnow(),db.and_(ReceiptGrant.temporary_only==True,User.traffic_usage>=ReceiptGrant.start_usage+5))).order_by(ReceiptGrant.expires_at).limit(100).all()
+        for grant in grants:
+            user=db.session.get(User,grant.user_id)
+            if grant.expires_at<=datetime.utcnow() or (grant.temporary_only and user and float(user.traffic_usage or 0)>=grant.start_usage+5):
+                row=db.session.get(RenewalRequest,grant.request_id)
+                if row:finish_receipt_grant(row,'expired')
+        db.session.commit()
+
+    def sync_receipt_credit(row):
+        user=db.session.get(User,row.user_id)
+        if not user or not UserNode.query.filter_by(user_id=user.id).first():return
+        from app import experience
+        try:experience.sync_access(user)
+        except Exception:
+            db.session.rollback()
+            user=db.session.get(User,row.user_id)
+            if user:user.pause_sync_pending=True;user.speed_sync_pending=True;db.session.commit()
+            app.logger.warning('Receipt credit node synchronization pending for request %s',row.id)
+
+    def create_request(user, plan_id, receipt_data, name='', contact='', note='', source='web', card_id=None, custom=None, coupon=''):
+        from removal_guard import claim
+        claim(db,User,user.id)
+        from app import representative_actions
+        if representative_actions.in_review(user):raise ValueError('حساب در حال لغو یا بایگانی است؛ پرداخت جدید مجاز نیست.')
         cfg = settings()
-        plan = next((p for p in cfg['plans'] if p['id'] == plan_id), None)
+        from app import representative_catalog
+        plan = representative_catalog.customer_quote(user, **(custom or dict(days=None, quota=None, devices=None))) if plan_id == 'custom' else next((p for p in cfg['plans'] if p['id'] == plan_id), None)
         if not plan:
             raise ValueError('سرویس انتخاب‌شده معتبر نیست.')
-        plan = dict(plan)
+        from app import commissions
+        plan = commissions.customer_plan(user,dict(plan))
         if card_id:
             card = next((c for c in cfg['bank_cards'] if c['id'] == card_id), None)
             if not card:
@@ -256,10 +381,18 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         if count >= 5:
             raise ValueError('تعداد درخواست‌های امروز به سقف مجاز رسیده است.')
         filename = store_image(receipt_data)
+        try:
+            from app import commerce
+            plan=commerce.discount(plan,coupon)
+        except Exception:
+            db.session.rollback();(storage / filename).unlink(missing_ok=True);raise
         row = RenewalRequest(user_id=user.id, username=user.username, plan=json.dumps(plan, ensure_ascii=False),
-                             name=name[:100], contact=contact[:120], note=note[:500], receipt=filename, source=source)
+                             name=name[:100], contact=contact[:120], note=note[:500], receipt=filename, source=source,billing_reference=secrets.token_hex(16))
         db.session.add(row)
         try:
+            db.session.flush()
+            commissions.claim_receipt(filename,'renewal:'+row.billing_reference)
+            start_receipt_grant(user,row)
             db.session.commit()
         except IntegrityError as exc:
             db.session.rollback()
@@ -285,7 +418,9 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
 
     @app.before_request
     def customer_login_gate():
-        if request.endpoint not in {'customer_portal', 'customer_config', 'avatar', 'upload_avatar', 'select_avatar', 'submit_renewal', 'pair_telegram', 'customer_sessions', 'customer_disconnect', 'customer_notifications', 'customer_notifications_read', 'customer_pause'}:
+        # Protect every private child route, including new modules and detail pages.
+        # An endpoint allowlist silently omitted newly added routes in older releases.
+        if not request.path.startswith(base+'/c/') or not (request.view_args or {}).get('token') or request.endpoint=='customer_login':
             return
         token = (request.view_args or {}).get('token', '')
         user = resolve_account(token)
@@ -378,7 +513,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
 
     @app.before_request
     def upload_limit():
-        if request.endpoint in {'upload_avatar', 'submit_renewal'}:
+        if request.endpoint in {'upload_avatar', 'submit_renewal','customer_wallet'}:
             request.max_content_length = MAX_UPLOAD + 1024 * 1024
 
     @app.context_processor
@@ -386,16 +521,21 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         return dict(customer_csrf=csrf, customer_base=base, customer_login_config=login_config)
 
     def render_portal(user, token):
+        from app import representative_credit
+        if representative_credit.mode(user.id):return redirect(base+'/c/'+token+'/reseller/credit')
         cfg = settings()
+        from app import commerce, commissions
+        cfg=commissions.customer_settings(user,cfg)
+        wallet=db.session.get(commerce.Wallet,user.id)
         nodes = [db.session.get(Node, rel.node_id) for rel in UserNode.query.filter_by(user_id=user.id).all()]
         profile = db.session.get(CustomerProfile, user.id)
         if profile and not profile.avatar_choice:
-            profile.avatar_choice = secrets.randbelow(20) + 1
+            profile.avatar_choice = secrets.randbelow(29) + 1
             db.session.commit()
         renewals = RenewalRequest.query.filter_by(user_id=user.id).order_by(RenewalRequest.id.desc()).limit(5).all()
         return render_template('customer_portal.html', user=user, token=token, panel_path=panel_path,
                 portal_base=base+'/c/'+token, nodes=[n for n in nodes if n], data=account_data(user),
-                profile=profile, customer_settings=cfg, renewals=renewals,
+                profile=profile, customer_settings=cfg, renewals=renewals, receipt_grant=ReceiptGrant.query.filter_by(user_id=user.id,active=True).first(),wallet_balance=wallet.balance if wallet else 0,
                 payment_ready=len(cfg['card_number']) == 16 and bool(cfg['card_holder'] and cfg['bank_name'])
                               and bool(cfg['admin_email'] or admin_recipients(cfg)),
                 has_pending=any(r.status == 'pending' for r in renewals))
@@ -408,9 +548,8 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                 return []
             return local_sessions(username)
         target = (node.host or node.ip or '').strip()
-        address = target if target.startswith(('http://', 'https://')) else 'http://'+target
-        if ':' not in address.split('//', 1)[-1]:
-            address += ':5001'
+        from cluster import node_url
+        address=node_url(node)
         payload = dict(username=username)
         if disconnect:
             payload.update(disconnect)
@@ -419,7 +558,9 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         if response.status_code == 404:
             raise ValueError('Update the node agent to enable session controls.')
         response.raise_for_status()
-        return response.json().get('sessions', [])
+        result=response.json()
+        if result.get('success') is not True:raise ValueError('Agent did not confirm the operation.')
+        return result.get('sessions', [])
 
     def connection_nodes(user):
         return [n for n in (db.session.get(Node, r.node_id) for r in UserNode.query.filter_by(user_id=user.id).all()) if n]
@@ -529,7 +670,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         user = resolve_account(token)
         verify_csrf()
         choice = request.form.get('avatar_choice', '')
-        if not re.fullmatch(r'[0-9]{1,2}', choice) or not 1 <= int(choice) <= 20:
+        if not re.fullmatch(r'[0-9]{1,2}', choice) or not 1 <= int(choice) <= 29:
             abort(400)
         row = db.session.get(CustomerProfile, user.id)
         old = row.avatar
@@ -542,11 +683,32 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         return redirect(base+'/c/'+token+'#profile')
 
     def private_image(filename):
-        response = send_file(storage / filename, mimetype='image/jpeg')
+        response = send_file(storage / filename, mimetype='image/webp' if filename.endswith('.webp') else 'image/jpeg')
         response.headers['Cache-Control'] = 'no-store'
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['Referrer-Policy'] = 'no-referrer'
         return response
+
+    @app.post(base+'/c/<token>/renew/quote')
+    def renewal_quote(token):
+        user=resolve_account(token);verify_csrf()
+        try:
+            cfg=settings();plan_id=request.form.get('plan_id')
+            from app import representative_catalog
+            plan=representative_catalog.customer_quote(user,days=request.form.get('custom_days'),quota=request.form.get('custom_quota'),devices=request.form.get('custom_devices')) if plan_id=='custom' else next((dict(p) for p in cfg['plans'] if p['id']==plan_id),None)
+            if not plan:raise ValueError('سرویس معتبر نیست.')
+            from app import commissions
+            plan=commissions.customer_plan(user,plan)
+            code=request.form.get('coupon','').strip().upper();percent=0
+            if code and not cfg['coupons_enabled']:raise ValueError('Discount codes are disabled.')
+            commissions.snapshot_discount(plan,code)
+            if code:
+                from app import commerce
+                row=db.session.get(commerce.Coupon,code)
+                if not row or not row.active or row.used>=row.limit or row.expires<datetime.utcnow().date().isoformat():raise ValueError('کد تخفیف نامعتبر یا منقضی است.')
+                percent=row.percent
+            return jsonify(price=max(1,int(plan['price'])*(100-percent)//100),coupon=code,percent=percent)
+        except ValueError as error:return jsonify(error=str(error)),400
 
     @app.post(base+'/c/<token>/renew')
     def submit_renewal(token):
@@ -559,8 +721,10 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             if not name or not contact or not receipt:
                 raise ValueError('نام، راه ارتباطی و تصویر رسید را کامل کنید.')
             row = create_request(user, request.form.get('plan_id'), receipt.stream.read(MAX_UPLOAD+1),
-                                 name, contact, request.form.get('note', ''), card_id=request.form.get('card_id'))
-            flash(f'درخواست شماره {row.id} ثبت شد؛ پس از تأیید واریز توسط مدیر تمدید می‌شود.', 'success')
+                                 name, contact, request.form.get('note', ''), card_id=request.form.get('card_id'), coupon=request.form.get('coupon',''),
+                                 custom=dict(days=request.form.get('custom_days'), quota=request.form.get('custom_quota'), devices=request.form.get('custom_devices')))
+            if db.session.get(ReceiptGrant,row.id):sync_receipt_credit(row)
+            flash(f'درخواست شماره {row.id} ثبت شد؛ پس از تأیید واریز توسط مدیر تمدید می‌شود.' + (' ۵ گیگ اعتبار موقت ۲۴ ساعته فعال شد.' if db.session.get(ReceiptGrant,row.id) else ''), 'success')
         except ValueError as exc:
             flash(str(exc), 'error')
         return redirect(base+'/c/'+token+'#renew')
@@ -583,14 +747,25 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
     @app.route(base+'/settings/customer', methods=['GET', 'POST'])
     @login_required
     def customer_settings():
+        if request.args.get('tab') == 'balepay':
+            return app.view_functions['balepay_settings']()
         cfg = settings()
         if request.method == 'POST':
             verify_csrf()
             try:
-                values = {key: request.form.get(key, '').strip() for key in cfg if key not in {'plans','bank_cards','admin_chat_ids'}}
+                values = {key: request.form.get(key, str(cfg[key])).strip() for key in cfg if key not in {'plans','bank_cards','admin_chat_ids','custom_pricing','coupons_enabled'}}
                 for key, value in values.items():
                     if len(value) > 255 or '\n' in value or '\r' in value:
                         raise ValueError('Invalid settings value.')
+                pricing = dict(enabled=request.form.get('pricing_enabled') == '1')
+                for key in ('base','per_gb','per_day','per_device'):
+                    value = request.form.get('pricing_'+key, str(cfg['custom_pricing'].get(key,0))).translate(FA_DIGITS)
+                    if not value.isdigit() or not 0 <= int(value) <= 1000000000:
+                        raise ValueError('Pricing rates must be non-negative integer Toman values.')
+                    pricing[key] = int(value)
+                if pricing['enabled'] and not any(pricing[k] for k in ('base','per_gb','per_day','per_device')):
+                    raise ValueError('Set at least one non-zero pricing rate.')
+                values['custom_pricing'] = json.dumps(pricing)
                 values['card_number'] = re.sub(r'[\s-]', '', values['card_number'].translate(FA_DIGITS))
                 if values['card_number'] and not re.fullmatch(r'\d{16}', values['card_number']):
                     raise ValueError('Card number must contain 16 digits.')
@@ -602,7 +777,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                     raise ValueError('Enter a valid support phone number.')
                 if values['admin_chat_id'] and not re.fullmatch(r'-?\d{1,20}', values['admin_chat_id']):
                     raise ValueError('Use the numeric Telegram chat ID, not the username.')
-                recipients = list(dict.fromkeys(re.split(r'[\s,;]+', request.form.get('admin_chat_ids', '').strip())))
+                recipients = list(dict.fromkeys(re.split(r'[\s,;]+', request.form.get('admin_chat_ids', cfg['admin_chat_ids']).strip())))
                 recipients = [value for value in recipients if value]
                 if len(recipients) > 10 or any(not re.fullmatch(r'-?\d{1,20}', value) for value in recipients):
                     raise ValueError('Enter up to 10 numeric Telegram chat IDs, separated by commas.')
@@ -647,7 +822,10 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                 if values['smtp_security'] not in {'ssl', 'starttls'}:
                     raise ValueError('Choose SSL or STARTTLS.')
                 plans = []
-                for default in DEFAULT_PLANS:
+                for default in cfg['plans']:
+                    if default['id']+'_title' not in request.form:
+                        plans.append(default)
+                        continue
                     prefix = default['id']+'_'
                     plan = dict(id=default['id'], title=request.form.get(prefix+'title', '').strip()[:100])
                     if not plan['title']:
@@ -657,6 +835,10 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                         if not value.isdigit() or not 1 <= int(value) <= upper:
                             raise ValueError('Plan days, devices, fair-use quota and price must be positive integers.')
                         plan[key] = int(value)
+                    from speed_policy import validate_policy
+                    plan.update(validate_policy(request.form.get(prefix+'quota_mode','metered'),request.form.get(prefix+'throttle_down_kbps',2000),request.form.get(prefix+'throttle_up_kbps',2000),plan['quota']))
+                    plan['title_en'] = request.form.get(prefix+'title_en', '').strip()[:120]
+                    plan['badge_en'] = request.form.get(prefix+'badge_en', '').strip()[:40]
                     plan['badge'] = request.form.get(prefix+'badge', '').strip()[:40]
                     original = request.form.get(prefix+'original_price', '').strip().translate(FA_DIGITS)
                     if original and (not original.isdigit() or not plan['price'] <= int(original) <= 1000000000):
@@ -677,21 +859,81 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                         secrets_cfg.pop(key, None)
                 for key, value in values.items():
                     set_setting(key, value)
-                set_setting('plans', json.dumps(plans, ensure_ascii=False))
+                # Dedicated catalog editor owns plan writes; payment settings must not overwrite newer prices.
+                if any(p['id']+'_title' in request.form for p in cfg['plans']):
+                    set_setting('plans', json.dumps(plans, ensure_ascii=False))
                 save_secrets(secrets_cfg)
                 db.session.commit()
+                if request.headers.get('X-Requested-With')=='XMLHttpRequest':
+                    return jsonify(success=True,message='Customer and payment settings saved.')
                 flash('Customer and payment settings saved.', 'success')
                 return redirect(base+'/settings/customer')
             except ValueError as exc:
                 db.session.rollback()
+                if request.headers.get('X-Requested-With')=='XMLHttpRequest':
+                    return jsonify(success=False,message=str(exc)),400
                 flash(str(exc), 'error')
         secrets_cfg = read_secrets()
         return render_template('customer_settings.html', panel_path=panel_path, cfg=cfg,
                     bot_configured=bool(secrets_cfg.get('bot_token')), smtp_configured=bool(secrets_cfg.get('smtp_password')))
 
+    @app.route(base+'/settings/notifications', methods=['GET', 'POST'])
+    @login_required
+    def notification_settings():
+        cfg = settings()
+        if request.method == 'POST':
+            verify_csrf()
+            try:
+                keys = ('bot_username', 'admin_chat_id', 'admin_chat_ids', 'admin_email',
+                        'smtp_host', 'smtp_port', 'smtp_security', 'smtp_user', 'smtp_from')
+                values = {key: request.form.get(key, str(cfg.get(key, ''))).strip() for key in keys}
+                if any(len(value) > 255 or '\n' in value or '\r' in value for key, value in values.items() if key != 'admin_chat_ids'):
+                    raise ValueError('Invalid settings value.')
+                values['bot_username'] = values['bot_username'].lstrip('@')
+                if values['bot_username'] and not re.fullmatch(r'[A-Za-z0-9_]{5,64}', values['bot_username']):
+                    raise ValueError('Invalid bot username.')
+                recipients = list(dict.fromkeys(filter(None, re.split(r'[\s,;]+', values['admin_chat_ids']))))
+                if len(recipients) > 10 or any(not re.fullmatch(r'-?\d{1,20}', value) for value in recipients):
+                    raise ValueError('Enter up to 10 numeric Telegram chat IDs.')
+                values['admin_chat_ids'] = ','.join(recipients)
+                if values['admin_chat_id'] and not re.fullmatch(r'-?\d{1,20}', values['admin_chat_id']):
+                    raise ValueError('Use the numeric Telegram chat ID, not the username.')
+                for key in ('admin_email', 'smtp_from'):
+                    if values[key] and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', values[key]):
+                        raise ValueError('Enter a valid email address.')
+                if values['smtp_host'] and not re.fullmatch(r'[A-Za-z0-9.-]{1,253}', values['smtp_host']):
+                    raise ValueError('Invalid SMTP hostname.')
+                if not values['smtp_port'].isdigit() or not 1 <= int(values['smtp_port']) <= 65535:
+                    raise ValueError('Invalid SMTP port.')
+                if values['smtp_security'] not in {'ssl', 'starttls'}:
+                    raise ValueError('Choose SSL or STARTTLS.')
+                secret_values = read_secrets()
+                token = request.form.get('bot_token', '').strip()
+                if token and not re.fullmatch(r'\d{5,20}:[A-Za-z0-9_-]{20,100}', token):
+                    raise ValueError('Invalid Telegram bot token.')
+                for key, value in (('bot_token', token), ('smtp_password', request.form.get('smtp_password', ''))):
+                    if value:
+                        secret_values[key] = value
+                    if request.form.get('clear_'+key) == '1':
+                        secret_values.pop(key, None)
+                for key, value in values.items():
+                    set_setting(key, value)
+                save_secrets(secret_values)
+                db.session.commit()
+                flash('Notification settings saved.', 'success')
+                return redirect(base+'/settings/notifications')
+            except ValueError as exc:
+                db.session.rollback()
+                flash(str(exc), 'error')
+        secret_values = read_secrets()
+        return render_template('notification_settings.html', panel_path=panel_path, cfg=settings(),
+                               bot_configured=bool(secret_values.get('bot_token')),
+                               smtp_configured=bool(secret_values.get('smtp_password')))
+
     @app.get(base+'/settings/update')
     @login_required
     def update_page():
+        abort(410, 'Use the documented SSH updater; the update UI was removed.')
         root = Path(app.root_path)
         version = (root/'VERSION').read_text().strip() if (root/'VERSION').exists() else 'Legacy'
         try:
@@ -710,6 +952,12 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             query = query.filter_by(status=status)
         rows = query.order_by(RenewalRequest.id.desc()).paginate(page=page, per_page=30, error_out=False)
         return render_template('renewal_inbox.html', panel_path=panel_path, rows=rows, status=status)
+
+    @app.get(base+'/renewals/<int:request_id>')
+    @login_required
+    def renewal_detail(request_id):
+        row=db.session.get(RenewalRequest,request_id) or abort(404)
+        return render_template('renewal_detail.html',row=row,panel_path=panel_path)
 
     @app.get(base+'/renewals/<int:request_id>/receipt')
     @login_required
@@ -734,16 +982,22 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         elif action == 'completed':
             from app import experience
             failures = experience.approve_renewal(row)
+            if row.source=='reseller_debt':
+                flash('Debt verified; sales credit restored.','success');return redirect(base+'/renewals?status=all')
+            if row.source=='wallet_topup':
+                flash('Payment verified and wallet credited.','success');return redirect(base+'/renewals?status=all')
             flash('Account renewed. Node confirmation pending: '+', '.join(failures) if failures else 'Account renewed and request completed.', 'warning' if failures else 'success')
             return redirect(base+'/renewals?status=all')
         else:
             if row.status != 'pending':
                 abort(409, 'This request has already been reviewed.')
             row.status = action
+            finish_receipt_grant(row,'rejected')
             row.reviewed_at = datetime.utcnow()
             from app import experience
-            experience.notify(row.user_id, 'درخواست تمدید رد شد', f'درخواست #{row.id} تأیید نشد؛ برای پیگیری با مدیر تماس بگیرید.')
+            experience.notify(row.user_id, 'پرداخت بدهی رد شد' if row.source=='reseller_debt' else 'درخواست شارژ رد شد' if row.source=='wallet_topup' else 'درخواست تمدید رد شد', f'درخواست #{row.id} تأیید نشد؛ برای پیگیری با مدیر تماس بگیرید.')
         db.session.commit()
+        if action=='rejected' and db.session.get(ReceiptGrant,row.id):sync_receipt_credit(row)
         flash('Request updated.', 'success')
         return redirect(base+'/renewals?status=all')
 
@@ -759,15 +1013,73 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
 
     def renewal_message(row):
         plan = json.loads(row.plan)
+        if row.source=='reseller_debt':return f'پرداخت بدهی نماینده #{row.id}\nنماینده: {row.username}\nمبلغ: {plan["price"]:,} تومان\nتماس: {row.contact}\nپس از بررسی واریز، تأیید کنید تا بدهی کم و اعتبار فروش برگردد.'
+        if row.source=='wallet_topup':return f'درخواست شارژ کیف پول #{row.id}\nکاربر: {row.username}\nمبلغ: {plan["price"]:,} تومان\nنام: {row.name}\nتماس: {row.contact}\n{row.note}\nپس از بررسی واریز، درخواست را در صندوق پرداخت‌ها تأیید کنید.'
         return (f'درخواست تمدید #{row.id}\nکاربر: {row.username}\nسرویس: {plan["title"]}\n'
                 f'مبلغ: {plan["price"]:,} تومان\nروز: {plan["days"]} | دستگاه: {plan["devices"]} | حد مصرف: {plan["quota"]} GB\n'
                 f'نام: {row.name}\nتماس: {row.contact}\nتوضیح: {row.note}\nمنبع: {row.source}\n'
                 'رسید نیاز به تأیید مدیر دارد؛ تأیید و تمدید از صندوق درخواست‌ها انجام می‌شود.')
 
+    def receipt_action(row, chat, action, expires=None):
+        expires = expires or int(time.time()) + 7*86400
+        value = f'{row.id}:{action}:{expires}:{chat}'
+        signature = hmac.new(app.secret_key.encode(), value.encode(), hashlib.sha256).hexdigest()[:24]
+        return f'br:{row.id}:{action}:{expires}:{signature}'
+
+    def receipt_keyboard(row, chat):
+        if row.status != 'pending' or row.source not in {'web','portal','telegram','reseller_debt'} or not str(chat).isdigit():
+            return None
+        return {'inline_keyboard': [[{'text': 'بررسی و تأیید رسید', 'callback_data': receipt_action(row, chat, 'ask')}]]}
+
+    def review_receipt_callback(callback):
+        callback_id = callback.get('id', '')
+        def answer(text):
+            if callback_id:
+                telegram('answerCallbackQuery', dict(callback_query_id=callback_id, text=text))
+        info = callback.get('message', {}).get('chat', {})
+        sender = callback.get('from', {})
+        chat = info.get('id')
+        if info.get('type') != 'private' or sender.get('is_bot') or str(chat) != str(sender.get('id')) or str(chat) not in admin_recipients(settings()):
+            answer('این عملیات فقط برای مدیر ثبت‌شده مجاز است.'); return
+        match = re.fullmatch(r'br:(\d+):(ask|yes|no):(\d+):([a-f0-9]{24})', callback.get('data',''))
+        if not match:
+            answer('درخواست نامعتبر است.'); return
+        request_id, action, expires, supplied = match.groups()
+        expected = hmac.new(app.secret_key.encode(), f'{request_id}:{action}:{expires}:{chat}'.encode(), hashlib.sha256).hexdigest()[:24]
+        if not hmac.compare_digest(expected, supplied) or not int(time.time()) < int(expires) <= int(time.time())+7*86400+30:
+            answer('دکمه منقضی یا نامعتبر است؛ از پنل اقدام کنید.'); return
+        row = db.session.get(RenewalRequest, int(request_id))
+        if not row or row.source not in {'web','portal','telegram','reseller_debt'}:
+            answer('این درخواست قابل بررسی در ربات نیست.'); return
+        if row.status != 'pending':
+            answer('این درخواست قبلاً بررسی شده است.'); return
+        if action == 'no':
+            answer('تأیید لغو شد؛ رسید همچنان در انتظار بررسی است.'); return
+        plan = json.loads(row.plan)
+        if action == 'ask':
+            answer('مشخصات درخواست را بررسی کنید.')
+            keyboard = {'inline_keyboard': [[{'text':'تأیید پرداخت بدهی' if row.source=='reseller_debt' else 'تأیید و تمدید', 'callback_data':receipt_action(row,chat,'yes',int(expires))}, {'text':'انصراف', 'callback_data':receipt_action(row,chat,'no',int(expires))}]]}
+            bot_text(chat, f'رسید #{row.id} — {row.username}\nمبلغ: {int(plan["price"]):,} تومان\nتمدید: {plan["days"]} روز / {plan["quota"]} GB\nفقط پس از بررسی واریز واقعی، تأیید کنید.', keyboard)
+            return
+        from app import experience, security
+        from werkzeug.exceptions import HTTPException
+        answer('در حال ثبت تأیید و تمدید…')
+        try:
+            with app.test_request_context():
+                failures = experience.approve_renewal(row)
+            db.session.add(security.Audit(username='Telegram admin', action='renewal.approve.telegram', details=json.dumps({'request_id':row.id,'chat_id':str(chat)}), address='telegram'))
+            db.session.commit()
+        except HTTPException:
+            db.session.rollback(); bot_text(chat, 'این درخواست قبلاً بررسی شده یا نیازمند بررسی پنل است.'); return
+        except Exception:
+            db.session.rollback(); app.logger.warning('Telegram receipt review failed for request %s', row.id)
+            bot_text(chat, 'ثبت نتیجه کامل نشد؛ وضعیت درخواست را در پنل بررسی کنید.'); return
+        bot_text(chat, (f'رسید #{row.id} تأیید شد؛ بدهی نماینده پرداخت و اعتبار فروش بازگردانده شد.' if row.source=='reseller_debt' else f'رسید #{row.id} تأیید شد و تمدید حساب {row.username} ثبت شد.') + (' همگام‌سازی نود در انتظار بررسی است.' if failures else ''))
+
     def deliver_notifications():
         cfg = settings()
         candidates = RenewalRequest.query.filter(RenewalRequest.attempts < 8,
-                RenewalRequest.next_attempt <= datetime.utcnow(),
+                RenewalRequest.next_attempt <= datetime.utcnow(),RenewalRequest.receipt!='',
                 db.or_(RenewalRequest.email_state != 'sent', RenewalRequest.telegram_state != 'sent')).limit(20).all()
         for row in candidates:
             if row.email_state == 'sent' and row.telegram_state == 'sent':
@@ -796,7 +1108,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                             if recipient in delivered:
                                 continue
                             try:
-                                telegram('sendDocument', dict(chat_id=recipient, caption=message[:1024]),
+                                telegram('sendDocument', dict(chat_id=recipient, caption=message[:1024], reply_markup=json.dumps(receipt_keyboard(row,recipient) or {'inline_keyboard':[]}, ensure_ascii=False)),
                                          files={'document': ('receipt-'+str(row.id)+'.jpg', attachment, 'image/jpeg')})
                                 delivered.append(recipient)
                                 row.telegram_sent_ids = json.dumps(delivered)
@@ -861,6 +1173,9 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         return bool(binding and link and hmac.compare_digest(binding.link_hash, link.token_hash))
 
     def process_update(event):
+        if event.get('callback_query'):
+            review_receipt_callback(event['callback_query'])
+            return
         message = event.get('message') or {}
         chat_info = message.get('chat', {})
         if chat_info.get('type') != 'private' or not message.get('from') or message['from'].get('is_bot'):
@@ -896,7 +1211,8 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         if not user:
             bot_text(chat, 'برای مشاهده حساب، از صفحه شخصی دکمه «اتصال به ربات» را بزنید.')
             return
-        cfg = settings()
+        from app import commissions
+        cfg = commissions.customer_settings(user,settings())
         if text in {'/start', '/account', '📊 حساب من'}:
             data = account_data(user)
             remaining = f'{data["remaining"]:.2f} GB' if data['remaining'] is not None else 'نامحدود'
@@ -923,9 +1239,9 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             lines = ['سرویس خود را انتخاب کنید:']
             for index, plan in enumerate(cfg['plans'], 1):
                 lines.append(f'{index}. {plan["title"]} | {plan["price"]:,} تومان | حد مصرف {plan["quota"]} GB')
-            lines.append('شماره سرویس (۱ تا ۴) را بفرستید.')
+            lines.append(f'شماره سرویس (۱ تا {len(cfg["plans"])}) را بفرستید.' if cfg['plans'] else 'پلنی برای تمدید فعال نیست؛ با مدیر تماس بگیرید.')
             bot_text(chat, '\n'.join(lines))
-        elif text.translate(FA_DIGITS) in {'1', '2', '3', '4'}:
+        elif text.translate(FA_DIGITS).isdigit() and 1<=int(text.translate(FA_DIGITS))<=len(cfg['plans']):
             plan = cfg['plans'][int(text.translate(FA_DIGITS))-1]
             binding.selected_plan, binding.selected_at = plan['id'], datetime.utcnow()
             db.session.commit()
@@ -958,7 +1274,8 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
                           message.get('caption', ''), source='telegram')
                 binding.selected_plan = None
                 db.session.commit()
-                bot_text(chat, f'درخواست #{row.id} ثبت شد. پس از بررسی واریز، مدیر حساب را تمدید می‌کند.', menu)
+                if db.session.get(ReceiptGrant,row.id):sync_receipt_credit(row)
+                bot_text(chat, f'درخواست #{row.id} ثبت شد. پس از بررسی واریز، مدیر حساب را تمدید می‌کند.' + (' ۵ گیگ اعتبار موقت ۲۴ ساعته فعال شد.' if db.session.get(ReceiptGrant,row.id) else ''), menu)
             except ValueError as exc:
                 bot_text(chat, str(exc))
         elif text in {'/cancel', 'لغو'}:
@@ -982,7 +1299,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         if not read_secrets().get('bot_token'):
             return
         offset = int(get_setting('telegram_offset', '0'))
-        events = telegram('getUpdates', dict(offset=offset, timeout=20, allowed_updates='["message"]'))
+        events = telegram('getUpdates', dict(offset=offset, timeout=20, allowed_updates='["message","callback_query"]'))
         for event in events:
             # At-least-once handling. Request limits prevent duplicate receipt requests on retry.
             process_update(event)
@@ -990,6 +1307,25 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
             db.session.commit()
 
     def delete_customer(user_id):
+        from app import representative_credit
+        from app import representative_actions
+        representative_actions.detach(user_id)
+        representative_credit.detach(user_id)
+        from app import support,commerce,TrafficDailyUser,resellers,portal_content,commissions
+        commissions.detach(user_id)
+        portal_content.Seen.query.filter_by(user_id=user_id).delete()
+        resellers.Grant.query.filter_by(user_id=user_id).delete()
+        resellers.Profile.query.filter_by(user_id=user_id).delete()
+        for child in User.query.filter_by(reseller_id=user_id).all():child.reseller_id=-user_id
+        for order in resellers.Order.query.filter_by(reseller_id=user_id).all():order.reseller_id=-user_id
+        for order in resellers.Order.query.filter_by(user_id=user_id).all():order.user_id=-user_id
+        for renewal in resellers.Renewal.query.filter_by(reseller_id=user_id).all():renewal.reseller_id=-user_id
+        for renewal in resellers.Renewal.query.filter_by(user_id=user_id).all():renewal.user_id=-user_id
+        for daily in TrafficDailyUser.query.filter_by(user_id=user_id).all():daily.user_id=-daily.id
+        commerce.Wallet.query.filter_by(user_id=user_id).delete()
+        for entry in commerce.Entry.query.filter_by(user_id=user_id).all():entry.user_id=-entry.id
+        for invoice in commerce.Invoice.query.filter_by(user_id=user_id).all():invoice.user_id=-invoice.id
+        for ticket in support.Ticket.query.filter_by(user_id=user_id).all():ticket.user_id=-ticket.id
         profile = db.session.get(CustomerProfile, user_id)
         if profile and profile.avatar:
             (storage / profile.avatar).unlink(missing_ok=True)
@@ -998,12 +1334,74 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         CustomerProfile.query.filter_by(user_id=user_id).delete()
         TelegramAccount.query.filter_by(user_id=user_id).delete()
         TelegramPair.query.filter_by(user_id=user_id).delete()
+        ReceiptGrant.query.filter_by(user_id=user_id).update(dict(user_id=-user_id,active=False,state='deleted'))
         # Keep admin receipt history, but detach it from a potentially reused user ID.
         for historic in RenewalRequest.query.filter_by(user_id=user_id).all():
             historic.user_id = -historic.id
 
-    return SimpleNamespace(verify_csrf=verify_csrf, delete_customer=delete_customer, render_portal=render_portal, resolve_bot_token=resolve_bot_token,
-            deliver_notifications=deliver_notifications, poll_bot=poll_bot, process_update=process_update,
+    @app.route(panel_path.rstrip('/')+'/settings/plans',methods=['GET'])
+    @login_required
+    def plan_catalog():
+        if getattr(current_user,'role','')!='owner':abort(403)
+        return render_template('plan_catalog.html',plans=settings()['plans'],panel_path=panel_path)
+
+    @app.route(panel_path.rstrip('/')+'/settings/plans/<plan_id>',methods=['GET','POST'])
+    @login_required
+    def plan_editor(plan_id):
+        if getattr(current_user,'role','')!='owner':abort(403)
+        import hashlib
+        raw_plans=get_setting('plans',None)
+        plans=settings()['plans']
+        existing=next((p for p in plans if p['id']==plan_id),None)
+        if plan_id!='new' and existing is None:abort(404)
+        version=hashlib.sha256(json.dumps(plans,sort_keys=True).encode()).hexdigest()
+        if request.method=='POST':
+            verify_csrf()
+            if request.form.get('version')!=version:return jsonify(success=False,message='Plans changed in another session. Reload before saving.'),409
+            try:
+                plan=dict(existing) if existing else dict(id='plan_'+secrets.token_hex(8))
+                for key,limit in [('title',100),('title_en',120),('badge',40),('badge_en',40)]:plan[key]=request.form.get(key,'').strip()[:limit]
+                if not plan['title']:raise ValueError('A plan title is required.')
+                for key,limit in [('days',3650),('quota',1000000),('devices',100),('price',1000000000)]:
+                    value=request.form.get(key,'').translate(FA_DIGITS)
+                    if not value.isascii() or not value.isdigit() or not 1<=int(value)<=limit:raise ValueError('Invalid '+key)
+                    plan[key]=int(value)
+                from speed_policy import validate_policy
+                plan.update(validate_policy(request.form.get('quota_mode','metered'),request.form.get('throttle_down_kbps',2000),request.form.get('throttle_up_kbps',2000),plan['quota']))
+                for key,limit in [('gift_days',3650),('gift_quota',1000000)]:
+                    value=request.form.get(key,'0').translate(FA_DIGITS)
+                    if not value.isascii() or not value.isdigit() or not 0<=int(value)<=limit:raise ValueError('Invalid '+key)
+                    plan[key]=int(value)
+                from pricing import with_gift
+                with_gift(plan,plan['gift_days'],plan['gift_quota'])
+                original=request.form.get('original_price','0').translate(FA_DIGITS) or '0'
+                if not original.isascii() or not original.isdigit():raise ValueError('Invalid original price.')
+                plan['original_price']=int(original)
+                if plan['original_price'] and not plan['price']<=plan['original_price']<=1000000000:raise ValueError('Original price must be at least the selling price.')
+            except ValueError as exc:return jsonify(success=False,message=str(exc)),400
+            plans=[plan if row['id']==plan_id else row for row in plans] if existing else plans+[plan]
+            # Compare-and-swap guards against two editors committing the same revision.
+            from sqlalchemy import update
+            from sqlalchemy.exc import IntegrityError
+            encoded=json.dumps(plans,ensure_ascii=False)
+            try:
+                if raw_plans is None:
+                    db.session.add(CustomerSetting(key='plans',value=encoded))
+                    db.session.flush()
+                else:
+                    changed=db.session.execute(update(CustomerSetting).where(CustomerSetting.key=='plans',CustomerSetting.value==raw_plans).values(value=encoded),execution_options={'synchronize_session':False}).rowcount
+                    if changed!=1:
+                        db.session.rollback()
+                        return jsonify(success=False,message='Plans changed in another session. Reload before saving.'),409
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                return jsonify(success=False,message='Plans changed in another session. Reload before saving.'),409
+            return jsonify(success=True,message='Plan saved.',redirect=panel_path.rstrip('/')+'/settings/plans')
+        return render_template('plan_editor.html',plan=existing or {},version=version,panel_path=panel_path)
+
+    return SimpleNamespace(receipt_counter_started=receipt_counter_started, ReceiptGrant=ReceiptGrant, finish_receipt_grant=finish_receipt_grant, expire_receipt_grants=expire_receipt_grants, receipt_action=receipt_action,receipt_keyboard=receipt_keyboard,verify_csrf=verify_csrf, delete_customer=delete_customer, render_portal=render_portal, resolve_bot_token=resolve_bot_token,
+            store_image=store_image,deliver_notifications=deliver_notifications, poll_bot=poll_bot, process_update=process_update,
             settings=settings, set_setting=set_setting, save_secrets=save_secrets, create_request=create_request,
             RenewalRequest=RenewalRequest, CustomerSetting=CustomerSetting, CustomerProfile=CustomerProfile,
             get_setting=get_setting, telegram=telegram, bound_user=bound_user, storage=storage, resolve_account=resolve_account, is_linked=is_linked,

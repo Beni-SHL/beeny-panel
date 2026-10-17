@@ -1,0 +1,155 @@
+/* 3.4.4: directional Telegram, compact representative workspace and support composer. */
+body .telegram-card{padding:22px!important;border-radius:22px!important;min-height:0!important;background:linear-gradient(135deg,#087fbe,#149bd0)!important;color:#fff!important;--accent:#0b83c5;--soft:#ffffff24;--ink:#fff;--muted:#e2f3ff;--surface:#ffffff14}
+body .telegram-card::before{content:none!important}
+body .telegram-card .telegram-content{display:grid!important;direction:ltr;grid-template-columns:minmax(0,1fr)100px;gap:18px;align-items:center}
+body .telegram-card .telegram-visual{position:relative;grid-column:2;grid-row:1;display:grid;place-items:center;isolation:isolate;min-width:0;align-self:center}
+body .telegram-visual::before{content:'';position:absolute;inset:-18px;border:1px solid #c5f2ff55;border-radius:38%;background:radial-gradient(circle,#ffffff28,transparent 68%);z-index:-1;animation:telegram-orbit 9s linear infinite;pointer-events:none}
+body .telegram-card .telegram-art{width:96px!important;height:96px!important;max-width:100%;margin:0!important;position:static!important;animation:telegram-float 5s ease-in-out infinite}
+body .telegram-card .telegram-copy{grid-column:1;grid-row:1;text-align:left;direction:ltr;min-width:0}
+html[dir=rtl] body .telegram-card .telegram-content{grid-template-columns:100px minmax(0,1fr)}
+html[dir=rtl] body .telegram-card .telegram-visual{grid-column:1}
+html[dir=rtl] body .telegram-card .telegram-copy{grid-column:2;text-align:right;direction:rtl}
+body .telegram-card .eyebrow{display:none}
+body .telegram-card h2{font-size:21px!important;line-height:1.5!important;margin:12px 0 8px!important;color:#fff!important}
+body .telegram-card .telegram-copy>p{margin:0 0 14px!important;line-height:1.8;font-size:12px;color:#e8f7ff!important}
+body .telegram-card .telegram-state{white-space:normal;display:inline-block;margin:0!important;font-size:10px!important;color:#fff!important;background:#ffffff24!important}
+body .telegram-card form{margin:12px 0!important;display:block!important;width:100%!important}
+body .telegram-card button.primary-button{background:#fff!important;color:#096fa6!important;border:1px solid #ffffffcc!important;box-shadow:0 3px 12px #055c9020!important;border-radius:12px;padding:10px 12px;gap:10px;width:100%;min-height:40px}
+body .telegram-card small{font-size:10px!important;line-height:1.7;color:#e2f3ff!important;display:block}
+@keyframes telegram-orbit{to{transform:rotate(360deg)}}
+body .community-card{background:linear-gradient(125deg,#e7f6ff,#f4faff)!important;border:1px solid #b6e2f7!important;color:#1b526d!important;--accent:#168bc2;--soft:#d8f1ff;display:grid!important;grid-template-columns:56px minmax(0,1fr);gap:16px;align-items:center;padding:22px!important}
+html[data-theme=dark] body .community-card{background:#142f45!important;border-color:#285775!important;color:#e5f5ff!important}
+body .community-card .community-icon{grid-column:1;grid-row:1;width:54px!important;height:54px!important;padding:0!important;background:transparent!important}
+body .community-icon img{width:52px;height:52px;display:block;object-fit:contain;border-radius:14px}
+body .community-card>div:not(.community-actions){grid-column:2;min-width:0}
+body .community-card p,body .community-card h2{color:inherit!important}
+body .community-card .community-actions{grid-column:1/-1;display:flex!important;flex-wrap:wrap;gap:10px!important}
+body .community-card .secondary-button{color:#fff!important;background:#168bc2!important;border:1px solid #1080b7!important;text-decoration:none!important;box-shadow:none!important;border-radius:12px;padding:9px 13px;min-height:38px;font-size:11px;gap:8px}
+body .community-card .secondary-button svg{width:17px;height:17px}
+body .reseller-nav-link{white-space:nowrap!important;font-size:12px!important}
+body .portal-nav nav a{gap:9px!important}
+body .users-page a,body .users-page .glass-btn,body .users-page .detail-card a{text-decoration:none!important}
+body .reseller-workspace{max-width:1160px;margin:0 auto}
+body .reseller-grid{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(0,1.2fr);gap:24px;align-items:start}
+body .reseller-create{padding:22px!important;margin:0!important;min-width:0}
+body .reseller-create>summary{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:0 0 16px;font-weight:750;cursor:pointer;list-style:none;border-bottom:1px solid var(--ca-line)}
+body .reseller-create form{padding-top:20px;display:grid;gap:17px}
+body .reseller-create label,body .reseller-renew label{display:grid;gap:8px;min-width:0;font-size:12px}
+body .reseller-workspace :is(input:not([type=hidden]),select){border:1px solid var(--ca-line)!important;border-radius:12px!important;background:var(--ca-input)!important;color:var(--ca-ink)!important;padding:11px 12px!important;min-height:42px;max-width:100%;width:100%;box-sizing:border-box}
+body .reseller-plan-picker{padding:0;margin:0;border:0;min-width:0;display:grid;gap:14px}
+body .reseller-plan-picker legend{font-size:12px;font-weight:700;float:none;width:auto;margin-bottom:12px}
+body .reseller-custom-fields[hidden]{display:none!important}
+body .reseller-password .password-tools{margin-top:10px;gap:8px;justify-content:flex-end}
+body .reseller-price{background:var(--ca-input);padding:13px 15px;border-radius:12px;border:1px solid var(--ca-line);display:block;font-weight:750}
+body .reseller-accounts{min-width:0;display:grid;gap:12px}
+body .reseller-list-heading{display:grid!important;gap:14px;margin:0 0 8px!important}
+body .reseller-search{display:flex;gap:10px;min-width:0}
+body .reseller-search input{min-width:0;flex:1}
+body .reseller-search button{flex:none}
+body .reseller-account{margin:0!important;padding:12px 14px!important;min-width:0;border-radius:16px!important}
+body .reseller-row-detail>summary{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto 14px;gap:12px!important;align-items:center;list-style:none;cursor:pointer;padding:4px 0!important}
+body .reseller-initial{width:34px!important;height:34px!important;display:grid;place-items:center;border-radius:11px;background:var(--ca-input)!important;color:var(--ca-ink)!important;font-size:14px!important;flex:none}
+body .reseller-row-name{display:grid;gap:4px;min-width:0;text-align:start}
+body .reseller-row-name b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+body .reseller-row-name small{font-size:10px}
+body .reseller-row-meta{font-size:11px;white-space:nowrap;padding-inline-start:6px}
+body .reseller-row-body{padding-top:18px!important;margin-top:12px!important;border-top:1px solid var(--ca-line);overflow-wrap:anywhere}
+body .reseller-actions{display:flex;flex-wrap:wrap;gap:8px!important;margin:15px 0}
+body .reseller-account :is(.reseller-share,.reseller-renew){margin:14px 0!important;padding:14px!important;border:1px solid var(--ca-line);border-radius:12px}
+body .reseller-row-body form{margin-top:14px}
+body .reseller-row-body pre{white-space:pre-wrap;overflow-wrap:anywhere}
+body .bulk-picker{border:0;min-width:0;padding:0;margin:0 0 24px}
+body .bulk-picker legend{float:none;font-size:14px;font-weight:700;margin-bottom:14px}
+body .bulk-picker-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+body .bulk-picker-toolbar input{flex:1;min-width:150px}
+body .bulk-user-list{max-height:360px;overflow:auto;border:1px solid var(--ca-line);border-radius:14px;padding:7px;display:grid;gap:4px;scrollbar-width:thin}
+body .bulk-user{display:grid!important;grid-template-columns:18px 30px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px!important;margin:0!important;background:var(--ca-input);border-radius:9px;font-size:12px;cursor:pointer}
+body .bulk-user[hidden]{display:none!important}
+body .bulk-user input{width:17px!important;height:17px;min-height:0;padding:0!important;margin:0!important;accent-color:#668bd0}
+body .bulk-user b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body .bulk-user small{font-size:10px;color:var(--ca-muted)}
+body .bulk-initial{width:30px;height:30px;display:grid;place-items:center;background:#7595db20;border-radius:9px;color:var(--ca-ink)}
+body .bulk-workspace>.admin-glass{margin-bottom:24px}
+body .bulk-workspace form>label{display:grid;gap:8px;margin-bottom:17px}
+body .nodes-page .glass-toolbar{padding:24px!important;margin-bottom:26px!important}
+body .nodes-page .section-title{margin-bottom:22px!important;line-height:1.5}
+body .nodes-page .glass-toolbar form{margin-top:0!important}
+body .support-workspace{--thread-paper:#222d3e;--thread-own:#263b55;--thread-border:#3a4a60;--thread-ink:#e7edf7;--thread-muted:#acbad0}
+body.light .support-workspace,html[data-theme=light] .support-workspace{--thread-paper:#fff;--thread-own:#eaf2ff;--thread-border:#d7e2f1;--thread-ink:#23354c;--thread-muted:#65778e}
+body .compose-heading{display:flex;gap:16px;align-items:flex-start;margin-bottom:23px}
+body .compose-heading h1{font-size:25px;margin:6px 0 10px;line-height:1.5}
+body .compose-heading .section-description{margin:0;font-size:12px}
+body .compose-symbol{width:52px;height:52px;flex:none;border-radius:17px;display:grid;place-items:center;background:#72a6f325;color:#7da6df;border:1px solid #75a5e52b}
+body .compose-symbol svg{width:27px;height:27px}
+body .ticket-topics{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 24px}
+body .ticket-topics>span{font-size:11px;color:var(--ca-muted);width:100%;margin-bottom:3px}
+body .ticket-topic{padding:7px 11px;border-radius:9px;background:var(--ca-input);border:1px solid var(--ca-line);color:var(--ca-ink);font-size:11px}
+body .ticket-compose{max-width:740px!important;width:100%;margin:0 auto!important;padding:28px!important}
+body .ticket-compose .stack-form{display:grid;gap:20px}
+body .ticket-compose label,body .ticket-reply label{display:grid;gap:9px;font-size:12px;font-weight:600}
+body .ticket-compose textarea,body .ticket-reply textarea{resize:vertical!important;min-height:140px;line-height:1.9!important;padding:14px!important;background:var(--thread-paper)!important;border:1px solid var(--thread-border)!important;color:var(--thread-ink)!important;border-radius:14px!important;box-shadow:none!important}
+body .ticket-compose input{padding:12px 14px!important;border-radius:12px!important}
+body .compose-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;padding-top:5px}
+body .compose-footer small{display:flex;align-items:center;gap:5px;color:var(--ca-muted);font-size:10px}
+body .compose-footer small svg{width:13px;height:13px}
+body .compose-footer button{min-height:40px;gap:8px;padding:10px 17px}
+body .compose-footer button svg{width:17px;height:17px}
+body .ticket-messages{display:flex!important;flex-direction:column;gap:22px!important;padding:8px 0 26px}
+body .message-bubble{display:grid!important;grid-template-columns:36px minmax(0,1fr);gap:10px;width:min(85%,680px)!important;max-width:none!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;align-self:flex-start}
+body .message-bubble.is-mine{align-self:flex-end;grid-template-columns:minmax(0,1fr)36px}
+body .message-avatar{grid-column:1;grid-row:1;padding-top:5px}
+body .message-bubble.is-mine .message-avatar{grid-column:2}
+body .message-bubble.is-mine .message-content{grid-column:1;grid-row:1;background:var(--thread-own)!important}
+body .message-content{grid-column:2;background:var(--thread-paper)!important;border:1px solid var(--thread-border);color:var(--thread-ink);border-radius:16px;padding:14px 16px;min-width:0;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body .message-avatar .thread-avatar{width:36px!important;height:36px!important;min-width:36px!important;border-radius:50%!important;object-fit:cover;display:grid;place-items:center;background:var(--thread-paper);color:var(--thread-ink)}
+body .message-content header{display:flex!important;gap:8px;align-items:center;margin:0 0 9px!important;font-size:11px!important}
+body .message-you{font-size:9px;color:var(--thread-muted)}
+body .message-content p{white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 12px!important;font-size:13px;line-height:1.9;color:var(--thread-ink)!important}
+body .message-content time{display:block;text-align:end;font-size:9px;color:var(--thread-muted)}
+body .reply-composer{display:block!important;padding:20px 0 0!important;margin-top:8px!important;border-top:1px solid var(--ca-line)}
+body .reply-composer .compose-footer{margin-top:12px}
+body .ticket-detail .compact-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+body .ticket-detail .compact-actions form{margin:0}
+body .store-badges{display:flex;flex-wrap:wrap;gap:10px!important}
+body .store-badges a{display:block;flex:0 0 auto;line-height:0}
+body .store-badges img{width:156px!important;height:48px!important;max-width:100%;object-fit:contain}
+.auth-controls{display:flex;align-items:center;gap:10px}
+.auth-controls .auth-language,.auth-controls .theme button{display:grid!important;place-items:center;width:40px;height:40px;border:1px solid var(--line,#ffffff30);border-radius:12px;color:inherit;background:var(--panel,#ffffff0d);position:relative;text-decoration:none!important;padding:0;font-size:19px}
+.auth-controls .auth-language svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7}
+.auth-controls .language-badge{position:absolute;bottom:3px;inset-inline-end:3px;font:700 7px system-ui,sans-serif}
+.auth-controls .theme{display:flex;gap:6px;background:none!important;padding:0!important;border:0!important}
+@media(max-width:700px){body .telegram-card{padding:18px!important}body .telegram-card .telegram-content{grid-template-columns:minmax(0,1fr)72px;gap:12px}html[dir=rtl] body .telegram-card .telegram-content{grid-template-columns:72px minmax(0,1fr)}body .telegram-card .telegram-art{width:72px!important;height:72px!important}body .telegram-card h2{font-size:18px!important}body .telegram-visual::before{inset:-9px}body .community-card{padding:18px!important;gap:12px;grid-template-columns:44px minmax(0,1fr)}body .community-card .community-icon,body .community-icon img{width:42px!important;height:42px!important}body .community-card h2{font-size:16px}body .community-card .community-actions{gap:8px!important}body .customer-device-nav{display:none!important}body .shell-nav .reseller-nav-link,body .mobile-shortcuts .reseller-nav-link{display:inline-flex!important;white-space:nowrap!important}body .reseller-grid{grid-template-columns:minmax(0,1fr);gap:22px}body .reseller-create{padding:18px!important}body .reseller-row-detail>summary{gap:9px!important;grid-template-columns:30px minmax(0,1fr) auto 12px}body .reseller-initial{width:30px!important;height:30px!important}body .reseller-account{padding:11px 12px!important}body .reseller-row-meta{font-size:10px}body .reseller-custom-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}body .reseller-custom-fields input{padding:9px!important}body .nodes-page .glass-toolbar{padding:18px!important}body .bulk-picker-toolbar input{flex-basis:100%}body .bulk-user{grid-template-columns:18px 25px minmax(0,1fr);gap:9px}body .bulk-user small{display:none}body .ticket-compose{padding:20px!important}body .compose-heading{gap:12px}body .compose-heading h1{font-size:21px}body .compose-symbol{width:42px;height:42px;border-radius:13px}body .message-bubble{width:96%!important;grid-template-columns:28px minmax(0,1fr);gap:8px}body .message-bubble.is-mine{grid-template-columns:minmax(0,1fr)28px}body .message-avatar .thread-avatar{width:28px!important;height:28px!important;min-width:28px!important}body .message-content{padding:12px;border-radius:13px}body .message-content p{font-size:12px}body .message-content time{font-size:8px}body .store-badges img{width:136px!important;height:42px!important}.auth-controls{gap:8px}.auth-controls .auth-language,.auth-controls .theme button{width:36px;height:36px}}
+@media(prefers-reduced-motion:reduce){body .telegram-visual::before{animation:none}}
+body .payments-workspace .payment-tabs{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 24px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+body .payment-tabs a{display:inline-flex!important;align-items:center;justify-content:center;gap:8px!important;padding:10px 15px!important;min-height:40px;border:1px solid var(--ca-line)!important;border-radius:12px!important;background:var(--ca-input)!important;color:var(--ca-muted)!important;font-size:12px!important;text-decoration:none!important;box-shadow:none!important;transition:background .15s,color .15s}
+body .payment-tabs a.active{background:#6182c62b!important;color:var(--ca-ink)!important;border-color:#7693d067!important;font-weight:700}
+body .payment-tabs svg{width:17px;height:17px;stroke-width:1.7}
+body .payments-workspace .renewal-entries{display:grid;gap:12px}
+body .payments-workspace .renewal-entries .inbox-row{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto auto 18px;gap:15px;align-items:center;margin:0!important;padding:16px!important;text-decoration:none!important;min-width:0;border-radius:16px!important}
+body .payments-workspace .thread-title{min-width:0;display:grid;gap:6px}
+body .payments-workspace .thread-title b{overflow-wrap:anywhere;font-size:13px;line-height:1.6}
+body .payments-workspace .thread-title small{font-size:10px}
+body .payments-workspace .inbox-row>strong{font-size:13px;white-space:nowrap}
+body .payments-workspace .inbox-icon{width:34px;height:34px;display:grid;place-items:center;background:#7094d820;border-radius:11px;color:var(--ca-ink)}
+body .payments-workspace .renewal-toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+body .payments-workspace .renewal-toolbar form{display:flex;flex-wrap:wrap;gap:9px;margin:0}
+body .payments-workspace .renewal-toolbar .admin-button{min-height:36px;border-radius:10px;font-size:11px;padding:8px 12px}
+@media(max-width:700px){body .payment-tabs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}body .payment-tabs a{font-size:11px!important;padding:9px 12px!important}body .payments-workspace .renewal-entries .inbox-row{grid-template-columns:30px minmax(0,1fr) auto;gap:10px;padding:14px!important}body .payments-workspace .inbox-row>strong{grid-column:2;font-size:12px}body .payments-workspace .inbox-row>.admin-status{grid-column:3;grid-row:1}body .payments-workspace .inbox-row>span:last-child{display:none}body .payments-workspace .admin-page-title{gap:16px}body .payments-workspace .admin-page-title h1{font-size:25px}}
+body .profile-quick-actions .ac-btn{text-decoration:none!important;border-bottom-style:solid}
+body .profile-quick-actions{gap:12px!important;margin-bottom:22px!important}
+body .nodes-page,body .nodes-page .node-card{min-width:0;max-width:100%}
+body .nodes-page .nodes-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))!important}
+body .nodes-page .node-card .node-info,body .nodes-page .node-card .node-header{min-width:0;overflow-wrap:anywhere}
+@media(max-width:700px){body .nodes-page .glass-toolbar .row{--bs-gutter-x:16px}body .nodes-page .node-card{padding:18px!important}body .nodes-page .node-header{flex-wrap:wrap;gap:12px}}
+body.light .payments-workspace .payment-tabs a{background:#edf2fa!important;color:#405571!important;border-color:#cdd8e9!important}
+body.light .payments-workspace .payment-tabs a.active{background:#dce8ff!important;color:#294d87!important;border-color:#adc4ed!important}
+body.light .payments-workspace .admin-page-title .admin-button{background:#edf2fa;color:#34496b}
+
+/* Compact desktop store badges; mobile retains its existing two-column flow. */
+@media(min-width:701px){
+ body .install-section .install-grid{grid-template-columns:minmax(0,322px) minmax(0,1fr);gap:24px;align-items:start}
+ body .install-section .store-badges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-width:322px;width:100%;gap:10px!important;align-content:start}
+ body .install-section .store-badges a{min-width:0;width:100%;display:flex;justify-content:center;align-items:center;line-height:0}
+ body .install-section .store-badges img{width:100%!important;max-width:156px;height:48px!important;object-fit:contain}
+}
+@media(min-width:701px) and (max-width:1050px){body .install-section .install-grid{grid-template-columns:minmax(0,1fr);gap:18px}body .install-section .store-badges{grid-template-columns:repeat(3,minmax(0,1fr));max-width:490px}}

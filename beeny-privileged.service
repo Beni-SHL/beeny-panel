@@ -1,0 +1,22 @@
+[Unit]
+Description=Beeny restricted privileged VPN helper
+After=network.target
+[Service]
+StateDirectory=beeny-maintenance
+StateDirectoryMode=0700
+User=root
+Group=beeny
+WorkingDirectory=/opt/beeny-panel
+EnvironmentFile=/etc/beeny-panel/panel.env
+ExecStart=/opt/beeny-panel/venv/bin/python /opt/beeny-panel/privileged_server.py
+RuntimeDirectory=beeny-panel
+RuntimeDirectoryMode=0750
+UMask=0077
+Restart=on-failure
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/etc/openvpn /opt/beeny-panel/backups /opt/beeny-panel/instance /etc/beeny-panel
+[Install]
+WantedBy=multi-user.target

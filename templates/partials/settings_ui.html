@@ -1,0 +1,5 @@
+{% from 'partials/ui_icons.html' import icon %}
+{% macro hero(mark,title,description,eyebrow='CONTROL CENTER') %}<header class="cc-hero"><div class="cc-hero-mark">{{ icon(mark) }}</div><div class="cc-hero-copy"><span class="cc-eyebrow">{{ admin_t(eyebrow) }}</span><h1>{{ admin_t(title) }}</h1><p>{{ admin_t(description) }}</p></div><a class="cc-back" href="{{ panel_path.rstrip('/') }}/settings" aria-label="{{ admin_t('Settings') }}">{{ icon('grid') }}</a></header>{% endmacro %}
+{% macro heading(mark,title,description='') %}<div class="cc-heading"><span class="cc-icon">{{ icon(mark) }}</span><div><h2>{{ admin_t(title) }}</h2>{% if description %}<p>{{ admin_t(description) }}</p>{% endif %}</div></div>{% endmacro %}
+{% macro action(mark,text,attrs='',kind='') %}<button class="cc-button {{ kind }}" {{ attrs|safe }}>{{ icon(mark) }}<span>{{ admin_t(text) }}</span></button>{% endmacro %}
+{% macro link(mark,text,href) %}<a class="cc-button" href="{{ href }}">{{ icon(mark) }}<span>{{ admin_t(text) }}</span></a>{% endmacro %}

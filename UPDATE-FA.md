@@ -2,11 +2,11 @@
 
 کاربر از بخش «انتخاب آواتار دلخواه» یکی از ۲۰ آواتار پشمالو را انتخاب می‌کند، یا عکس خودش را تا ۲۰ مگابایت آپلود می‌کند. انتخاب تصادفی فقط برای بار اول است و بعد از ورود مجدد ثابت می‌ماند.
 
-برای آپدیت پنل فعلی، فایل **beeny-panel-manual-update-2.2.0.zip** را با MobaXterm در `/root` آپلود کنید. سپس هر دستور را جدا اجرا کنید:
+برای آپدیت پنل فعلی، فایل **beeny-panel-manual-update-2.2.1.zip** را با MobaXterm در `/root` آپلود کنید. سپس هر دستور را جدا اجرا کنید:
 
 ```bash
-unzip -q /root/beeny-panel-manual-update-2.2.0.zip -d /root/beeny-update-2.2.0
-cd /root/beeny-update-2.2.0
+unzip -q /root/beeny-panel-manual-update-2.2.1.zip -d /root/beeny-update-2.2.1
+cd /root/beeny-update-2.2.1
 sudo bash scripts/update_panel.sh --check
 sudo bash scripts/apply_experience_update.sh
 ```
@@ -33,10 +33,10 @@ ZIP را در Downloads ذخیره کنید. هر دستور را جداگانه
 
 ```bat
 cd /d "%USERPROFILE%\beeny-panel-upload"
-tar -xf "%USERPROFILE%\Downloads\beeny-panel-github-ready-2.2.0.zip" -C .
+tar -xf "%USERPROFILE%\Downloads\beeny-panel-github-ready-2.2.1.zip" -C .
 git add -A
 git diff --cached --check
-git commit -m "Release Beeny Panel 2.2.0"
+git commit -m "Release Beeny Panel 2.2.1"
 git push origin main
 ```
 

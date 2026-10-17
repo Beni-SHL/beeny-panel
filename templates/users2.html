@@ -138,7 +138,7 @@
   <div class="users-toolbar">
     <div class="toolbar-row1">
       <div class="toolbar-title">
-        <h1>Users List</h1>
+        <h1>{{ admin_t('Users List') }}</h1>
         <span id="totalUsersCount">0</span>
       </div>
       <div class="toolbar-actions">
@@ -151,20 +151,20 @@
     </div>
     <div class="filter-bar">
       <select id="sortFilter" class="filter-select">
-        <option value="newest">Newest First</option>
-        <option value="traffic_desc">Highest Usage</option>
-        <option value="traffic_asc">Lowest Usage</option>
-        <option value="oldest">Oldest First</option>
+        <option value="newest">{{ admin_t('Newest First') }}</option>
+        <option value="traffic_desc">{{ admin_t('Highest Usage') }}</option>
+        <option value="traffic_asc">{{ admin_t('Lowest Usage') }}</option>
+        <option value="oldest">{{ admin_t('Oldest First') }}</option>
       </select>
       <select id="protocolFilter" class="filter-select">
-        <option value="">All Protocols</option>
+        <option value="">{{ admin_t('All Protocols') }}</option>
         <option value="openvpn">OpenVPN</option>
         <option value="wireguard">WireGuard</option>
       </select>
       <select id="statusFilter" class="filter-select">
-        <option value="">All Status</option>
-        <option value="active">Active</option>
-        <option value="disabled">Disabled</option>
+        <option value="">{{ admin_t('All Status') }}</option>
+        <option value="active">{{ admin_t('Active') }}</option>
+        <option value="disabled">{{ admin_t('Disabled') }}</option>
       </select>
     </div>
   </div>
@@ -175,8 +175,8 @@
 <div id="addModal" class="glass-modal">
   <div class="glass-modal-content">
     <button class="modal-close" onclick="closeModal('addModal')"><i class="fa fa-times"></i></button>
-    <h2>Add New User</h2>
-    <form action="{{ panel_path }}/users/add" method="POST">
+    <h2>{{ admin_t('Add New User') }}</h2>
+    <form action="{{ panel_path }}/users/add" method="POST" data-admin-ajax>
       <div style="display:flex; gap:10px;">
         <input type="text" name="username" class="glass-input" placeholder="Username" required>
         <select name="protocol" class="glass-input">
@@ -189,11 +189,11 @@
         <input type="number" step="0.1" name="traffic_limit" class="glass-input" placeholder="Traffic GB (0=Unlimited)" value="10">
       </div>
       <div>
-        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Validity (Days from first connect)</label>
+        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">{{ admin_t('Validity (Days from first connect)') }}</label>
         <input type="number" name="expire_days" class="glass-input" placeholder="e.g. 30">
       </div>
       <div>
-        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Allowed Nodes</label>
+        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">{{ admin_t('Allowed Nodes') }}</label>
         <div class="nodes-grid-modal">
           {% for node in nodes %}
           <label class="node-checkbox">
@@ -203,7 +203,7 @@
           {% endfor %}
         </div>
       </div>
-      <button type="submit" class="modal-btn-submit"><i class="fa fa-check"></i> Create User</button>
+      <button type="submit" class="modal-btn-submit"><i class="fa fa-check"></i> {{ admin_t('Create User') }}</button>
     </form>
   </div>
 </div>
@@ -211,8 +211,8 @@
 <div id="editModal" class="glass-modal">
   <div class="glass-modal-content">
     <button class="modal-close" onclick="closeModal('editModal')"><i class="fa fa-times"></i></button>
-    <h2>Edit User</h2>
-    <form id="editForm" method="POST">
+    <h2>{{ admin_t('Edit User') }}</h2>
+    <form id="editForm" method="POST" data-admin-ajax>
       <div style="display:flex; gap:10px;">
         <input type="text" id="edit_username" class="glass-input" disabled style="opacity:0.5;">
         <select name="protocol" id="edit_protocol" class="glass-input">
@@ -226,19 +226,19 @@
       </div>
       <div style="display:flex; gap:10px;">
         <div style="flex:1;">
-            <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Validity (Days)</label>
+            <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">{{ admin_t('Validity (Days)') }}</label>
             <input type="number" name="expire_days" id="edit_expire" class="glass-input" placeholder="Replace days...">
         </div>
         <div style="flex:1;">
-            <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Status</label>
+            <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">{{ admin_t('Status') }}</label>
             <select name="status" id="edit_status" class="glass-input">
-              <option value="active">Active</option>
-              <option value="disabled">Disabled</option>
+              <option value="active">{{ admin_t('Active') }}</option>
+              <option value="disabled">{{ admin_t('Disabled') }}</option>
             </select>
         </div>
       </div>
       <div>
-        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">Re-assign Nodes</label>
+        <label style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:5px; display:block;">{{ admin_t('Re-assign Nodes') }}</label>
         <div class="nodes-grid-modal">
           {% for node in nodes %}
           <label class="node-checkbox">
@@ -248,7 +248,7 @@
           {% endfor %}
         </div>
       </div>
-      <button type="submit" class="modal-btn-submit" style="border-color:rgba(74,222,128,0.3); color:#4ade80;"><i class="fa fa-save"></i> Save Changes</button>
+      <button type="submit" class="modal-btn-submit" style="border-color:rgba(74,222,128,0.3); color:#4ade80;"><i class="fa fa-save"></i> {{ admin_t('Save Changes') }}</button>
     </form>
   </div>
 </div>

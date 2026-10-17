@@ -8,6 +8,7 @@ for failure in ('database', 'health'):
  with tempfile.TemporaryDirectory() as tmp:
   root=Path(tmp); dest=root/'panel'; etc=root/'etc'; run=root/'run'; bins=root/'bin'; release=root/'release'
   shutil.copytree(source,release,ignore=shutil.ignore_patterns('.git','__pycache__','instance','venv','backups'))
+  (release/'scripts/harden_services.sh').write_text('#!/bin/bash\necho \"BEENY_PRIVILEGE_SOCKET=/run/beeny-panel/privileged.sock\" >> '+str(etc/'beeny-panel/panel.env')+'\n')
   shutil.copytree(release,dest)
   for directory in (etc/'systemd/system',etc/'beeny-panel',run,bins,dest/'instance',dest/'venv/bin'):directory.mkdir(parents=True,exist_ok=True)
   (dest/'app.py').write_text('OLD_APPLICATION = True\n')
@@ -31,6 +32,7 @@ for failure in ('database', 'health'):
   assert (dest/'app.py').read_text()=='OLD_APPLICATION = True\n',result.stderr
   assert (dest/'venv/bin/python').exists(),result.stderr
   assert (etc/'systemd/system/beeny-panel.service').read_text()=='old systemd unit\n'
+  assert (etc/'beeny-panel/panel.env').read_text()=='BEENY_PORT=8080\n'
   assert 'start beeny-panel' in (root/'systemctl.log').read_text(),result.stderr
   assert list((dest/'backups').glob('update-*')),result.stderr
   print(f'{failure} failure: application, Python environment and prior service restored')

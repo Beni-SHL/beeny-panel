@@ -2,12 +2,16 @@
 
 set -euo pipefail
 USER_NAME="${1:-}"
-[[ "$USER_NAME" =~ ^[A-Za-z0-9_-]{1,64}$ ]] || { echo 'Invalid username' >&2; exit 2; }
+[[ "$USER_NAME" =~ ^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}$ ]] || { echo 'Invalid username' >&2; exit 2; }
 [[ "${BEENY_PUBLIC_HOST:-}" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || { echo 'BEENY_PUBLIC_HOST is missing or invalid' >&2; exit 2; }
 [[ "${BEENY_VPN_PORT:-}" =~ ^[0-9]{1,5}$ ]] && (( BEENY_VPN_PORT >= 1 && BEENY_VPN_PORT <= 65535 )) || { echo 'BEENY_VPN_PORT is missing or invalid' >&2; exit 2; }
 [[ -r /etc/openvpn/ta.key ]] || { echo 'VPN tls-auth key is missing: /etc/openvpn/ta.key' >&2; exit 1; }
+vpn_proto="${BEENY_VPN_PROTO:-tcp}"
+[[ "$vpn_proto" == tcp || "$vpn_proto" == udp ]] || { echo 'Invalid VPN protocol' >&2; exit 2; }
 mkdir -p /etc/openvpn/clients
 umask 077
+exec 9>/etc/openvpn/.beeny-pki.lock
+flock -w 120 9 || { echo 'PKI is busy; retry shortly.' >&2; exit 1; }
 export EASYRSA_BATCH=1
 
 cd /etc/openvpn/easy-rsa || exit 1
@@ -42,7 +46,7 @@ fi
 cat > /etc/openvpn/clients/${USER_NAME}.ovpn <<EOF
 client
 dev tun
-proto tcp
+proto ${vpn_proto}
 remote ${BEENY_PUBLIC_HOST} ${BEENY_VPN_PORT}
 
 resolv-retry infinite
@@ -51,6 +55,7 @@ persist-key
 persist-tun
 
 remote-cert-tls server
+block-ipv6
 
 cipher AES-256-GCM
 auth SHA256

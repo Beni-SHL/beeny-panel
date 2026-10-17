@@ -241,9 +241,9 @@ body.light .configs-menu{ background:rgba(255,255,255,0.82); }
   <div class="users-toolbar glass-surface">
     <div class="toolbar-header">
       <div class="toolbar-title">
-        <div class="toolbar-eyebrow"><span class="dot"></span> Live Directory</div>
-        <h1>Users</h1>
-        <div class="count-line"><strong id="totalUsersCount">0</strong><span>accounts provisioned</span></div>
+        <div class="toolbar-eyebrow"><span class="dot"></span> {{ admin_t('Live Directory') }}</div>
+        <h1>{{ admin_t('Users') }}</h1>
+        <div class="count-line"><strong id="totalUsersCount">0</strong><span>{{ admin_t('accounts provisioned') }}</span></div>
       </div>
 
       <div class="search-action-wrap">
@@ -256,31 +256,31 @@ body.light .configs-menu{ background:rgba(255,255,255,0.82); }
     </div>
 
     <div class="stat-strip">
-      <div class="stat-chip"><i class="fa fa-circle si-online"></i><div class="stat-chip-text"><strong id="statOnline">0</strong><span>Online Now</span></div></div>
-      <div class="stat-chip"><i class="fa fa-users si-total"></i><div class="stat-chip-text"><strong id="statTotal">0</strong><span>Total Users</span></div></div>
-      <div class="stat-chip"><i class="fa fa-database si-traffic"></i><div class="stat-chip-text"><strong id="statTraffic">0 GB</strong><span>Traffic Used</span></div></div>
-      <div class="stat-chip"><i class="fa fa-triangle-exclamation si-warn"></i><div class="stat-chip-text"><strong id="statWarn">0</strong><span>Near Limit</span></div></div>
+      <div class="stat-chip"><i class="fa fa-circle si-online"></i><div class="stat-chip-text"><strong id="statOnline">0</strong><span>{{ admin_t('Online Now') }}</span></div></div>
+      <div class="stat-chip"><i class="fa fa-users si-total"></i><div class="stat-chip-text"><strong id="statTotal">0</strong><span>{{ admin_t('Total Users') }}</span></div></div>
+      <div class="stat-chip"><i class="fa fa-database si-traffic"></i><div class="stat-chip-text"><strong id="statTraffic">0 GB</strong><span>{{ admin_t('Traffic Used') }}</span></div></div>
+      <div class="stat-chip"><i class="fa fa-triangle-exclamation si-warn"></i><div class="stat-chip-text"><strong id="statWarn">0</strong><span>{{ admin_t('Near Limit') }}</span></div></div>
     </div>
 
     <div class="filter-bar">
       <select id="sortFilter" class="filter-select">
-        <option value="newest">Newest First</option>
-        <option value="online_first">Online First</option>
-        <option value="traffic_desc">Highest Usage</option>
-        <option value="traffic_asc">Lowest Usage</option>
-        <option value="oldest">Oldest First</option>
+        <option value="newest">{{ admin_t('Newest First') }}</option>
+        <option value="online_first">{{ admin_t('Online First') }}</option>
+        <option value="traffic_desc">{{ admin_t('Highest Usage') }}</option>
+        <option value="traffic_asc">{{ admin_t('Lowest Usage') }}</option>
+        <option value="oldest">{{ admin_t('Oldest First') }}</option>
       </select>
       <select id="protocolFilter" class="filter-select">
-        <option value="">All Protocols</option>
+        <option value="">{{ admin_t('All Protocols') }}</option>
         <option value="openvpn">OpenVPN</option>
         <option value="wireguard">WireGuard</option>
       </select>
       <select id="statusFilter" class="filter-select">
-        <option value="">All Status</option>
-        <option value="active">Active</option>
-        <option value="disabled">Disabled</option>
+        <option value="">{{ admin_t('All Status') }}</option>
+        <option value="active">{{ admin_t('Active') }}</option>
+        <option value="disabled">{{ admin_t('Disabled') }}</option>
       </select>
-      <span class="filter-count"><i class="fa fa-filter"></i> filters applied live</span>
+      <span class="filter-count"><i class="fa fa-filter"></i> {{ admin_t('filters applied live') }}</span>
     </div>
   </div>
 

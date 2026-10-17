@@ -14,14 +14,14 @@
       const bytes = window.crypto.getRandomValues(new Uint8Array(20));
       field.value = Array.from(bytes, byte => alphabet[byte & 63]).join('');
       field.type = 'text';
-      toggle.textContent = 'Hide';
+      toggle.setAttribute('aria-label', 'Hide');toggle.title=toggle.getAttribute('aria-label');
       toggle.setAttribute('aria-pressed', 'true');
       field.dispatchEvent(new Event('input', {bubbles: true}));
       status.textContent = 'Generated. Copy and share privately before saving.';
     });
     toggle.addEventListener('click', () => {
       field.type = field.type === 'password' ? 'text' : 'password';
-      toggle.textContent = field.type === 'text' ? 'Hide' : 'Show';
+      toggle.setAttribute('aria-label', field.type === 'text' ? 'Hide' : 'Show');toggle.title=toggle.getAttribute('aria-label');
       toggle.setAttribute('aria-pressed', String(field.type === 'text'));
     });
     controls.querySelector('[data-password-copy]').addEventListener('click', async () => {
@@ -30,7 +30,7 @@
         await navigator.clipboard.writeText(field.value);
         status.textContent = 'Password copied.';
       } catch (_) {
-        field.type = 'text'; toggle.textContent = 'Hide'; toggle.setAttribute('aria-pressed', 'true');
+        field.type = 'text'; toggle.setAttribute('aria-label', 'Hide');toggle.title=toggle.getAttribute('aria-label'); toggle.setAttribute('aria-pressed', 'true');
         field.focus(); field.select();
         status.textContent = 'Select and copy the password manually.';
       }

@@ -1,0 +1,10 @@
+<nav class="customer-payment-tabs" aria-label="Customer payment settings">
+{% if gateway_tab %}
+<a href="{{ panel_path }}/settings/customer"><i class="fa fa-credit-card" aria-hidden="true"></i><span>{{ admin_t('Cards & contacts') }}</span></a>
+<a href="{{ panel_path }}/settings/customer#settings-plans"><i class="fa fa-tags" aria-hidden="true"></i><span>{{ admin_t('Plans & pricing') }}</span></a>
+{% else %}
+<button type="button" role="tab" aria-controls="settings-payment" data-target="settings-payment"><i class="fa fa-credit-card" aria-hidden="true"></i><span>{{ admin_t('Cards & contacts') }}</span></button>
+<button type="button" role="tab" aria-controls="settings-plans" data-target="settings-plans"><i class="fa fa-tags" aria-hidden="true"></i><span>{{ admin_t('Plans & pricing') }}</span></button>
+{% endif %}
+{% if admin_role()=='owner' %}<a href="{{ panel_path or customer_base }}/settings/customer?tab=balepay" {% if gateway_tab %}aria-current="page"{% endif %}><i class="fa fa-wallet" aria-hidden="true"></i><span>{{ admin_t('BalePay') }}</span></a>{% endif %}
+</nav>

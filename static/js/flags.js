@@ -1,7 +1,7 @@
 (() => {
   function render(root=document) {
     root.querySelectorAll('.flag[data-code]').forEach(el => {
-      const code=el.dataset.code.toLowerCase();
+      const raw=el.dataset.code.toLowerCase();const code=({uk:'gb',en:'gb'})[raw]||raw;
       if(!/^[a-z]{2}$/.test(code) || el.dataset.flagLoaded===code)return;
       el.dataset.flagLoaded=code;
       const image=new Image();image.src='/static/flags/'+code+'.svg';image.alt=code.toUpperCase();

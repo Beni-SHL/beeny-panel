@@ -74,14 +74,18 @@ demo() {
 
 check_source() {
   local needed
-  for needed in app.py cluster.py renewal.py traffic_ledger.py serve.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-customer-worker.service beeny-panel.service beeny-vpn-firewall.service templates/login.html templates/layout.html templates/user_form.html templates/customer_portal.html templates/customer_login.html templates/customer_sessions.html templates/customer_settings.html templates/renewal_inbox.html templates/update.html static/js/portal.js static/js/flags.js static/css/customer-admin.css templates/dashboard.html templates/traffic.html static/css/style.css static/css/brand.css static/css/login.css static/css/portal.css static/fonts/Vazirmatn-variable.woff2 static/beeny-mark.svg scripts/create_vpn_user.sh scripts/vpn-firewall.sh scripts/init_admin.py; do
+  for needed in maintenance.py scripts/manage_admin.py scripts/beenyctl.py scripts/bootstrap.sh scripts/install_cli.sh connection_guard.py session_identity.py warp_manager.py iran_network.py removal_guard.py network_settings.py network_policy.py beeny-network-policy.service representative_removal.py admin_i18n.py https_maintenance.py monitoring.py host_metrics.py crl_sync.py scripts/preflight_364.py style-bundles.json scripts/build_style_bundles.py scripts/enable_pki_audit.sh admission.py scripts/vpn_admission.py scripts/export_admission.py sales_engine.py financial_reporting.py session_limits.py terminal_traffic.py node_snapshots.py scripts/vpn_maintenance.py scripts/vpn_disconnect.py scripts/configure_vpn_core.py scripts/migrate_sales.py beeny-pki.service beeny-pki.timer sales_reporting.py representative_catalog.py static/i18n/representative-admin-en.json representative_actions.py static/css/release-361.css templates/partials/rep_overview.html templates/partials/rep_create.html templates/partials/rep_debt.html templates/partials/rep_income.html templates/partials/rep_prices.html templates/partials/rep_reports.html templates/partials/rep_cancellations.html templates/partials/rep_identity.html representative_credit.py templates/representative_credit.html templates/representative_credit_admin.html templates/representative_statement.html templates/representative_shell.html templates/representative_login.html static/css/representative-credit.css static/js/representative-credit.js static/brand/balepay.png templates/partials/payment_settings_tabs.html balepay_bridge.py templates/settings_balepay.html commissions.py templates/commission_admin.html templates/commission_workspace.html static/css/commissions.css static/js/commissions.js bandwidth.py speed_policy.py resellers.py templates/auth_login.html templates/partials/auth_scene.html templates/ticket_detail.html templates/renewal_detail.html templates/reseller.html templates/reseller_admin.html static/brand/mark.png static/css/auth-bloom.css static/css/studio.css static/js/auth-bloom.js static/js/studio.js static/js/reseller-controls.js bulk.py host_traffic.py devices.py security.py backup_engine.py privileged.py privileged_server.py health.py support.py commerce.py beeny-privileged.service scripts/harden_services.sh app.py cluster.py renewal.py traffic_ledger.py serve.py admin_sessions.py pricing.py experience.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-customer-worker.service beeny-panel.service beeny-vpn-firewall.service templates/login.html templates/layout.html templates/user_form.html templates/customer_portal.html templates/customer_login.html templates/customer_sessions.html templates/customer_settings.html templates/renewal_inbox.html templates/update.html static/js/portal.js static/js/flags.js static/css/customer-admin.css templates/dashboard.html templates/traffic.html static/css/style.css static/css/brand.css static/css/login.css static/css/portal.css static/fonts/Vazirmatn-variable.woff2 static/beeny-mark.svg scripts/create_vpn_user.sh scripts/vpn-firewall.sh scripts/init_admin.py; do
     [[ -f "$ROOT_DIR/$needed" ]] || { echo "Missing: $needed" >&2; exit 1; }
   done
   python3 - "$ROOT_DIR" <<'PY'
 import ast, pathlib, sys
 root=pathlib.Path(sys.argv[1])
-for p in [root/'app.py',root/'cluster.py',root/'renewal.py',root/'traffic_ledger.py',root/'serve.py',root/'customer_features.py',root/'customer_worker.py',root/'vpn_sessions.py',root/'migrations.py',root/'scripts/init_admin.py']:
+for p in [root/'app.py',root/'sales_engine.py',root/'financial_reporting.py',root/'session_limits.py',root/'terminal_traffic.py',root/'node_snapshots.py',root/'sales_reporting.py',root/'representative_catalog.py',root/'representative_actions.py',root/'representative_credit.py',root/'balepay_bridge.py',root/'commissions.py',root/'resellers.py',root/'support.py',root/'commerce.py',root/'cluster.py',root/'renewal.py',root/'traffic_ledger.py',root/'serve.py',root/'admin_sessions.py',root/'pricing.py',root/'experience.py',root/'customer_features.py',root/'customer_worker.py',root/'vpn_sessions.py',root/'migrations.py',root/'scripts/init_admin.py']:
     ast.parse(p.read_text())
+for index in range(1,30):
+    assert (root/f'static/avatars/monster-{index:02d}.webp').is_file(), f'Missing avatar {index}'
+for filename in ['js/experience.js','js/users-list.js','js/share-access.js','js/ambient.js','css/experience.css','css/design-fixes.css','js/background-loader.js','js/avatar-theme.js','js/bank-carousel.js']:
+    assert (root/'static'/filename).is_file(), f'Missing {filename}'
 PY
 }
 check_source
@@ -222,7 +226,7 @@ ok 'All settings validated'
 install -m 600 /dev/null "$LOG"
 phase 2 'Install system packages'
 run_quiet 'Refresh Ubuntu package lists' apt-get update
-run_quiet 'Install OpenVPN, Easy-RSA and Python' env DEBIAN_FRONTEND=noninteractive apt-get install -y openvpn easy-rsa python3 python3-venv python3-pip rsync netcat-openbsd iptables ca-certificates
+run_quiet 'Install OpenVPN, Easy-RSA and Python' env DEBIAN_FRONTEND=noninteractive apt-get install -y openvpn easy-rsa python3 python3-venv python3-pip rsync netcat-openbsd iptables nftables iproute2 curl ca-certificates ffmpeg
 if [[ -n "$panel_domain" ]]; then
   run_quiet 'Install Nginx and Certbot' env DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot
 fi
@@ -240,6 +244,8 @@ install -m 644 /etc/openvpn/easy-rsa/pki/dh.pem /etc/openvpn/dh.pem
 openvpn --genkey tls-auth /etc/openvpn/ta.key
 chmod 600 /etc/openvpn/ta.key
 ok 'Certificates generated on this server'
+(cd /etc/openvpn/easy-rsa && EASYRSA_BATCH=1 ./easyrsa gen-crl)
+install -m 644 /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn/crl.pem
 phase 4 'Configure OpenVPN and routing'
 cat > /etc/openvpn/server/server.conf <<CONF
 port $vpn_port
@@ -255,6 +261,14 @@ key /etc/openvpn/server/server.key
 dh /etc/openvpn/dh.pem
 tls-auth /etc/openvpn/ta.key 0
 tls-version-min 1.2
+crl-verify /etc/openvpn/crl.pem
+ignore-unknown-option disable-dco
+disable-dco
+user nobody
+group nogroup
+server-ipv6 fd42:bee:8::/64
+push "redirect-gateway ipv6"
+push "block-ipv6"
 data-ciphers AES-256-GCM:AES-128-GCM
 cipher AES-256-GCM
 auth SHA256
@@ -313,7 +327,10 @@ export BEENY_SECRET_KEY="$secret" BEENY_PUBLIC_HOST="$vpn_host" BEENY_VPN_PORT="
 printf '%s\n' "$admin_pass" | PYTHONPATH="$DEST${PYTHONPATH:+:$PYTHONPATH}" "$DEST/venv/bin/python" "$DEST/scripts/init_admin.py" "$admin_user"
 unset admin_pass secret BEENY_SECRET_KEY
 fi
+bash "$DEST/scripts/harden_services.sh"
 install -m 644 "$DEST/beeny-panel.service" /etc/systemd/system/beeny-panel.service
+install -m 644 "$DEST/beeny-network-policy.service" /etc/systemd/system/beeny-network-policy.service
+systemctl enable beeny-network-policy.service
 systemctl daemon-reload
 systemctl enable --now beeny-panel
 systemctl is-active --quiet beeny-panel || { echo 'Panel failed. Check: journalctl -u beeny-panel -n 100' >&2; exit 1; }
@@ -346,11 +363,13 @@ if [[ -n "$panel_domain" ]]; then
 server {
     listen 80;
     server_name $panel_domain;
+    client_max_body_size 224M;
     return 301 https://\$host\$request_uri;
 }
 server {
     listen 443 ssl;
     server_name $panel_domain;
+    client_max_body_size 224M;
     ssl_certificate /etc/letsencrypt/live/$panel_domain/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$panel_domain/privkey.pem;
     location / {
@@ -380,3 +399,5 @@ systemctl is-active --quiet beeny-panel || { echo 'Panel service failed after pu
 printf '\n%s╭───────────────── INSTALLATION COMPLETE ─────────────────╮%s\n' "$GREEN" "$RESET"
 printf '  Panel:   %s\n  OpenVPN: %s:%s/TCP\n  Logs:    %s\n' "$panel_url" "$vpn_host" "$vpn_port" "$LOG"
 printf '%s╰─────────────────────────────────────────────────────────╯%s\n\n' "$GREEN" "$RESET"
+
+bash "$DEST/scripts/install_cli.sh"

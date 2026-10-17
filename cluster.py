@@ -1,7 +1,20 @@
 import requests
 import os
+from privileged import call as privileged_call,enabled as privileged_enabled
+
+
+def node_url(node):
+    from urllib.parse import urlsplit
+    target=(node.host or node.ip or '').strip()
+    explicit=target.startswith(('http://','https://'))
+    parsed=urlsplit(target if explicit else 'http://'+target)
+    if not parsed.hostname or parsed.scheme not in {'http','https'} or parsed.username or parsed.password or parsed.query or parsed.fragment:raise ValueError('Invalid node API address.')
+    _=parsed.port
+    if not explicit and parsed.port is None:target+=':5001'
+    return (target if explicit else 'http://'+target).rstrip('/')
 
 def get_file_content(paths):
+    if privileged_enabled():return ""
     for path in paths:
         if os.path.exists(path):
             with open(path, "r") as f:
@@ -14,14 +27,7 @@ def bootstrap_node(node):
         if not target:
             return False, "Error: Node address is empty"
 
-        host_address = target.strip()
-        if not host_address.startswith("http://") and not host_address.startswith("https://"):
-            host_url = f"http://{host_address}"
-        else:
-            host_url = host_address
-
-        if ":" not in host_url.replace("http://", "").replace("https://", ""):
-            host_url = f"{host_url}:5001"
+        host_url=node_url(node)
 
         ca_crt = get_file_content(["/etc/openvpn/easy-rsa/pki/ca.crt", "/etc/openvpn/server/ca.crt", "/etc/openvpn/ca.crt"])
         ta_key = get_file_content(["/etc/openvpn/easy-rsa/ta.key", "/etc/openvpn/server/ta.key", "/etc/openvpn/ta.key"])
@@ -48,6 +54,10 @@ def bootstrap_node(node):
             "server_conf": server_conf
         }
 
+        if privileged_enabled():
+            payload=privileged_call('bootstrap_material')
+            replacements={'/etc/openvpn/easy-rsa/pki/ca.crt':'/etc/openvpn/ca.crt','/etc/openvpn/easy-rsa/pki/issued/server.crt':'/etc/openvpn/server/server.crt','/etc/openvpn/easy-rsa/pki/private/server.key':'/etc/openvpn/server/server.key','/etc/openvpn/easy-rsa/pki/dh.pem':'/etc/openvpn/dh.pem','/etc/openvpn/easy-rsa/ta.key':'/etc/openvpn/ta.key'}
+            for old,new in replacements.items():payload['server_conf']=payload['server_conf'].replace(old,new)
         headers = {"Authorization": f"Bearer {node.api_key}"}
         response = requests.post(f"{host_url}/api/node/bootstrap-openvpn", json=payload, headers=headers, timeout=10)
 
@@ -65,23 +75,16 @@ def create_user_on_node(node, user):
         if not target:
             return "Error: Node address is empty"
 
-        host_address = target.strip()
-        if not host_address.startswith("http://") and not host_address.startswith("https://"):
-            host_url = f"http://{host_address}"
-        else:
-            host_url = host_address
-
-        if ":" not in host_url.replace("http://", "").replace("https://", ""):
-            host_url = f"{host_url}:5001"
+        host_url=node_url(node)
 
         username = user.username
         try:
-            with open(f"/etc/openvpn/easy-rsa/pki/issued/{username}.crt", "r") as f:
-                cert_data = f.read()
-            with open(f"/etc/openvpn/easy-rsa/pki/private/{username}.key", "r") as f:
-                key_data = f.read()
-        except Exception as e:
-            return f"Error reading local certs for {username}: {str(e)}"
+            if privileged_enabled():
+                material=privileged_call('material',username=username);cert_data,key_data=material['cert'],material['key']
+            else:
+                with open(f'/etc/openvpn/easy-rsa/pki/issued/{username}.crt') as f:cert_data=f.read()
+                with open(f'/etc/openvpn/easy-rsa/pki/private/{username}.key') as f:key_data=f.read()
+        except (OSError,RuntimeError):return 'Certificate material unavailable.'
 
         payload = {
             "username": username,
@@ -113,14 +116,7 @@ def delete_user_on_node(node, username):
         if not target:
             return False
 
-        host_address = target.strip()
-        if not host_address.startswith("http://") and not host_address.startswith("https://"):
-            host_url = f"http://{host_address}"
-        else:
-            host_url = host_address
-
-        if ":" not in host_url.replace("http://", "").replace("https://", ""):
-            host_url = f"{host_url}:5001"
+        host_url=node_url(node)
 
         headers = {"Authorization": f"Bearer {node.api_key}"}
         payload = {"username": username}
@@ -140,14 +136,13 @@ def set_user_state_on_node(node, username, active):
     target = (node.host or node.ip or '').strip()
     if not target:
         return False, 'Node address is missing'
-    address = target if target.startswith(('http://', 'https://')) else f'http://{target}'
-    if ':' not in address.split('//', 1)[-1]:
-        address += ':5001'
     try:
+        address=node_url(node)
         response = requests.post(f'{address}/api/node/set-user-state',
                                  json={'username': username, 'active': active},
                                  headers={'Authorization': f'Bearer {node.api_key}'}, timeout=5)
         response.raise_for_status()
+        if response.json().get('success') is not True:return False,'Agent did not confirm the change.'
         return True, ''
-    except requests.RequestException as exc:
+    except (requests.RequestException,ValueError) as exc:
         return False, str(exc)

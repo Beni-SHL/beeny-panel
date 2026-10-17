@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  function init(){
   document.querySelectorAll('[data-toggle-password]').forEach(button => {
     button.addEventListener('click', () => {
       const field = document.getElementById(button.dataset.togglePassword);
@@ -22,14 +23,24 @@
   }
   document.querySelectorAll('[data-copy-card]').forEach(button => button.addEventListener('click', async () => {
     const initial = button.textContent;
-    try { await navigator.clipboard.writeText(button.dataset.copyCard); button.textContent = 'شماره کارت کپی شد ✓'; }
-    catch (_) { button.textContent = button.dataset.copyCard; }
+    try { await navigator.clipboard.writeText(button.dataset.copyCard); button.textContent = (document.documentElement.lang==='en'?"Card number copied \u2713":'شماره کارت کپی شد ✓'); }
+    catch (_) {
+      const field=document.createElement('textarea');field.value=button.dataset.copyCard;field.style.position='fixed';field.style.opacity='0';document.body.append(field);field.select();
+      const copied=document.execCommand('copy');field.remove();button.textContent=copied?(document.documentElement.lang==='en'?"Card number copied \u2713":'شماره کارت کپی شد ✓'):button.dataset.copyCard;
+    }
     setTimeout(() => button.textContent = initial, 2500);
   }));
-  document.querySelectorAll('[data-confirm-delete]').forEach(form => form.addEventListener('submit', event => {
-    if (!window.confirm('Delete this request and permanently remove its receipt image?')) event.preventDefault();
-  }));
+  if(!window.beenyDeleteConfirmation){
+    window.beenyDeleteConfirmation=true;
+    document.addEventListener('submit',event=>{
+      const form=event.target;
+      if(!form.matches('[data-confirm-delete]'))return;
+      const message=form.dataset.confirmDelete||'Delete this item permanently?';
+      if(!window.confirm(window.adminT?.(message)||message))event.preventDefault();
+    },true);
+  }
   document.querySelectorAll('[data-notifications]').forEach(center => {
+    if(center.dataset.notificationsBound)return;center.dataset.notificationsBound='1';
     const bell = center.querySelector('.notification-bell'), popup = center.querySelector('.notification-popover');
     const items = center.querySelector('.notification-items'), badge = center.querySelector('.notification-badge');
     const fa = center.dataset.locale === 'fa';
@@ -44,8 +55,9 @@
         upto = data.latest_id;
         badge.textContent = data.unread > 99 ? '99+' : String(data.unread);
         badge.hidden = !data.unread;
+        center.classList.toggle('has-unread', Boolean(data.unread));
         items.replaceChildren();
-        if (!data.items.length) { const p = document.createElement('p'); p.textContent = fa ? 'هنوز اعلانی ندارید.' : 'No notifications yet.'; items.append(p); }
+        if (!data.items.length) { const p = document.createElement('p'); p.textContent = fa ? (document.documentElement.lang==='en'?"No notifications yet.":'هنوز اعلانی ندارید.') : 'No notifications yet.'; items.append(p); }
         data.items.forEach(row => {
           const article = document.createElement('article'), title = document.createElement('b'), body = document.createElement('p'), stamp = document.createElement('time');
           title.textContent = row.title; body.textContent = row.body; stamp.textContent = new Date(row.created).toLocaleString(fa ? 'fa-IR' : 'en-GB');
@@ -57,9 +69,24 @@
     bell.addEventListener('click', () => {popup.hidden = !popup.hidden; bell.setAttribute('aria-expanded', String(!popup.hidden)); if (!popup.hidden) refresh();});
     document.addEventListener('click', event => { if (!center.contains(event.target)) {popup.hidden = true; bell.setAttribute('aria-expanded','false');} });
     center.addEventListener('keydown', event => {if (event.key === 'Escape') {popup.hidden=true; bell.focus(); bell.setAttribute('aria-expanded','false');}});
-    center.querySelector('.notification-read').addEventListener('click', async () => {
-      try {const response = await fetch(center.dataset.notifications+'/read', {method:'POST', body:new URLSearchParams({csrf:center.dataset.csrf, upto:String(upto)})}); if (response.ok && !response.redirected) await refresh();} catch (_) {}
-    });
+    async function acknowledge(action, button) {
+      if (button.disabled) return;
+      button.disabled = true;
+      try {
+        const response = await fetch(center.dataset.notifications+'/'+action, {
+          method:'POST', body:new URLSearchParams({csrf:center.dataset.csrf, upto:String(upto)})
+        });
+        if (response.ok && !response.redirected) {
+          popup.hidden = true;
+          bell.setAttribute('aria-expanded', 'false');
+          bell.focus();
+          await refresh();
+        }
+      } catch (_) { /* Keep the menu open if the action was not confirmed. */ }
+      finally { button.disabled = false; }
+    }
+    center.querySelector('.notification-read').addEventListener('click', event => acknowledge('read', event.currentTarget));
+    center.querySelector('.notification-clear').addEventListener('click', event => acknowledge('clear', event.currentTarget));
     refresh(); setInterval(() => {if (!document.hidden) refresh();},60000);
   });
   const addCard = document.getElementById('add-bank-card'), cards = document.getElementById('extra-cards');
@@ -79,4 +106,6 @@
       card.querySelector('input').focus();
     });
   }
+  }
+  init();document.addEventListener('admin:content-ready',init);
 })();

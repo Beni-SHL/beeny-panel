@@ -1,0 +1,10 @@
+(()=>{'use strict';
+ document.querySelectorAll('[data-bulk-search]').forEach(search=>{const box=search.closest('.bulk-picker'),rows=[...box.querySelectorAll('.bulk-user')],inputs=rows.map(row=>row.querySelector('input'));
+  const update=()=>{const chosen=inputs.filter(i=>i.checked).length;box.querySelector('[data-bulk-count]').textContent=chosen;inputs.forEach(i=>i.disabled=chosen>=100&&!i.checked);};
+  search.addEventListener('input',()=>{const q=search.value.toLocaleLowerCase().trim();rows.forEach(row=>row.hidden=!row.dataset.name.includes(q));});
+  box.addEventListener('change',update);box.querySelector('[data-bulk-select]').addEventListener('click',()=>{let count=inputs.filter(i=>i.checked).length;rows.filter(r=>!r.hidden).forEach(row=>{const i=row.querySelector('input');if(!i.checked&&count<100){i.checked=true;count++;}});update();});
+  box.querySelector('[data-bulk-clear]').addEventListener('click',()=>{inputs.forEach(i=>i.checked=false);update();});update();
+ });
+ document.querySelectorAll('[data-ticket-message]').forEach(text=>{const count=text.closest('form').querySelector('[data-ticket-count]');const update=()=>{if(count)count.textContent=text.value.length;};text.addEventListener('input',update);update();});
+ document.querySelectorAll('[data-ticket-subject]').forEach(button=>button.addEventListener('click',()=>{const input=button.closest('.ticket-compose').querySelector('[name=subject]');input.value=button.dataset.ticketSubject;input.focus();}));
+})();

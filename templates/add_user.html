@@ -114,18 +114,18 @@
 }
 </style>
 
-<h2 class="page-title">Create New User</h2>
+<h2 class="page-title">{{ admin_t('Create New User') }}</h2>
 
 <div class="glass-form-card">
-    <form method="post">
+    <form method="post" data-admin-ajax>
 
         <div class="row" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
             <div style="flex: 1; min-width: 200px;">
-                <label class="form-label">Username</label>
+                <label class="form-label">{{ admin_t('Username') }}</label>
                 <input type="text" name="username" class="glass-input" placeholder="e.g. jondoe" required>
             </div>
             <div style="flex: 1; min-width: 200px;">
-                <label class="form-label">Protocol</label>
+                <label class="form-label">{{ admin_t('Protocol') }}</label>
                 <select name="protocol" class="glass-input">
                     <option value="openvpn">OpenVPN</option>
                     <option value="wireguard">WireGuard</option>
@@ -135,24 +135,24 @@
 
         <div class="row" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
             <div style="flex: 1; min-width: 200px;">
-                <label class="form-label">Max Devices</label>
+                <label class="form-label">{{ admin_t('Max Devices') }}</label>
                 <input type="number" name="max_devices" value="1" min="1" class="glass-input">
             </div>
             <div style="flex: 1; min-width: 200px;">
-                <label class="form-label">Traffic Limit (GB)</label>
+                <label class="form-label">{{ admin_t('Traffic Limit (GB)') }}</label>
                 <input type="number" step="0.1" min="0" value="10" name="traffic_limit" class="glass-input">
-                <span class="helper-text">Set 0 for Unlimited traffic</span>
+                <span class="helper-text">{{ admin_t('Set 0 for Unlimited traffic') }}</span>
             </div>
         </div>
 
         <div class="mb-4" style="margin-bottom: 30px;">
-            <label class="form-label">Expire Date</label>
+            <label class="form-label">{{ admin_t('Expire Date') }}</label>
             <input type="date" name="expire_date" class="glass-input">
         </div>
 
         <div class="nodes-section">
             <label class="form-label" style="font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px;">
-                <i class="fa fa-globe" style="color: #60a5fa;"></i> Select Allowed Nodes
+                <i class="fa fa-globe" style="color: #60a5fa;"></i> {{ admin_t('Select Allowed Nodes') }}
             </label>
             <div class="nodes-grid">
                 {% for node in nodes %}
@@ -164,16 +164,16 @@
             </div>
             {% if not nodes %}
             <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24; border-radius: 12px; padding: 14px; margin-top: 10px; font-size: 13px;">
-                ?? No nodes found. Please add a node in the settings first.
+                {{ admin_t('?? No nodes found. Please add a node in the settings first.') }}
             </div>
             {% endif %}
         </div>
 
         <div class="action-buttons">
             <button type="submit" class="btn-primary-glass">
-                <i class="fa fa-check" style="margin-right: 6px;"></i> Create User
+                <i class="fa fa-check" style="margin-right: 6px;"></i> {{ admin_t('Create User') }}
             </button>
-            <a href="{{ panel_path }}/users" class="btn-cancel-glass">Cancel</a>
+            <a href="{{ panel_path }}/users" class="btn-cancel-glass">{{ admin_t('Cancel') }}</a>
         </div>
     </form>
 </div>

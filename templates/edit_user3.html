@@ -2,14 +2,14 @@
 
 {% block content %}
 
-<h2 class="mb-4">Edit User</h2>
+<h2 class="mb-4">{{ admin_t('Edit User') }}</h2>
 
 <div class="glass-card">
 
-<form method="post">
+<form method="post" data-admin-ajax>
 
     <div class="mb-3">
-        <label>Username</label>
+        <label>{{ admin_t('Username') }}</label>
 
         <input
             name="username"
@@ -19,7 +19,7 @@
 
     <div class="mb-3">
 
-        <label>Protocol</label>
+        <label>{{ admin_t('Protocol') }}</label>
 
         <select
             name="protocol"
@@ -45,7 +45,7 @@
 
     <div class="mb-3">
 
-        <label>Max Devices</label>
+        <label>{{ admin_t('Max Devices') }}</label>
 
         <input
             type="number"
@@ -57,7 +57,7 @@
 
     <div class="mb-3">
 
-        <label>Expire Date</label>
+        <label>{{ admin_t('Expire Date') }}</label>
 
         <input
             type="date"
@@ -69,7 +69,7 @@
 
     <div class="mb-3">
 
-        <label>Status</label>
+        <label>{{ admin_t('Status') }}</label>
 
         <select
             name="status"
@@ -79,14 +79,14 @@
             {% if user.status=="active" %}
             selected
             {% endif %}>
-            Active
+            {{ admin_t('Active') }}
             </option>
 
             <option value="disabled"
             {% if user.status=="disabled" %}
             selected
             {% endif %}>
-            Disabled
+            {{ admin_t('Disabled') }}
             </option>
 
         </select>
@@ -95,7 +95,7 @@
 
     <button
         class="btn btn-success">
-        Save Changes
+        {{ admin_t('Save Changes') }}
     </button>
 
 </form>

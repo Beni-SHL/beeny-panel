@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily Beeny PKI audit
+[Timer]
+OnCalendar=*-*-* 03:00:00 UTC
+RandomizedDelaySec=1800
+Persistent=true
+[Install]
+WantedBy=timers.target

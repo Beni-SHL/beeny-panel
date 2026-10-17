@@ -1,52 +1,125 @@
-## Release 2.2.0 — customer experience
+# Beeny Panel 3.6.9
 
-- 20 original fluffy monster avatars; a stable random default, customer choice and private photo uploads (20 MiB).
-- Animated blue Telegram card, larger profile, a notification bell for customers and admins, low-data and low-time warnings, and smooth feedback dialogs.
-- Approve & renew applies the saved plan once: add days/data, set device allowance, preserve usage and personal pause, and notify the paired customer through the portal and Telegram.
-- Delete renewal requests and their receipt files. Notification delivery supports one primary and up to 10 additional admin chat IDs and retries only failed recipients.
-- Multiple payment cards in six colors with a swipeable selector; optional plan discount badges and original prices.
-- Customer pause enforces local/remote VPN access without overriding administrator restrictions. Failed node confirmations remain visible and are retried.
-- Searchable continuous account list, batches up to 200, alphabetical sorting, login password visibility, and one-copy customer access messages.
+راهنمای این انتشار: [GUIDE-3.6.9-FA.md](GUIDE-3.6.9-FA.md). این نسخه قانون پسوند دامنه ندارد.
 
-### Upgrade an existing 2.1.x panel manually
+## Release 3.6.8 — connection evidence, peer limits and inherited typography
 
-Upload the full release ZIP to `/root` using MobaXterm, then run:
+Read [the update guide](UPDATE-3.6.8-FA.md), [operational setup and limitations](OPERATIONS-3.6.8-FA.md), and [the change/AJAX report](CHANGES-3.6.8-FA.md). Existing VPN outages require server evidence; this release does not claim a remotely verified outage root cause. Optional immediate admission and deliberate client-route activation require separate operational setup. Ordinary updates never restart OpenVPN.
+
+## Release 3.6.7 — dashboard-aligned control center
+
+Compact icon lists, distinct node/health views and flags, embedded administrator tools in General, supplied local Yekan Bakh weights, Persian RTL shell and language transition loader. Server-side account search and global online ordering precede pagination. Progressive AJAX covers ordinary management POST forms and retains dedicated action handlers. Legacy representative removal now opens the reviewed cascade workflow instead of only dropping permissions.
+
+Optional per-node network rules add reviewed RIPE registered Iran IPv4 import and resolved direct-domain routes; secured remote bridges require network-policy-v2. Nothing is auto-applied. Read [the update guide](UPDATE-3.6.7-FA.md) and RELEASE.json for operational limits and validation.
+
+## Release 3.6.6 — settings and controlled network policies
+
+Read [the Persian update guide](UPDATE-3.6.6-FA.md) before updating the primary server and secured node bridges. Ordinary updates preserve VPN configuration, certificates and traffic counters and do not restart OpenVPN. New network rules are optional, per-node and require explicit preview/application/confirmation. See RELEASE.json for validation and deployment limits.
+
+## Release 3.6.5 — monitoring and capacity
+
+See [the Persian update guide](UPDATE-3.6.5-FA.md). Monitoring is recorded every 30 seconds in the background, including all updated bridge nodes. Real network rates replace lifetime counters. Estimates are advisory; no VPN restart, protocol/MTU changes or account traffic reset occurs during the ordinary update.
+
+## Release 3.6.4
+
+See [UPDATE-3.6.4-FA.md](UPDATE-3.6.4-FA.md) for staged panel/node updates, billing, PKI maintenance and optional core/admission activation. Panel-only updates do not restart OpenVPN. Live kernel, client and payment validation remains required.
+
+## نسخه ۳.۶.۲
+
+اصلاح AJAX قیمت، سرویس دلخواه و پلن‌های جدید، مدیریت انگلیسی/فارسی، پرداخت بدهی در دسکتاپ و حفظ منوی نمایندگی در پشتیبانی. اعلان ساخت حساب برای مدیر تلگرام اضافه شده است. راهنما: [UPDATE-3.6.2-FA.md](UPDATE-3.6.2-FA.md).
+
+## نسخه ۳.۶.۱
+
+فضای نمایندگی با صفحه‌های مستقل، مدیریت یکپارچه فارسی، کپی متن حساب و لغو فروش با تأیید مدیر. راهنمای نصب و تغییرات: [UPDATE-3.6.1-FA.md](UPDATE-3.6.1-FA.md). برای نود انگلیس و افزونه بله‌پی ۰.۴.۰ آپدیت جدید لازم نیست.
+
+# Beeny Panel 3.5.1
+
+Landscape tutorial covers, private direct video uploads and lazy playback modals, plus commission selling: [Persian update guide](UPDATE-3.5.1-FA.md). Existing prepaid representatives are unchanged until explicitly converted; no node update required.
+
+# Beeny Panel 3.4.2
+
+See [UPDATE-3.4.2-FA.md](UPDATE-3.4.2-FA.md) for this release, the 20 requested UI repairs and the tested England speed fixes.
+
+# Release 3.4.1
+
+Fair-use speed limits and independent client VPN endpoint settings. See [Persian update guide](UPDATE-3.4.1-FA.md). Existing quotas and account policies are preserved.
+
+## Release 3.3.1
+
+Restores the original Users initial badge and expandable layout by scoping customer avatar styles; optional compact mode remains. Remaining quota is deep blue with a flat-ended gray consumed arc growing clockwise, animated water fill and reduced-motion support. Support has one entry card, a private inbox and a separate compose page. Matched customer header controls put pastel-red logout last; payment review actions share one toolbar, and the receipt coupon sits in the receipt panel after bank information.
+
+Representatives can create accounts with manager-approved preset prices or custom tariffs, renew their own completed accounts from wallet balance, and copy a prepared account message. Prices, ownership, status, current node grants and balance are checked server-side; a renewal debits once and retains consumption and personal pause. Passwords remain hashed; a creation password is held in the tab only for the creation redirect (up to five minutes), then removed. Existing passwords cannot be recovered. All private customer subroutes require authentication, including representative and ticket detail pages. Mark/read and clear close the notification menu after successful confirmation.
+
+Representative accounts now use a searchable, paginated expandable list. Announcements are colored cards under the customer avatar with edit/delete and icon choices.
+
+See [Persian 3.3.1 update guide](UPDATE-3.3.1-FA.md). Uses the existing backup/rollback updater; it does not stop or restart OpenVPN. Live VPS verification is still required.
+
+## Release 3.2.0
+
+Reference login design for administrator and private customer pages, new brand assets, separate ticket/payment inboxes and detail pages, receipt modal, light wallet/support surfaces and mobile account controls. Pastel avatar accents keep the Telegram card blue. Remaining-quota ring and tap-accessible daily chart include sub-GB units. Receipt renewals accept server-validated coupons; preview does not reserve coupon capacity.
+
+Customer representatives have a private wallet-funded workspace. The owner grants specific nodes and integer-Toman rates. Creation reserves credit atomically, issues a disabled account, and activates only after provisioning and grant revalidation. Failed orders can be retried without another debit or cancelled/refunded by the owner; completed orders cannot be refunded through that action. Representative sales are snapshotted in the financial ledger. No administrator access is granted.
+
+The 3.0.1 local access reconciliation and traffic history preservation remain. Existing-panel updates use `scripts/apply_experience_update.sh`; clean servers use `install.sh`. See [the historical 3.2 representative guide](UPDATE-3.2-FA.md). Tests use isolated databases and mocked node operations; live VPS VPN and delivery checks remain necessary.
+
+## Release 3.0.1
+
+Restores eligible local VPN access at panel startup without resetting customer traffic or restarting OpenVPN. Only active, unpaused, unexpired accounts within quota and assigned to the local node qualify. Manager-disabled accounts and England-only accounts stay blocked. Custom CCD addresses/routes are preserved. This does not recover usage erased by previous manual resets.
+
+Refined customer tickets, wallet receipt top-ups, mobile layouts and dark/light admin tables. Telegram & email has its own sidebar page; saving it preserves cards and plans. A complete prepared access message replaces individual copy cards, with icon buttons for sharing. The original management background and expandable Users view remain, alongside optional compact mode.
+
+See [Persian update guide](UPDATE-3.0-FA.md) for the 3.0.1 manual and GitHub update commands.
+
+## Release 3.0.0
+
+Security roles and 2FA, signed complete backups, private support tickets, wallet and invoices, independent device certificates, previewed bulk account operations, node health and durable server-interface traffic accounting. Original Lightfall management background and expandable users view are preserved; compact list remains optional.
+
+See [Persian update guide](UPDATE-3.0-FA.md) before updating an existing VPS. Run `scripts/apply_experience_update.sh` for an existing installation, or `install.sh` only on a new server. Remote legacy agents need the optional node bridge for host telemetry and verified access control.
+
+## Release 3.5.1
+
+- 29 optimized WebP avatars (200 KB combined); new personal avatar uploads also use WebP. Existing personal photos remain readable. The customer avatar appears only at the top of the profile.
+- Verified local OpenVPN management acknowledgement for customer pause, and persistent retry when a node cannot confirm. A stopped VPN service is reported as pending; this update does not restart VPN services.
+- Matching notification/theme controls, unread pulse and bell movement. Clear notifications hides existing messages for that account/admin; new messages and delivery history remain intact.
+- Bank carousel has no separate card selection: copy always uses the slide currently visible, including during a swipe.
+- The current release copies one complete prepared account message. Telegram/WhatsApp share that message; Instagram copies it for pasting in a conversation. Native Share is available on supported browsers. Existing password hashes cannot be recovered.
+- Settings > General > Active Sessions now manages real admin login sessions. Revoke one device or all your devices, including remembered logins. Customer sessions are independent.
+- Customer & payments > Custom service price calculator enables custom renewals and sets integer Toman rates. Formula: base + GB × GB rate + days × daily rate + (devices − 1) × extra-device rate. Preset plan prices are separate. The server computes and snapshots the custom price; approval adds the selected days and GB and sets the device limit.
+
+### Manual update on an existing panel
+
+Upload `beeny-panel-manual-update-3.5.1.zip` to `/root` with MobaXterm, then run each line:
 
 ```bash
-unzip -q /root/beeny-panel-manual-update-2.2.0.zip -d /root/beeny-update-2.2.0
-cd /root/beeny-update-2.2.0
-sudo bash scripts/update_panel.sh --check
+python3 -m zipfile -t /root/beeny-panel-manual-update-3.5.1.zip
+python3 -m zipfile -e /root/beeny-panel-manual-update-3.5.1.zip /root/beeny-update-3.5.1
+cd /root/beeny-update-3.5.1
 sudo bash scripts/apply_experience_update.sh
+cat /opt/beeny-panel/VERSION
+systemctl is-active beeny-panel beeny-customer-worker
 ```
 
-The updater backs up code, database, environment and service files before switching. Accounts, node IDs/assignments, VPN certificates, admin/customer credentials, settings, uploads and traffic history are preserved. Failed health checks restore the prior application and Python environment. The existing panel URL is retained. Do not run the new-server installer on an existing server.
+The updater backs up the current application/database before changing files. Use the update script for existing installations; `install.sh` is for a clean VPS. It preserves account IDs, node assignments, VPN material, config, customer uploads and notification secrets.
 
-### GitHub release and new installation
+### Publish the complete source from Windows CMD
 
-Extract the GitHub-ready ZIP into your repository checkout, then run `git add -A`, `git commit -m "Release Beeny Panel 2.2.0"` and `git push origin main` on separate lines. After publishing, existing 2.1.x panels can use `sudo bash /opt/beeny-panel/scripts/update_panel.sh --github`.
+Extract `beeny-panel-github-ready-3.5.1.zip` into your existing cloned repository, then run each line:
+
+```bat
+cd /d "%USERPROFILE%\beeny-panel-upload"
+tar -xf "%USERPROFILE%\Downloads\beeny-panel-github-ready-3.5.1.zip" -C .
+type VERSION
+git add .
+git commit -m "Release Beeny Panel 3.5.1"
+git push origin main
+```
+
+After publishing, installed servers can update with:
 
 ```bash
-git clone https://github.com/Beni-SHL/beeny-panel.git
-cd beeny-panel
-bash install.sh --check
-sudo bash install.sh
+sudo bash /opt/beeny-panel/scripts/update_panel.sh --github
 ```
 
-### Configure after updating
-
-In **Customer portal & payments**, save extra bank cards, colors, plan badges/original prices and numeric Telegram admin IDs. Every admin must start the bot. Customers connect from their private page. Notifications about renewals are sent to the currently linked Telegram account; invalidated bindings never receive them.
-
-To share account access in one message, save/generate a customer password and generate its private link in the **same browser tab within 10 minutes**. Copy the ready Persian message. Passwords are hashed on the server; the short-lived draft stays in browser session storage and can be cleared. Existing passwords cannot be retrieved.
-
-Personal pause does not freeze expiry time. An admin-disabled, expired or quota-blocked account cannot be reactivated by the customer. Remote enforcement needs the compatible agent endpoint `/api/node/set-user-state`; lack of confirmation is shown and retried. Renewal requests are approved only after independently verifying the bank transfer. Approvals add purchased GB to the limit, retain already consumed GB, and extend validity from the current expiry (or today when expired).
-
-## Release 2.1.2
-
-- Generate, show and copy secure 20-character customer portal passwords when creating accounts or configuring an existing customer login.
-- Photo and receipt uploads now accept up to 20 MiB (JPG, PNG, WebP; at most 40 million pixels). Photos are resized and metadata is removed before private storage.
-- Installer configures Nginx for 24 MiB request bodies. Updates adjust the Beeny site with a backup and restore it if Nginx validation or reload fails.
-- Telegram worker uses IPv4 by default. Set BEENY_WORKER_FORCE_IPV4=0 in panel.env if your network supports IPv6 and you want dual-stack HTTP connections.
-- Existing upgraded 2.1.x servers can apply the smaller package with `bash scripts/apply_account_photo_patch.sh`. Existing users, settings, passwords and VPN certificates are preserved.
 
 # Beeny Panel
 
@@ -146,3 +219,19 @@ sudo journalctl -u beeny-panel -n 100 --no-pager
 Create a disposable account, connect with its `.ovpn` profile, verify dashboard online status and Traffic after the next status poll, extend its expiry, and try its private link from an unauthenticated browser. Test a remote node separately after updating its agent.
 
 The admin UI inherits legacy routes that should be audited for CSRF and destructive GET requests before deployment beyond a trusted test environment.
+
+## Portal content (3.3.0)
+Owners can manage Telegram channel/group links, support avatar, direct HTTPS video URLs, WebP covers and bilingual customer announcement cards under **Portal content**. Customers can switch Persian/English, view tutorials and open Renewal as a separate tab. Videos use `preload=none`; host playable MP4/WebM files on your HTTPS media service. Third-party video availability is the operator's responsibility.
+
+## Release 3.5.4
+English owner-only gateway settings under Payments, recent payment attempts, and fresh checkout retries with delayed-confirmation support. See UPDATE-3.5.4-FA.md.
+
+## Release 3.5.5
+BalePay is available under Customer & payments → BalePay. Shared light/dark styles and CSRF, owner access, and retained order history. See UPDATE-3.5.5-FA.md.
+
+## Release 3.5.6
+BalePay sits beside Plans & pricing in the shared payment toolbar, with responsive spacing and light/dark styles. Test-mode order snapshots reject real activation. Pair with WordPress bridge 0.3.2; see UPDATE-3.5.6-FA.md.
+
+## Representative credit · 3.6.0
+
+Owner registration and opt-in policy: `settings/representative-credit`. Dedicated representative login: `representatives/login`. See [UPDATE-3.6.0-FA.md](UPDATE-3.6.0-FA.md) for principal debt, settlement, suspension and migration rules. Initial credit is not cash. Bank payout verification remains manual.

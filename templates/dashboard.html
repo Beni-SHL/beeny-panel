@@ -251,11 +251,11 @@ body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px
 <!-- HEADER -->
 <div class="gc dash-header">
   <div class="dash-header-left">
-    <h1>Dashboard</h1>
-    <p id="dashTime">Loading...</p>
+    <h1>{{ admin_t('Dashboard') }}</h1>
+    <p id="dashTime">{{ admin_t('Loading...') }}</p>
   </div>
   <div class="dash-header-right">
-    <div class="server-badge"><div class="server-badge-dot"></div>Server Online</div>
+    <div class="server-badge"><div class="server-badge-dot"></div>{{ admin_t('Server Online') }}</div>
     <a href="" class="refresh-btn" id="refreshBtn" title="Refresh"><i class="fa fa-arrows-rotate"></i></a>
   </div>
 </div>
@@ -264,14 +264,14 @@ body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px
 {% set lifetime = lifetime_traffic|default(total_traffic) %}
 <div class="gc gc-int hero-traffic reveal">
   <div class="hero-traffic-left">
-    <div class="hero-eyebrow"><span class="dot"></span>Lifetime Tracked Traffic</div>
+    <div class="hero-eyebrow"><span class="dot"></span>{{ admin_t('Lifetime Tracked Traffic') }}</div>
     <div class="hero-value" id="lifetimeValue" data-target="{{ lifetime }}">0 GB</div>
     <div class="hero-caption">
-      <b>Cumulative total</b> recorded since ledger activation — this figure only ever goes up. User resets, edits or quota
+      <b>{{ admin_t('Cumulative total') }}</b> recorded since ledger activation — this figure only ever goes up. User resets, edits or quota
       changes do not subtract from it, and remains available for bandwidth accounting.
     </div>
     <div class="hero-chips">
-      <div class="hero-chip"><span class="sq" style="background:var(--cyan)"></span>Never resets</div>
+      <div class="hero-chip"><span class="sq" style="background:var(--cyan)"></span>{{ admin_t('Never resets') }}</div>
       <div class="hero-chip"><span class="sq" style="background:var(--blue)"></span>{{ total_users }} users tracked</div>
     </div>
   </div>
@@ -283,42 +283,42 @@ body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px
   <div class="gc gc-int stat-card sc-blue">
     <div class="stat-top">
       <div class="stat-icon"><i class="fa fa-users"></i></div>
-      <div><div class="stat-label">Total Users</div><div class="stat-value" data-target="{{ total_users }}">0</div><div class="stat-sub">Registered</div></div>
+      <div><div class="stat-label">{{ admin_t('Total Users') }}</div><div class="stat-value" data-target="{{ total_users }}">0</div><div class="stat-sub">{{ admin_t('Registered') }}</div></div>
     </div>
     <canvas class="stat-spark" data-color="#60a5fa"></canvas>
   </div>
   <div class="gc gc-int stat-card sc-green">
     <div class="stat-top">
       <div class="stat-icon"><i class="fa fa-circle-dot"></i></div>
-      <div><div class="stat-label">Online Now</div><div class="stat-value" data-target="{{ online_users }}">0</div><div class="stat-sub">Connected</div></div>
+      <div><div class="stat-label">{{ admin_t('Online Now') }}</div><div class="stat-value" data-target="{{ online_users }}">0</div><div class="stat-sub">{{ admin_t('Connected') }}</div></div>
     </div>
     <canvas class="stat-spark" data-color="#4ade80"></canvas>
   </div>
   <div class="gc gc-int stat-card sc-green">
     <div class="stat-top">
       <div class="stat-icon"><i class="fa fa-check-circle"></i></div>
-      <div><div class="stat-label">Active</div><div class="stat-value" data-target="{{ active_users }}">0</div><div class="stat-sub">Non-expired</div></div>
+      <div><div class="stat-label">{{ admin_t('Active') }}</div><div class="stat-value" data-target="{{ active_users }}">0</div><div class="stat-sub">{{ admin_t('Non-expired') }}</div></div>
     </div>
     <canvas class="stat-spark" data-color="#4ade80"></canvas>
   </div>
   <div class="gc gc-int stat-card sc-amber">
     <div class="stat-top">
       <div class="stat-icon"><i class="fa fa-clock"></i></div>
-      <div><div class="stat-label">Expiring</div><div class="stat-value" data-target="{{ expiring_users }}">0</div><div class="stat-sub">Within 7d</div></div>
+      <div><div class="stat-label">{{ admin_t('Expiring') }}</div><div class="stat-value" data-target="{{ expiring_users }}">0</div><div class="stat-sub">{{ admin_t('Within 7d') }}</div></div>
     </div>
     <canvas class="stat-spark" data-color="#fbbf24"></canvas>
   </div>
   <div class="gc gc-int stat-card sc-blue">
     <div class="stat-top">
       <div class="stat-icon"><i class="fa fa-shield-halved"></i></div>
-      <div><div class="stat-label">OpenVPN</div><div class="stat-value" data-target="{{ openvpn_users }}">0</div><div class="stat-sub">Protocol</div></div>
+      <div><div class="stat-label">OpenVPN</div><div class="stat-value" data-target="{{ openvpn_users }}">0</div><div class="stat-sub">{{ admin_t('Protocol') }}</div></div>
     </div>
     <canvas class="stat-spark" data-color="#60a5fa"></canvas>
   </div>
   <div class="gc gc-int stat-card">
     <div class="stat-top">
       <div class="stat-icon sc-purple"><i class="fa fa-bolt"></i></div>
-      <div><div class="stat-label">WireGuard</div><div class="stat-value" data-target="{{ wireguard_users }}">0</div><div class="stat-sub">Protocol</div></div>
+      <div><div class="stat-label">WireGuard</div><div class="stat-value" data-target="{{ wireguard_users }}">0</div><div class="stat-sub">{{ admin_t('Protocol') }}</div></div>
     </div>
     <canvas class="stat-spark" data-color="#a78bfa"></canvas>
   </div>
@@ -328,19 +328,19 @@ body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px
 <div class="row-2 reveal">
 
   <div class="gc gc-int traffic-card">
-    <div class="section-title">Traffic Overview</div>
-    <div class="section-sub">Last 7 days · GB consumed</div>
+    <div class="section-title">{{ admin_t('Traffic Overview') }}</div>
+    <div class="section-sub">{{ admin_t('Last 7 days · GB consumed') }}</div>
     <div class="bar-chart-wrap"><canvas id="barCanvas"></canvas><div class="chart-tooltip" id="chartTip"></div></div>
     <div class="traffic-summary">
-      <div class="tsummary-item"><span>Total Used</span><strong>{{ total_traffic }} GB</strong></div>
-      <div class="tsummary-item"><span>Avg / User</span><strong id="avgTraffic">-- GB</strong></div>
-      <div class="tsummary-item"><span>Peak Day</span><strong id="peakDay">--</strong></div>
+      <div class="tsummary-item"><span>{{ admin_t('Total Used') }}</span><strong>{{ total_traffic }} GB</strong></div>
+      <div class="tsummary-item"><span>{{ admin_t('Avg / User') }}</span><strong id="avgTraffic">-- GB</strong></div>
+      <div class="tsummary-item"><span>{{ admin_t('Peak Day') }}</span><strong id="peakDay">--</strong></div>
     </div>
   </div>
 
   <div class="gc gc-int proto-card">
-    <div class="section-title">Protocol Split</div>
-    <div class="section-sub">Distribution</div>
+    <div class="section-title">{{ admin_t('Protocol Split') }}</div>
+    <div class="section-sub">{{ admin_t('Distribution') }}</div>
     <div class="donut-wrap">
       <svg id="donutSVG" width="140" height="140" viewBox="0 0 140 140">
         <circle cx="70" cy="70" r="52" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="18"/>
@@ -351,7 +351,7 @@ body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px
       </svg>
       <div class="donut-center">
         <span class="dc-val" id="donutTotal">0</span>
-        <span class="dc-label">Total</span>
+        <span class="dc-label">{{ admin_t('Total') }}</span>
       </div>
     </div>
     <div class="proto-list">
@@ -377,8 +377,8 @@ body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px
 
   <!-- Online Users — populated from Jinja data -->
   <div class="gc gc-int online-card">
-    <div class="section-title">Online Users</div>
-    <div class="section-sub">Currently connected</div>
+    <div class="section-title">{{ admin_t('Online Users') }}</div>
+    <div class="section-sub">{{ admin_t('Currently connected') }}</div>
     <div class="user-mini-list">
       {% set ol = online_users_list if online_users_list is defined else [] %}
       {% if ol %}
@@ -389,23 +389,23 @@ body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px
             <div class="mini-name">{{ u.username }}</div>
             <div class="mini-sub">{{ u.protocol|upper if u.protocol is defined else 'VPN' }} · {{ u.ip if u.ip is defined else '--' }}</div>
           </div>
-          <span class="mini-badge badge-online"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span>Online</span>
+          <span class="mini-badge badge-online"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span>{{ admin_t('Online') }}</span>
         </div>
         {% endfor %}
       {% else %}
         <div class="empty-state">
           <i class="fa fa-signal"></i>
-          No users connected right now
+          {{ admin_t('No users connected right now') }}
         </div>
       {% endif %}
     </div>
-    <a href="{{ base }}/users" class="view-all">View all users <i class="fa fa-arrow-right" style="font-size:10px"></i></a>
+    <a href="{{ base }}/users" class="view-all">{{ admin_t('View all users') }} <i class="fa fa-arrow-right" style="font-size:10px"></i></a>
   </div>
 
   <!-- Expiring Users -->
   <div class="gc gc-int expiring-card">
-    <div class="section-title">Expiring Soon</div>
-    <div class="section-sub">Next 7 days</div>
+    <div class="section-title">{{ admin_t('Expiring Soon') }}</div>
+    <div class="section-sub">{{ admin_t('Next 7 days') }}</div>
     <div class="user-mini-list">
       {% set el = expiring_users_list if expiring_users_list is defined else [] %}
       {% if el %}
@@ -422,42 +422,42 @@ body.light .dashboard .gc{background:#fff;border-color:#d8e2f0;box-shadow:0 12px
       {% else %}
         <div class="empty-state">
           <i class="fa fa-calendar-check"></i>
-          No users expiring soon
+          {{ admin_t('No users expiring soon') }}
         </div>
       {% endif %}
     </div>
-    <a href="{{ base }}/users" class="view-all">View all users <i class="fa fa-arrow-right" style="font-size:10px"></i></a>
+    <a href="{{ base }}/users" class="view-all">{{ admin_t('View all users') }} <i class="fa fa-arrow-right" style="font-size:10px"></i></a>
   </div>
 
 </div>
 
 <!-- QUICK ACTIONS -->
 <div class="gc quick-actions reveal">
-  <div class="section-title">Quick Actions</div>
+  <div class="section-title">{{ admin_t('Quick Actions') }}</div>
   <div class="actions-grid">
     <a href="{{ base }}/users/add" class="action-tile">
-      <div class="action-tile-icon" style="background:rgba(96,165,250,.12);color:#60a5fa"><i class="fa fa-user-plus"></i></div>Add User
+      <div class="action-tile-icon" style="background:rgba(96,165,250,.12);color:#60a5fa"><i class="fa fa-user-plus"></i></div>{{ admin_t('Add User') }}
     </a>
     <a href="{{ base }}/users" class="action-tile">
-      <div class="action-tile-icon" style="background:rgba(74,222,128,.12);color:#4ade80"><i class="fa fa-users"></i></div>All Users
+      <div class="action-tile-icon" style="background:rgba(74,222,128,.12);color:#4ade80"><i class="fa fa-users"></i></div>{{ admin_t('All Users') }}
     </a>
     <a href="{{ base }}/server/restart" class="action-tile" onclick="return confirm('Restart VPN server?')">
-      <div class="action-tile-icon" style="background:rgba(251,191,36,.12);color:#fbbf24"><i class="fa fa-arrows-rotate"></i></div>Restart VPN
+      <div class="action-tile-icon" style="background:rgba(251,191,36,.12);color:#fbbf24"><i class="fa fa-arrows-rotate"></i></div>{{ admin_t('Restart VPN') }}
     </a>
     <a href="{{ base }}/settings" class="action-tile">
-      <div class="action-tile-icon" style="background:rgba(167,139,250,.12);color:#a78bfa"><i class="fa fa-gear"></i></div>Settings
+      <div class="action-tile-icon" style="background:rgba(167,139,250,.12);color:#a78bfa"><i class="fa fa-gear"></i></div>{{ admin_t('Settings') }}
     </a>
     <a href="{{ base }}/backups" class="action-tile">
-      <div class="action-tile-icon" style="background:rgba(34,211,238,.12);color:#22d3ee"><i class="fa fa-database"></i></div>Backups
+      <div class="action-tile-icon" style="background:rgba(34,211,238,.12);color:#22d3ee"><i class="fa fa-database"></i></div>{{ admin_t('Backups') }}
     </a>
     <a href="{{ base }}/logs" class="action-tile">
-      <div class="action-tile-icon" style="background:rgba(248,113,113,.12);color:#f87171"><i class="fa fa-scroll"></i></div>Logs
+      <div class="action-tile-icon" style="background:rgba(248,113,113,.12);color:#f87171"><i class="fa fa-scroll"></i></div>{{ admin_t('Logs') }}
     </a>
     <a href="{{ base }}/certificates" class="action-tile">
-      <div class="action-tile-icon" style="background:rgba(129,140,248,.12);color:#818cf8"><i class="fa fa-certificate"></i></div>Certificates
+      <div class="action-tile-icon" style="background:rgba(129,140,248,.12);color:#818cf8"><i class="fa fa-certificate"></i></div>{{ admin_t('Certificates') }}
     </a>
     <a href="{{ base }}/reports" class="action-tile">
-      <div class="action-tile-icon" style="background:rgba(251,191,36,.12);color:#fbbf24"><i class="fa fa-chart-bar"></i></div>Reports
+      <div class="action-tile-icon" style="background:rgba(251,191,36,.12);color:#fbbf24"><i class="fa fa-chart-bar"></i></div>{{ admin_t('Reports') }}
     </a>
   </div>
 </div>
@@ -470,8 +470,8 @@ const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 /* ── Clock ── */
 function updateClock(){
   document.getElementById('dashTime').textContent =
-    new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
-    + ' · ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    new Date().toLocaleDateString(document.documentElement.lang==='fa'?'fa-IR':'en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    + ' · ' + new Date().toLocaleTimeString(document.documentElement.lang==='fa'?'fa-IR':'en-US',{hour:'2-digit',minute:'2-digit'});
 }
 updateClock(); setInterval(updateClock,60000);
 

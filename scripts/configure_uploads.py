@@ -11,13 +11,13 @@ def upload_site_config(original):
         raise RuntimeError('Unrecognized Beeny Nginx site; configure the upload limit manually.')
     updated = re.sub(r'^\s*client_max_body_size\s+[^;]+;[^\n]*\n?', '', original, flags=re.M)
     return re.sub(r'(^[ \t]*server_name\s+[^;]+;)',
-                  r'\1\n    client_max_body_size 24M;', updated, flags=re.M)
+                  r'\1\n    client_max_body_size 224M;', updated, flags=re.M)
 
 
 def configure():
     site = Path('/etc/nginx/sites-enabled/beeny-panel')
     if not site.is_file():
-        print('No Beeny Nginx site found. Set client_max_body_size 24M on your proxy.')
+        print('No Beeny Nginx site found. Set client_max_body_size 224M on your proxy.')
         return
     site = site.resolve()
     original = site.read_text()
@@ -35,7 +35,7 @@ def configure():
         subprocess.run(['nginx', '-t'], check=False)
         subprocess.run(['systemctl', 'reload', 'nginx'], check=False)
         raise
-    print('Nginx upload limit set to 24M. Backup:', backup)
+    print('Nginx upload limit set to 224M. Backup:', backup)
 
 
 if __name__ == '__main__':

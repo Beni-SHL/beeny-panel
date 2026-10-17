@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily Beeny Panel retention cleanup
+[Timer]
+OnCalendar=*-*-* 04:15:00 UTC
+RandomizedDelaySec=600
+Persistent=true
+[Install]
+WantedBy=timers.target

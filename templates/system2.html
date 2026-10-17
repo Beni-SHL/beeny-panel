@@ -316,27 +316,27 @@
     <div class="hero-left">
       <div class="hero-badge">
         <i class="fa-solid fa-server"></i>
-        SYSTEM CENTER
+        {{ admin_t('SYSTEM CENTER') }}
       </div>
-      <h1>Server Management</h1>
-      <p>Monitor system resources, services and server status in real-time.</p>
+      <h1>{{ admin_t('Server Management') }}</h1>
+      <p>{{ admin_t('Monitor system resources, services and server status in real-time.') }}</p>
     </div>
     <div class="hero-right">
       <div class="hero-stat">
-        <span>Hostname</span>
-        <strong id="hostname">Loading...</strong>
+        <span>{{ admin_t('Hostname') }}</span>
+        <strong id="hostname">{{ admin_t('Loading...') }}</strong>
       </div>
       <div class="hero-stat">
-        <span>CPU</span>
-        <strong id="cpuUsage">Loading...</strong>
+        <span>{{ admin_t('CPU') }}</span>
+        <strong id="cpuUsage">{{ admin_t('Loading...') }}</strong>
       </div>
       <div class="hero-stat">
-        <span>RAM</span>
-        <strong id="ramUsage">Loading...</strong>
+        <span>{{ admin_t('RAM') }}</span>
+        <strong id="ramUsage">{{ admin_t('Loading...') }}</strong>
       </div>
       <div class="hero-stat">
-        <span>Disk</span>
-        <strong id="diskUsage">Loading...</strong>
+        <span>{{ admin_t('Disk') }}</span>
+        <strong id="diskUsage">{{ admin_t('Loading...') }}</strong>
       </div>
     </div>
   </section>
@@ -345,37 +345,37 @@
   <div class="stats-grid">
     <div class="glass-card">
       <div class="card-icon"><i class="fa-solid fa-microchip"></i></div>
-      <h3>CPU Cores</h3>
+      <h3>{{ admin_t('CPU Cores') }}</h3>
       <div class="value" id="cpuCores">-</div>
       <div class="detail">
-        <span>Load 1min</span>
+        <span>{{ admin_t('Load 1min') }}</span>
         <span id="loadAvg">-</span>
       </div>
     </div>
     <div class="glass-card">
       <div class="card-icon"><i class="fa-solid fa-memory"></i></div>
-      <h3>Memory</h3>
+      <h3>{{ admin_t('Memory') }}</h3>
       <div class="value" id="ramTotal">-</div>
       <div class="detail">
-        <span>Used</span>
+        <span>{{ admin_t('Used') }}</span>
         <span id="ramUsed">-</span>
       </div>
     </div>
     <div class="glass-card">
       <div class="card-icon"><i class="fa-solid fa-hard-drive"></i></div>
-      <h3>Disk</h3>
+      <h3>{{ admin_t('Disk') }}</h3>
       <div class="value" id="diskTotal">-</div>
       <div class="detail">
-        <span>Used</span>
+        <span>{{ admin_t('Used') }}</span>
         <span id="diskUsed">-</span>
       </div>
     </div>
     <div class="glass-card">
       <div class="card-icon"><i class="fa-solid fa-clock"></i></div>
-      <h3>Uptime</h3>
+      <h3>{{ admin_t('Uptime') }}</h3>
       <div class="value" id="uptime">-</div>
       <div class="detail">
-        <span>Last boot</span>
+        <span>{{ admin_t('Last boot') }}</span>
         <span id="bootTime">-</span>
       </div>
     </div>
@@ -384,23 +384,23 @@
   <!-- Services Status -->
   <div class="services-section">
     <div class="services-header">
-      <h3><i class="fa-solid fa-cogs"></i> Running Services</h3>
+      <h3><i class="fa-solid fa-cogs"></i> {{ admin_t('Running Services') }}</h3>
       <button class="refresh-btn" onclick="loadAllStats()">
-        <i class="fa-solid fa-rotate"></i> Refresh
+        <i class="fa-solid fa-rotate"></i> {{ admin_t('Refresh') }}
       </button>
     </div>
     <div id="servicesList">
       <div class="service-item">
-        <span class="service-name"><i class="fa-solid fa-database"></i> Database</span>
-        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+        <span class="service-name"><i class="fa-solid fa-database"></i> {{ admin_t('Database') }}</span>
+        <span class="service-status"><span class="status-badge status-running"></span> {{ admin_t('Running') }}</span>
       </div>
       <div class="service-item">
-        <span class="service-name"><i class="fa-solid fa-globe"></i> Web Server</span>
-        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+        <span class="service-name"><i class="fa-solid fa-globe"></i> {{ admin_t('Web Server') }}</span>
+        <span class="service-status"><span class="status-badge status-running"></span> {{ admin_t('Running') }}</span>
       </div>
       <div class="service-item">
-        <span class="service-name"><i class="fa-solid fa-shield"></i> VPN Core</span>
-        <span class="service-status"><span class="status-badge status-running"></span> Running</span>
+        <span class="service-name"><i class="fa-solid fa-shield"></i> {{ admin_t('VPN Core') }}</span>
+        <span class="service-status"><span class="status-badge status-running"></span> {{ admin_t('Running') }}</span>
       </div>
     </div>
   </div>

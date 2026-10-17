@@ -1,0 +1,18 @@
+[Unit]
+Description=Beeny scoped VPN network policies
+After=network-online.target openvpn-server@server.service warp-svc.service
+Wants=network-online.target
+ConditionPathExists=/etc/openvpn/beeny-network-policy
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/beeny-panel/venv/bin/python /opt/beeny-panel/network_policy.py boot
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/etc/openvpn
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

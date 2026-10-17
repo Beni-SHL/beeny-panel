@@ -9,6 +9,12 @@ if [[ "${1:-}" == --github ]]; then
   checkout="$(mktemp -d /tmp/beeny-release.XXXXXXXX)"
   trap 'rm -rf -- "$checkout"' EXIT
   GIT_TERMINAL_PROMPT=0 git -c credential.helper= clone --depth 1 --branch main https://github.com/Beni-SHL/beeny-panel.git "$checkout"
+  python3 - "$checkout/VERSION" "$DEST/VERSION" <<'PYVERSION'
+import pathlib,sys,re
+new=pathlib.Path(sys.argv[1]).read_text().strip();installed=pathlib.Path(sys.argv[2]);old=installed.read_text().strip() if installed.is_file() else '0.0.0'
+if not re.fullmatch(r'\d+\.\d+\.\d+',new) or not re.fullmatch(r'\d+\.\d+\.\d+',old):raise SystemExit('Unrecognized release version; use a verified local update.')
+if tuple(map(int,new.split('.')))<tuple(map(int,old.split('.'))):raise SystemExit('GitHub version is older than the installed release. Update refused.')
+PYVERSION
   if [[ "${2:-}" == --legacy ]]; then
     bash "$checkout/scripts/update_panel.sh" --legacy
   elif [[ -z "${2:-}" ]]; then
@@ -24,14 +30,14 @@ if [[ "$MODE" == --legacy ]]; then
   exit
 fi
 [[ "$MODE" == '' || "$MODE" == --check || "$MODE" == --verify ]] || { echo 'Usage: sudo bash scripts/update_panel.sh [--github [--legacy]|--legacy|--check|--verify]' >&2; exit 2; }
-FILES=(app.py cluster.py renewal.py traffic_ledger.py serve.py experience.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-panel.service beeny-customer-worker.service scripts/create_vpn_user.sh scripts/check_users.py scripts/init_admin.py scripts/manage_user_config.py scripts/update_panel.sh scripts/upgrade_legacy.py scripts/configure_uploads.py)
+FILES=(maintenance.py scripts/manage_admin.py scripts/beenyctl.py scripts/bootstrap.sh scripts/install_cli.sh scripts/collect_vpn_diagnostics.py connection_guard.py session_identity.py warp_manager.py iran_network.py removal_guard.py network_settings.py network_policy.py beeny-network-policy.service representative_removal.py admin_i18n.py https_maintenance.py monitoring.py host_metrics.py crl_sync.py scripts/preflight_364.py style-bundles.json scripts/build_style_bundles.py scripts/enable_pki_audit.sh admission.py scripts/vpn_admission.py scripts/export_admission.py sales_engine.py financial_reporting.py session_limits.py terminal_traffic.py node_snapshots.py scripts/vpn_maintenance.py scripts/vpn_disconnect.py scripts/configure_vpn_core.py scripts/migrate_sales.py beeny-pki.service beeny-pki.timer sales_reporting.py representative_catalog.py representative_actions.py representative_credit.py balepay_bridge.py commissions.py scripts/update_node_speed.sh bandwidth.py speed_policy.py portal_i18n.py portal_content.py resellers.py scripts/repair_local_access.py node_agent/bridge.py node_agent/host_traffic.py scripts/reset_admin_access.py scripts/close_legacy_node_api.sh scripts/install_node_bridge.sh scripts/secure_node_api.sh scripts/cleanup_storage.py beeny-cleanup.service beeny-cleanup.timer bulk.py host_traffic.py devices.py scripts/harden_services.sh scripts/enable_backups.sh scripts/decrypt_backup.py beeny-privileged.service commerce.py beeny-backup.service beeny-backup.timer scripts/scheduled_backup.py health.py support.py security.py backup_engine.py privileged.py privileged_server.py app.py cluster.py renewal.py traffic_ledger.py serve.py admin_sessions.py pricing.py experience.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-panel.service beeny-customer-worker.service scripts/create_vpn_user.sh scripts/check_users.py scripts/init_admin.py scripts/manage_user_config.py scripts/update_panel.sh scripts/upgrade_legacy.py scripts/configure_uploads.py)
 while IFS= read -r -d '' path; do FILES+=("${path#"$ROOT_DIR/"}"); done < <(find "$ROOT_DIR/templates" "$ROOT_DIR/static" -type f ! -name '*.pyc' -print0)
 for rel in "${FILES[@]}"; do [[ -f "$ROOT_DIR/$rel" ]] || { echo "Missing update source: $rel" >&2; exit 1; }; done
 [[ -f "$DEST/app.py" && -f "$DEST/config.json" && -f /etc/beeny-panel/panel.env && -f "$DEST/instance/beeny.db" && -d "$DEST/instance" && -x "$DEST/venv/bin/python" ]] || { echo 'Compatible installed panel not found at /opt/beeny-panel.' >&2; exit 1; }
 python3 - "$ROOT_DIR" "$DEST/config.json" <<'PY'
 import ast, json, pathlib, sys
 root = pathlib.Path(sys.argv[1])
-for name in ('app.py','experience.py','customer_features.py','customer_worker.py','migrations.py','serve.py'):
+for name in ('app.py','sales_engine.py','financial_reporting.py','session_limits.py','terminal_traffic.py','node_snapshots.py','sales_reporting.py','representative_catalog.py','representative_actions.py','representative_credit.py','balepay_bridge.py','commissions.py','resellers.py','support.py','commerce.py','admin_sessions.py','pricing.py','experience.py','customer_features.py','customer_worker.py','migrations.py','serve.py'):
     ast.parse((root/name).read_text())
 config = json.loads(pathlib.Path(sys.argv[2]).read_text())
 assert 'panel_path' in config, 'Existing configuration is incompatible'
@@ -56,7 +62,9 @@ for attempt in range(10):
 with sqlite3.connect(f'file:{root/"instance/beeny.db"}?mode=ro',uri=True) as db:
     assert db.execute('PRAGMA quick_check').fetchone()[0]=='ok'
     tables={r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    assert {'customer_profiles','renewal_requests','telegram_accounts','customer_settings','account_notifications','admin_notification_reads'}.issubset(tables)
+    assert {'customer_profiles','renewal_requests','telegram_accounts','customer_settings','account_notifications','admin_notification_reads','panel_login_sessions','commission_policies','commission_sales','commission_earnings','commission_settlements','balepay_orders','balepay_gateway_config','receipt_grants','representative_credit_accounts','representative_credit_entries','representative_credit_margins','representative_credit_statements','representative_delivery_credentials','representative_sale_cancellations','representative_custom_tariffs'}.issubset(tables)
+    assert 'offset_used' in {c[1] for c in db.execute('PRAGMA table_info(commission_earnings)')}
+    assert 'encrypted_payment_settings' in {c[1] for c in db.execute('PRAGMA table_info(balepay_gateway_config)')}
 print('Running login and database upgrade verified.')
 PY
 }
@@ -70,6 +78,10 @@ else
   exec 9>/run/beeny-panel-update.lock
 fi
 flock -n 9 || { echo 'Another Beeny update is running.' >&2; exit 1; }
+if ! command -v ffprobe >/dev/null 2>&1; then
+  DEBIAN_FRONTEND=noninteractive apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get install -y ffmpeg
+fi
 stamp="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 backup="$DEST/backups/update-$stamp"
 next_venv="$DEST/.venv-releases/$stamp"
@@ -93,28 +105,40 @@ for rel in "${FILES[@]}"; do
   fi
 done
 cp -p "$DEST/config.json" "$backup/config.json"
+helper_existed=0
+if [[ -f /etc/systemd/system/beeny-privileged.service ]]; then helper_existed=1; cp -p /etc/systemd/system/beeny-privileged.service "$backup/helper-unit"; fi
 cp -p /etc/beeny-panel/panel.env "$backup/panel.env"
 cp -p "$DEST/.release.json" "$backup/release.json" 2>/dev/null || true
 cp -p /etc/systemd/system/beeny-panel.service "$backup/panel-unit"
 worker_existed=0
 if [[ -f /etc/systemd/system/beeny-customer-worker.service ]]; then worker_existed=1; cp -p /etc/systemd/system/beeny-customer-worker.service "$backup/worker-unit"; fi
+network_unit_existed=0
+if [[ -f /etc/systemd/system/beeny-network-policy.service ]]; then network_unit_existed=1; cp -p /etc/systemd/system/beeny-network-policy.service "$backup/network-unit"; fi
 panel_was_active=0; worker_was_active=0
 systemctl is-active --quiet beeny-panel && panel_was_active=1
 systemctl is-active --quiet beeny-customer-worker && worker_was_active=1
+cli_existed=0
+if [[ -e /usr/local/bin/beeny || -L /usr/local/bin/beeny ]]; then cli_existed=1; cp -a /usr/local/bin/beeny "$backup/cli"; fi
 swapped=0
 rollback() {
   result=$?
   trap - ERR INT TERM
   echo "Update failed; restoring application. Backup: $backup" >&2
-  systemctl stop beeny-panel beeny-customer-worker 2>/dev/null || true
+  systemctl stop beeny-panel beeny-customer-worker beeny-privileged 2>/dev/null || true
   if [[ "$swapped" == 1 ]]; then rm -f "$DEST/venv"; mv "$backup/previous-venv" "$DEST/venv"; fi
   for rel in "${FILES[@]}"; do
     if [[ -f "$backup/code/$rel" ]]; then cp -p "$backup/code/$rel" "$DEST/$rel"; else rm -f "$DEST/$rel"; fi
   done
   if [[ -f "$backup/release.json" ]]; then cp -p "$backup/release.json" "$DEST/.release.json"; else rm -f "$DEST/.release.json"; fi
+  cp -p "$backup/panel.env" /etc/beeny-panel/panel.env
+  if [[ "$helper_existed" == 1 ]]; then install -m 644 "$backup/helper-unit" /etc/systemd/system/beeny-privileged.service; else systemctl disable beeny-privileged 2>/dev/null || true; rm -f /etc/systemd/system/beeny-privileged.service; fi
   install -m 644 "$backup/panel-unit" /etc/systemd/system/beeny-panel.service
   if [[ "$worker_existed" == 1 ]]; then install -m 644 "$backup/worker-unit" /etc/systemd/system/beeny-customer-worker.service; else systemctl disable beeny-customer-worker 2>/dev/null || true; rm -f /etc/systemd/system/beeny-customer-worker.service; fi
+  if [[ "$network_unit_existed" == 1 ]]; then install -m 644 "$backup/network-unit" /etc/systemd/system/beeny-network-policy.service; else systemctl disable beeny-network-policy.service 2>/dev/null || true; rm -f /etc/systemd/system/beeny-network-policy.service; fi
+  rm -f /usr/local/bin/beeny
+  if [[ "$cli_existed" == 1 ]]; then cp -a "$backup/cli" /usr/local/bin/beeny; fi
   systemctl daemon-reload
+  [[ "$helper_existed" == 0 ]] || systemctl start beeny-privileged
   [[ "$panel_was_active" == 0 ]] || systemctl start beeny-panel
   [[ "$worker_was_active" == 0 ]] || systemctl start beeny-customer-worker
   # Keep additive database changes and any new customer writes. Snapshot is for manual recovery.
@@ -138,9 +162,14 @@ chmod 700 "$DEST/scripts/create_vpn_user.sh" "$DEST/scripts/update_panel.sh"
 mv "$DEST/venv" "$backup/previous-venv"
 swapped=1
 ln -s "$next_venv" "$DEST/venv"
+bash "$DEST/scripts/harden_services.sh"
+bash "$DEST/scripts/install_cli.sh"
 install -m 644 "$DEST/beeny-panel.service" /etc/systemd/system/beeny-panel.service
 install -m 644 "$DEST/beeny-customer-worker.service" /etc/systemd/system/beeny-customer-worker.service
+install -m 644 "$DEST/beeny-network-policy.service" /etc/systemd/system/beeny-network-policy.service
 systemctl daemon-reload
+systemctl enable beeny-network-policy.service
+systemd-run --quiet --wait --pipe --property=User=beeny --property=EnvironmentFile=/etc/beeny-panel/panel.env "$DEST/venv/bin/python" "$DEST/scripts/migrate_sales.py"
 systemctl enable --now beeny-panel
 verify_deployed
 systemctl enable --now beeny-customer-worker
@@ -151,7 +180,7 @@ import datetime,json,pathlib,sys
 pathlib.Path(sys.argv[1]).write_text(json.dumps(dict(commit=sys.argv[2],updated_at=datetime.datetime.now(datetime.timezone.utc).isoformat())))
 PY
 trap - ERR INT TERM
-python3 "$DEST/scripts/configure_uploads.py" || echo 'Panel updated; configure Nginx upload limit 24M manually.' >&2
+python3 "$DEST/scripts/configure_uploads.py" || echo 'Panel updated; configure Nginx upload limit 224M manually.' >&2
 printf 'Panel updated successfully. Backup: %s\n' "$backup"
 echo 'VPN certificates, user data, panel settings, avatars and receipts were preserved.'
 echo 'Next: set customer passwords and configure Customer & payments.'

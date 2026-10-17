@@ -16,7 +16,7 @@ def extend_expiry(current, days, mode="extend", today=None):
     return (base + timedelta(days=days)).isoformat()
 
 
-def activation_error(expiry, limit, usage, today=None):
+def activation_error(expiry, limit, usage, today=None, quota_mode="metered"):
     today = today or date.today()
     if expiry and expiry not in ("-", "") and not expiry.isdigit():
         try:
@@ -24,6 +24,7 @@ def activation_error(expiry, limit, usage, today=None):
                 return "The account is expired. Add renewal days before activating."
         except ValueError:
             return "Stored expiry date is invalid; contact the administrator."
-    if limit > 0 and usage >= limit:
+    if quota_mode not in {"metered","fair_use"}:return "Invalid quota policy; contact the administrator."
+    if quota_mode != "fair_use" and limit > 0 and usage >= limit:
         return "The data limit is used up. Raise the limit or select Reset traffic."
     return None

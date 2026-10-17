@@ -24,6 +24,7 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
         read_at = db.Column(db.DateTime)
         dedupe = db.Column(db.String(200), unique=True)
         telegram_state = db.Column(db.String(20), default='pending')
+        cleared_at = db.Column(db.DateTime)
         attempts = db.Column(db.Integer, default=0)
         next_attempt = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -31,6 +32,7 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
         __tablename__ = 'admin_notification_reads'
         notification_id = db.Column(db.Integer, primary_key=True)
         admin_id = db.Column(db.Integer, primary_key=True)
+        cleared = db.Column(db.Boolean, default=False, nullable=False)
 
     def notify(user_id, title, body, dedupe=None):
         if dedupe and Notification.query.filter_by(dedupe=dedupe).first():
@@ -84,6 +86,11 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
     def feed(user_id):
         query = Notification.query.filter_by(user_id=user_id)
         if user_id is None:
+            cleared_ids = db.select(AdminRead.notification_id).where(AdminRead.admin_id == current_user.id, AdminRead.cleared.is_(True))
+            query = query.filter(Notification.id.not_in(cleared_ids))
+        else:
+            query = query.filter(Notification.cleared_at.is_(None))
+        if user_id is None:
             read_ids = db.select(AdminRead.notification_id).where(AdminRead.admin_id == current_user.id)
             unread = query.filter(Notification.id.not_in(read_ids)).count()
         else:
@@ -124,30 +131,81 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
         db.session.commit()
         return jsonify(ok=True)
 
+    @app.post(base+'/c/<token>/notifications/clear')
+    def customer_notifications_clear(token):
+        user = features.resolve_account(token)
+        features.verify_csrf()
+        upto = request.form.get('upto', 0, type=int)
+        Notification.query.filter(Notification.user_id == user.id, Notification.id <= upto).update(
+            dict(cleared_at=datetime.utcnow(), read_at=datetime.utcnow()))
+        db.session.commit()
+        return jsonify(ok=True)
+
+    @app.post(base+'/notifications/clear')
+    @login_required
+    def admin_notifications_clear():
+        features.verify_csrf()
+        upto = request.form.get('upto', 0, type=int)
+        for row in Notification.query.filter(Notification.user_id.is_(None), Notification.id <= upto):
+            mark = db.session.get(AdminRead, (row.id, current_user.id))
+            if mark is None:
+                mark = AdminRead(notification_id=row.id, admin_id=current_user.id)
+                db.session.add(mark)
+            mark.cleared = True
+        db.session.commit()
+        return jsonify(ok=True)
+
     def sync_access(user):
         from app import sync_primary_access, kick_user_globally
-        from cluster import set_user_state_on_node
+        from cluster import set_user_state_on_node,create_user_on_node
+        from app import devices
+        from types import SimpleNamespace
+        registered=devices.Device.query.filter_by(user_id=user.id).all()
+        device_failed={device.id:False for device in registered}
+        from vpn_sessions import local_sessions, disconnect_session
         db.session.refresh(user)
+        from app import speed_policy
+        speed_failures=speed_policy.sync(user)
         enabled = user.status == 'active' and not user.customer_paused and not activation_error(
-            user.expire_date, user.traffic_limit or 0, user.traffic_usage or 0)
+            user.expire_date, user.traffic_limit or 0, user.traffic_usage or 0, quota_mode=getattr(user,'quota_mode','metered'))
+        from app import representative_credit
+        from app import representative_actions
+        enabled=enabled and not representative_credit.suspended(user) and not representative_actions.blocked(user)
         selected = [rel.node_id for rel in UserNode.query.filter_by(user_id=user.id)]
         nodes = Node.query.all()
-        failures = []
+        failures = list(speed_failures)
         primary_selected = any(is_primary_node(n) and n.id in selected for n in nodes)
         try:
             sync_primary_access(user, primary_selected and bool(enabled))
-            if not enabled:
-                kick_user_globally(user)
+            if primary_selected:
+                connections = local_sessions(user.username)
+                if not enabled:
+                    for connection in connections:
+                        try:
+                            disconnect_session(user.username, connection['id'], connection['fingerprint'])
+                        except ValueError:
+                            # A device which disconnected during the snapshot needs no kick.
+                            pass
         except (OSError, RuntimeError):
             failures.append('Primary')
+            device_failed={device.id:True for device in registered}
         for node in nodes:
             if node.id in selected and not is_primary_node(node):
                 try:
+                    from app import devices
                     ok, _ = set_user_state_on_node(node, user.username, bool(enabled))
+                    for device in registered:
+                        provision=True
+                        if device.pending:provision=str(create_user_on_node(node,SimpleNamespace(username=device.common_name))).startswith('Success:')
+                        device_ok,_=set_user_state_on_node(node,device.common_name,bool(enabled) and not device.blocked)
+                        device_failed[device.id]=device_failed[device.id] or not (device_ok and provision)
+                        ok=ok and device_ok and provision
                     if not ok:
                         failures.append(node.name)
                 except Exception:
                     failures.append(node.name)
+                    device_failed={device.id:True for device in registered}
+        for device in registered:device.pending=device_failed[device.id]
         user.pause_sync_pending = bool(failures)
         db.session.commit()
         return failures
@@ -159,7 +217,8 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
         desired = request.form.get('paused')
         if desired not in {'0', '1'}:
             abort(400)
-        if desired == '0' and (user.status != 'active' or activation_error(user.expire_date, user.traffic_limit or 0, user.traffic_usage or 0)):
+        from app import representative_credit
+        if desired == '0' and (representative_credit.suspended(user) or user.status != 'active' or activation_error(user.expire_date, user.traffic_limit or 0, user.traffic_usage or 0, quota_mode=getattr(user,'quota_mode','metered'))):
             flash('حساب توسط مدیر یا به‌علت پایان اعتبار محدود شده است؛ برای فعال‌سازی با پشتیبانی تماس بگیرید.', 'error')
             return redirect(base+'/c/'+token+'#profile')
         user.customer_paused = desired == '1'
@@ -173,6 +232,9 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
         return redirect(base+'/c/'+token+'#profile')
 
     def approve_renewal(row):
+        from app import representative_actions
+        account_user=db.session.get(User,row.user_id)
+        if account_user and representative_actions.blocked(account_user):abort(409,'حساب در حال بایگانی است؛ پرداخت باید توسط مدیر تعیین تکلیف شود.')
         # The conditional UPDATE serializes competing approvals; quota/days apply once.
         changed = db.session.execute(update(features.RenewalRequest).where(
             features.RenewalRequest.id == row.id, features.RenewalRequest.status == 'pending'
@@ -183,16 +245,50 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
         if not user:
             db.session.rollback()
             abort(409, 'The account no longer exists.')
+        from app import sales_engine
+        sales_engine.renewal_receipt(row)
+        if row.source=='reseller_debt':
+            from app import representative_credit
+            representative_credit.approve_debt(row)
+            db.session.commit()
+            representative_credit.sync_children(user.id)
+            return []
+        features.finish_receipt_grant(row,'approved')
         plan = json.loads(row.plan)
+        if row.source=='wallet_topup':
+            from app import commerce
+            from flask_login import current_user
+            amount=plan.get('price')
+            if not isinstance(amount,int) or not 1000<=amount<=100000000:
+                db.session.rollback();abort(400,'Invalid wallet top-up amount.')
+            wallet=db.session.get(commerce.Wallet,user.id)
+            if not wallet:wallet=commerce.Wallet(user_id=user.id,balance=0);db.session.add(wallet);db.session.flush()
+            changed=db.session.execute(update(commerce.Wallet).where(commerce.Wallet.user_id==user.id,commerce.Wallet.balance+amount<=10000000000).values(balance=commerce.Wallet.balance+amount)).rowcount
+            if changed!=1:db.session.rollback();abort(409,'Wallet balance limit exceeded.')
+            db.session.add(commerce.Entry(user_id=user.id,amount=amount,reason=f'شارژ تأییدشده #{row.id}',reference='topup:'+row.billing_reference,admin_id=current_user.id if current_user.is_authenticated else None))
+            notify(user.id,'کیف پول شما شارژ شد',f'{amount:,} تومان پس از تأیید رسید #{row.id} به موجودی اضافه شد. اکنون می‌توانید سرویس را از کیف پول تمدید کنید.')
+            notify(None,'Wallet credited',f'Request #{row.id}: {amount:,} Toman credited to {user.username}.')
+            db.session.commit();return []
+        from pricing import service_allowance
+        plan=service_allowance(plan)
         user.expire_date = extend_expiry(user.expire_date, int(plan['days']))
         user.traffic_limit = max(user.traffic_limit or 0, math.ceil(user.traffic_usage or 0)) + int(plan['quota'])
+        if 'quota_mode' in plan:
+            from speed_policy import validate_policy
+            for key,value in validate_policy(plan['quota_mode'],plan.get('throttle_down_kbps',2000),plan.get('throttle_up_kbps',2000),plan['quota']).items():setattr(user,key,value)
         user.max_devices = int(plan['devices'])
         user.status = 'active'
         user.pause_sync_pending = True
         notify(user.id, 'تمدید شما انجام شد', f'درخواست #{row.id} تأیید شد: {plan["days"]} روز و {plan["quota"]} گیگابایت اضافه شد. توقف شخصی شما، در صورت فعال بودن، حفظ شده است.')
         notify(None, 'Renewal approved', f'Request #{row.id} renewed {user.username}.')
+        from app import commerce
+        commerce.record_invoice(row)
         db.session.commit()
-        return sync_access(user)
+        failures=sync_access(user)
+        if not failures:
+            from app import commissions
+            commissions.release(row.billing_reference,confirmed=True)
+        return failures
 
     @app.post(base+'/renewals/<int:request_id>/delete')
     @login_required
@@ -201,11 +297,11 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
         row = db.session.get(features.RenewalRequest, request_id) or abort(404)
         filename = row.receipt
         # Unlink first: a permission error retains the request for a later retry.
-        file = (features.storage/filename).resolve()
-        if file.parent != features.storage.resolve():
+        file = (features.storage/filename).resolve() if filename else None
+        if file and file.parent != features.storage.resolve():
             abort(400)
         try:
-            file.unlink(missing_ok=True)
+            if file:file.unlink(missing_ok=True)
         except OSError:
             abort(409, 'Receipt could not be deleted. Check storage permissions.')
         notify(None, 'Renewal request deleted', f'Request #{row.id} and its receipt were deleted.')
@@ -259,7 +355,7 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
     @app.context_processor
     def context():
         return dict(customer_telegram_connected=features.is_linked,
-                    customer_can_enable=lambda user: user.status == 'active' and not activation_error(user.expire_date, user.traffic_limit or 0, user.traffic_usage or 0))
+                    customer_can_enable=lambda user: user.status == 'active' and not __import__('app').representative_credit.suspended(user) and not __import__('app').representative_actions.blocked(user) and not activation_error(user.expire_date, user.traffic_limit or 0, user.traffic_usage or 0, quota_mode=getattr(user,'quota_mode','metered')))
 
     return SimpleNamespace(Notification=Notification, AdminRead=AdminRead, notify=notify,
                            worker_cycle=worker_cycle, approve_renewal=approve_renewal, sync_access=sync_access)

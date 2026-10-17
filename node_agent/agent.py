@@ -4,6 +4,7 @@ import subprocess
 import os
 import re
 import socket
+from host_traffic import metrics
 
 app = Flask(__name__)
 
@@ -11,6 +12,21 @@ def verify_api_key():
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "): return False
     return auth.replace("Bearer ", "") == AGENT_API_KEY
+
+@app.route('/api/node/set-speed-policy',methods=['POST'])
+def set_speed_policy():
+    if not verify_api_key():return jsonify(error='Unauthorized'),401
+    data=request.get_json(silent=True) or {}
+    try:
+        import bandwidth
+        return jsonify(bandwidth.set_policy(data.get('username'),data.get('names'),data.get('down'),data.get('up')))
+    except Exception:return jsonify(success=False,error='Speed policy failed; check agent logs.'),503
+
+@app.get('/api/node/speed-status')
+def speed_status():
+    if not verify_api_key():return jsonify(error='Unauthorized'),401
+    import bandwidth
+    return jsonify(success=not bandwidth.LAST_ERROR),503 if bandwidth.LAST_ERROR else 200
 
 @app.route("/api/node/stats")
 def stats():
@@ -53,7 +69,7 @@ def install_cert():
     if not verify_api_key(): return jsonify({"error": "Unauthorized"}), 401
     data = request.get_json()
     username = data.get("username")
-    if not username or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username): return jsonify({"error": "invalid"}), 400
+    if not username or not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}", username): return jsonify({"error": "invalid"}), 400
     try:
         os.makedirs("/etc/openvpn/users", exist_ok=True)
         with open(f"/etc/openvpn/users/{username}.crt", "w") as f: f.write(data.get("cert"))
@@ -72,8 +88,8 @@ def get_status_log():
         # فرستادن لاگ مصرفی نود برای سرور مرکزی
         if os.path.exists("/var/log/openvpn-status.log"):
             with open("/var/log/openvpn-status.log", "r") as f:
-                return jsonify({"success": True, "log": f.read()})
-        return jsonify({"success": True, "log": ""})
+                return jsonify({"success": True, "log": f.read(),"metrics":metrics(),"agent_version":"3.0.0"})
+        return jsonify({"success": True, "log": "","metrics":metrics(),"agent_version":"3.0.0"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -82,7 +98,7 @@ def kill_user():
     if not verify_api_key(): return jsonify({"error": "Unauthorized"}), 401
     data = request.get_json()
     username = data.get("username")
-    if not username or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username):
+    if not username or not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}", username):
         return jsonify({"error": "invalid"}), 400
     try:
         # ۱. مسدودسازی دائمی کاربر روی این نود
@@ -107,15 +123,17 @@ def set_user_state():
     data = request.get_json(silent=True) or {}
     username = data.get("username", "")
     active = data.get("active")
-    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username) or not isinstance(active, bool):
+    if not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}", username) or not isinstance(active, bool):
         return jsonify({"error": "Invalid account state"}), 400
     try:
         os.makedirs("/etc/openvpn/ccd", exist_ok=True)
         path = f"/etc/openvpn/ccd/{username}"
         if active:
-            if os.path.exists(path): os.remove(path)
+            from vpn_sessions import enable_ccd
+            enable_ccd(path)
         else:
-            with open(path, "w") as handle: handle.write("disable\n")
+            from vpn_sessions import disable_ccd
+            disable_ccd(path)
             try:
                 with socket.create_connection(("127.0.0.1", 7505), timeout=1) as conn:
                     conn.sendall(f"kill {username}\n".encode("ascii"))
@@ -129,7 +147,7 @@ def set_user_state():
 def delete_user():
     if not verify_api_key(): return jsonify({"error": "Unauthorized"}), 401
     username = (request.get_json(silent=True) or {}).get("username", "")
-    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username):
+    if not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}", username):
         return jsonify({"error": "Invalid username"}), 400
     try:
         os.makedirs('/etc/openvpn/ccd', exist_ok=True)
@@ -177,5 +195,7 @@ def account_disconnect():
         return jsonify(error='Management interface unavailable'), 503
 
 if __name__ == "__main__":
+    import bandwidth
+    bandwidth.start()
     app.run(host="0.0.0.0", port=AGENT_PORT)
 

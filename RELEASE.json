@@ -1,18 +1,58 @@
 {
-  "version": "2.2.0",
-  "checks": [
-    "39 integration/unit tests",
-    "Database and health-failure rollback scenarios",
-    "Chromium desktop and mobile flows; no script errors"
-  ],
+  "version": "3.6.9",
+  "base_version": "3.6.8-reconnect-1",
+  "release_date": "2026-10-18",
+  "bridge_version": "3.6.9",
   "features": [
-    "20 customer-selectable generated avatars",
-    "Customer/admin notifications and Telegram delivery",
-    "One-time renewal approval",
-    "Personal VPN pause",
-    "Multiple bank cards and discount badges",
-    "Continuous alphabetical account list",
-    "Single-copy access message"
+    "Shared Settings-style administration surfaces for portal content, payments, notifications, bulk operations, traffic, representative credit, support, audit and payment/ticket details.",
+    "Local eight-weight Yekan Bakh and local Inter variable font with its OFL license; mobile layouts, list-based audit, restrained animation and reduced-cost administrative backgrounds.",
+    "Retained progressive AJAX form transport; shared tab/page links and accessible show/hide for newly entered secrets only.",
+    "Per-node selected WARP presets for common Telegram, Google, Spotify and Instagram destinations plus custom hostnames/IPv4 networks; IPv4 DNS snapshots and marked, scoped routing.",
+    "Existing all-traffic WARP policies preserve their semantics; verified connected WARP interface required; preview/apply/confirmation and automatic rollback retained.",
+    "Fixed owner maintenance API and SSH menu for account administration, service status/restart, reversible existing-kernel BBR, official WARP package jobs, managed SSL, signed backup and GitHub update.",
+    "GitHub bootstrap and downgrade protection; additive updater with launcher rollback. No suffix-based domain bypass feature."
   ],
-  "live_server_tested": false
+  "validation": {
+    "python_tests": 384,
+    "python_test_seconds": 341.683,
+    "new_behavioral_tests": 10,
+    "syntax": "Python, Bash, JavaScript and Jinja validated; installer --check passed.",
+    "browser": {
+      "pages": 13,
+      "list_and_detail_pages": 5,
+      "languages": [
+        "en",
+        "fa"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "widths": [
+        375,
+        768,
+        1440
+      ],
+      "layout_failures": 0,
+      "javascript_errors": 0,
+      "checks": [
+        "AJAX portal content and payment saves without document navigation",
+        "WARP selection serialization, preview/apply/confirmation with mocked backend",
+        "Password display toggle shows entered value only",
+        "Populated ticket/audit/representative lists and long money amounts"
+      ]
+    },
+    "live_vps_operations": false
+  },
+  "limitations": [
+    "No real VPS apt/Certbot/BBR/nftables/WARP provisioning, traffic egress or mobile client networking was run in this environment. Browser network/maintenance operations were mocked.",
+    "No claim to resolve the observed Germany internet-path stall. Existing reconnect hotfix and VPN core configuration logic are retained unchanged.",
+    "No .ir/.ru/.cn suffix bypass and no domain-aware custom customer client are included. Existing explicit IPv4/hostname snapshots and RIPE import are not suffix routing.",
+    "WARP presets do not cover every CDN, shared IP or IPv6 endpoint. Refresh hostname snapshots explicitly via preview/apply. The existing interface must already be connected and pass the bound-interface trace probe.",
+    "WARP package installation does not register or connect a tunnel automatically. Managed removal retains existing safety restrictions.",
+    "Direct-route delivery still needs deliberate OpenVPN restart and client reconnect; ordinary application and node updates do not perform that restart.",
+    "SSH SSL issuance requires configured, valid Nginx and public certificate validation. BBR enables the current kernel algorithm without replacing live qdiscs.",
+    "Full backups are signed, not encrypted. Stored administrator passwords are hashes and cannot be displayed.",
+    "GitHub source publishing and clean-VPS installation remain operator actions; this ZIP is ready to publish, not already published."
+  ]
 }

@@ -46,8 +46,8 @@ class OpenVPNClientManager:
         """غیرفعال کردن کاربر (ایجاد فایل با محتوای disable)"""
         config_file = self.ccd_dir / username
 
-        with open(config_file, 'w') as f:
-            f.write("disable\n")
+        from vpn_sessions import disable_ccd
+        disable_ccd(config_file)
 
         self._reload_openvpn()
 
@@ -94,16 +94,10 @@ class OpenVPNClientManager:
             print(f"Error reloading OpenVPN: {e}")
 
     def _kill_user_connections(self, username):
-        """قطع اتصالات فعال یک کاربر"""
-        try:
-            # استفاده از management interface OpenVPN
-            result = subprocess.run(
-                ["echo", f"kill {username}", "|", "nc", "127.0.0.1", "7505"],
-                capture_output=True,
-                shell=True
-            )
-        except Exception as e:
-            print(f"Error killing connections for {username}: {e}")
+        from vpn_sessions import local_sessions,disconnect_session
+        for row in local_sessions(username):
+            try:disconnect_session(username,row['id'],row['fingerprint'])
+            except ValueError:pass
 
     def update_all_users(self, users):
         """
@@ -119,7 +113,7 @@ class OpenVPNClientManager:
             should_disable = False
 
             # بررسی محدودیت ترافیک
-            if user.traffic_limit > 0:
+            if getattr(user,'quota_mode','metered')!='fair_use' and user.traffic_limit > 0:
                 if user.traffic_usage >= user.traffic_limit:
                     should_disable = True
 
@@ -150,7 +144,7 @@ def sync_user_openvpn_status(user):
 
     should_disable = False
 
-    if user.traffic_limit > 0 and user.traffic_usage >= user.traffic_limit:
+    if getattr(user,'quota_mode','metered')!='fair_use' and user.traffic_limit > 0 and user.traffic_usage >= user.traffic_limit:
         should_disable = True
 
     try:
@@ -185,7 +179,7 @@ if __name__ == "__main__":
         for user in users:
             should_disable = False
 
-            if user.traffic_limit > 0 and user.traffic_usage >= user.traffic_limit:
+            if getattr(user,'quota_mode','metered')!='fair_use' and user.traffic_limit > 0 and user.traffic_usage >= user.traffic_limit:
                 should_disable = True
 
             try:

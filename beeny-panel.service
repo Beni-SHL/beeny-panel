@@ -1,12 +1,12 @@
 [Unit]
 Description=Beeny Panel
-After=network-online.target openvpn-server@server.service
-Wants=network-online.target
+After=beeny-privileged.service network-online.target openvpn-server@server.service
+Wants=beeny-privileged.service network-online.target
 
 [Service]
 Type=simple
-User=root
-Group=root
+User=beeny
+Group=beeny
 WorkingDirectory=/opt/beeny-panel
 EnvironmentFile=/etc/beeny-panel/panel.env
 ExecStart=/opt/beeny-panel/venv/bin/python /opt/beeny-panel/serve.py
@@ -14,6 +14,10 @@ Restart=on-failure
 RestartSec=5
 UMask=0077
 NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/beeny-panel/instance /opt/beeny-panel/config.json /opt/beeny-panel/backups
 
 [Install]
 WantedBy=multi-user.target

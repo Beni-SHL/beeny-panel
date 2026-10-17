@@ -1,0 +1,29 @@
+{
+  "admin-enhancements.css": [
+    "css/light-pages.css",
+    "css/experience.css",
+    "css/design-fixes.css",
+    "css/quality.css",
+    "css/refinement.css",
+    "css/studio.css",
+    "css/liquid-glass.css",
+    "css/polish.css",
+    "css/release-342.css",
+    "css/performance.css",
+    "css/release-344.css",
+    "css/commissions.css",
+    "css/operations.css"
+  ],
+  "representative-enhancements.css": [
+    "css/studio.css",
+    "css/liquid-glass.css",
+    "css/polish.css",
+    "css/release-342.css",
+    "css/performance.css",
+    "css/release-344.css",
+    "css/commissions.css",
+    "css/release-359.css",
+    "css/release-361.css",
+    "css/operations.css"
+  ]
+}

@@ -1,0 +1,100 @@
+
+/* Renewal layout and shared online funding presentation. */
+body .bale-online-banner{grid-template-columns:64px minmax(0,1fr);padding:16px 18px;margin:16px 0;gap:16px;border-radius:18px}
+body .bale-brand-float{gap:4px;font-size:12px}
+body .bale-brand-float img{width:50px;height:50px;border-radius:15px}
+body .bale-brand-float:before{width:65px;height:65px;inset:-6px auto auto}
+body .bale-online-copy h3{font-size:17px;margin:0 0 5px}
+body .bale-online-copy p{font-size:12px;line-height:1.7;margin:4px 0}
+body .bale-online-copy .bale-alternative{font-size:11px;margin:2px 0}
+body .bale-kicker{display:none}
+body .bale-online-button{padding:9px 14px;margin-top:8px;border-radius:11px;font-size:12px;min-height:38px}
+body .receipt-gift-note{padding:10px 14px;margin:16px 0;border-radius:12px}
+body .receipt-gift-note p{margin:0;font-size:12px;line-height:1.8}
+body .pay-total{padding:18px 0;gap:10px;display:flex;flex-direction:column;align-items:start}
+body .pay-total strong{font-size:clamp(25px,3.1vw,38px);font-weight:850;line-height:1.5;overflow-wrap:anywhere}
+body .renewal-coupon{margin:20px 0;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+body .renewal-coupon .coupon-field{margin:0;gap:10px}
+body .custom-service-details{padding:16px 20px;margin:18px 0}
+body .custom-service-details>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;font-weight:750}
+body .custom-service-details>summary::-webkit-details-marker{display:none}
+body .custom-service-details>summary span{transition:transform .2s;font-size:20px}
+body .custom-service-details[open]>summary span{transform:rotate(180deg)}
+body .custom-service-body{padding-top:14px}
+body .custom-service-body .form-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+body .coupon-visibility-form{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:12px 0 20px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+body .speed-status-card.is-throttled{background:linear-gradient(125deg,#fff3ce,#fff8e8)!important;border:1px solid #e9c46d!important;color:#624211!important;box-shadow:none}
+body .speed-status-card.is-throttled .eyebrow,body .speed-status-card.is-throttled h2,body .speed-status-card.is-throttled p{color:inherit!important}
+html[data-theme=dark] body .speed-status-card.is-throttled{background:linear-gradient(125deg,#3d311c,#29251d)!important;color:#ffdf9b!important;border-color:#766039!important}
+body .speed-status-card.is-throttled .primary-button{background:#ad700b!important;color:#fff!important}
+body .community-card{display:grid!important;grid-template-columns:64px minmax(0,1fr);gap:14px 18px!important;padding:22px!important;position:relative;overflow:hidden;background:linear-gradient(120deg,#0989cb,#1fa4dc)!important;color:#fff!important;border-color:#51bbee!important;isolation:isolate}
+body .community-card:before{content:'';position:absolute;width:150px;height:150px;border-radius:50%;background:#ffffff0f;inset:-90px auto auto -30px;z-index:-1;animation:community-glow 7s ease-in-out infinite}
+body .community-card h2,body .community-card p,body .community-card .eyebrow{color:#fff!important}
+body .community-card h2{font-size:18px;margin:0 0 5px}
+body .community-card p{font-size:12px;margin:0;opacity:.92}
+body .community-card .community-icon{width:56px;height:56px;border-radius:18px;background:#ffffff19;display:grid;place-items:center;animation:community-float 5s ease-in-out infinite}
+body .community-card .community-icon img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 3px 4px #005b8725)}
+body .community-card .community-actions{grid-column:2;display:flex!important;flex-wrap:wrap;gap:8px!important;margin:0!important;width:auto!important}
+body .community-card .community-actions a{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 1 auto!important;min-height:36px;padding:7px 12px!important;margin:0!important;border:0!important;border-radius:12px;background:#fff!important;color:#087eBA!important;font-size:11px;font-weight:700;white-space:normal;line-height:1.5;text-decoration:none;transition:transform .2s,background .2s}
+body .community-card .community-actions a:hover{transform:translateY(-2px);background:#eaf8ff!important}
+body .community-card .community-actions svg{width:16px;height:16px}
+@keyframes community-float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
+@keyframes community-glow{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@media(max-width:600px){body .bale-online-banner{grid-template-columns:48px minmax(0,1fr);padding:14px;gap:12px}body .bale-brand-float img{width:42px;height:42px}body .bale-online-copy h3{font-size:14px}body .bale-online-copy p{font-size:11px}body .bale-online-button{width:100%;font-size:11px}body .community-card{padding:16px!important;grid-template-columns:48px minmax(0,1fr);gap:10px!important}body .community-card .community-actions{grid-column:1/-1;justify-content:start}body .community-card h2{font-size:15px}body .community-card .community-icon{width:44px;height:44px}body .community-card .community-icon img{width:36px;height:36px}body .community-card .community-actions a{padding:7px 10px!important;font-size:10px}body .custom-service-body .form-grid{grid-template-columns:1fr;gap:10px}}
+@media(prefers-reduced-motion:reduce){body .community-card:before,body .community-card .community-icon{animation:none}body .community-actions a{transition:none}}
+
+/* Owner messages appear as speech bubbles pointing to the profile above. */
+body .talk-announcements{gap:14px;margin:14px 0 22px;padding-top:8px}
+body .talk-announcements .talk-bubble{--bubble-fill:color-mix(in srgb,var(--alert) 9%,var(--surface));--bubble-edge:color-mix(in srgb,var(--alert) 28%,var(--line));position:relative;border-radius:24px;background:var(--bubble-fill);border-color:var(--bubble-edge);padding:18px 20px;grid-template-columns:38px minmax(0,1fr) 30px;gap:14px;overflow:visible}
+body .talk-announcements .talk-bubble:before{content:'';position:absolute;inset-block-start:-8px;inset-inline-start:58px;width:14px;height:14px;background:var(--bubble-fill);border-block-start:1px solid var(--bubble-edge);border-inline-start:1px solid var(--bubble-edge);transform:rotate(45deg);border-radius:3px 0 0 0}
+html[dir=rtl] body .talk-announcements .talk-bubble:before{transform:rotate(-45deg)}
+body .talk-bubble .alert-icon{border-radius:50%;width:38px;height:38px}
+body .talk-bubble .alert-close{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;transition:background .18s,transform .18s}
+body .talk-bubble .alert-close:hover{background:color-mix(in srgb,var(--alert) 12%,transparent);transform:rotate(8deg)}
+body .talk-bubble .alert-close svg{width:16px;height:16px}
+@media(max-width:600px){body .talk-announcements .talk-bubble{padding:14px;border-radius:19px;grid-template-columns:30px minmax(0,1fr) 28px;gap:10px}body .talk-announcements .talk-bubble:before{inset-inline-start:32px}body .talk-bubble .alert-icon{width:30px;height:30px}body .talk-bubble h2{font-size:13px}body .talk-bubble p{font-size:12px;line-height:1.9}}
+@media(prefers-reduced-motion:reduce){body .talk-bubble .alert-close{transition:none}}
+
+/* Compact online option directly below the receipt submit control. */
+body .receipt-panel .receipt-online-option{grid-template-columns:40px minmax(0,1fr);padding:12px;margin:16px 0 0;gap:10px;border-radius:14px}
+body .receipt-online-option .bale-brand-float{font-size:10px;gap:3px}
+body .receipt-online-option .bale-brand-float img{width:36px;height:36px;border-radius:11px}
+body .receipt-online-option .bale-brand-float:before{width:44px;height:44px}
+body .receipt-online-option .bale-online-copy h3{font-size:14px;margin:0 0 4px}
+body .receipt-online-option .bale-online-copy p{font-size:11px;line-height:1.6;margin:0 0 6px}
+body .receipt-online-option .bale-online-button{width:auto;margin-top:3px;min-height:34px;font-size:11px;padding:7px 11px}
+body .transfer-instruction{font-size:13px;line-height:1.9;margin:4px 0 0;color:var(--ink);overflow-wrap:anywhere}
+body .transfer-instruction b{font-weight:800}
+/* Quiet community card with explicit contrast, independent of avatar theme. */
+body .community-card{grid-template-columns:50px minmax(0,1fr) auto!important;gap:14px!important;padding:18px!important;background:#eaf5fd!important;border:1px solid #c5e1f3!important;color:#173b59!important;box-shadow:none!important;animation:none!important}
+body .community-card:before,body .community-card:after{display:none!important}
+body .community-card h2{color:#173b59!important;font-size:17px;margin:0 0 4px}
+body .community-card p,body .community-card .eyebrow{color:#41667f!important;opacity:1!important}
+body .community-card .community-icon{background:#d9eefb!important;border:1px solid #bcdff5;width:48px;height:48px;border-radius:15px;animation:none!important;transform:none!important;box-shadow:none}
+body .community-card .community-icon img{width:36px;height:36px;filter:none;animation:none!important;transform:none!important}
+body .community-card .community-actions{grid-column:3!important;display:flex!important;justify-content:end;align-items:center;max-width:265px;gap:8px!important}
+body .community-card .community-actions a{color:#096aa5!important;background:#fff!important;border:1px solid #c8e1f1!important;box-shadow:none!important;min-height:35px;font-size:11px;padding:7px 11px!important;border-radius:11px;transform:none!important;animation:none!important;transition:background .15s,color .15s}
+body .community-card .community-actions a:hover{background:#f4fbff!important;transform:none!important}
+html[data-theme=dark] body .community-card{background:#172e40!important;border-color:#315975!important;color:#e9f6ff!important}
+html[data-theme=dark] body .community-card h2{color:#e9f6ff!important}
+html[data-theme=dark] body .community-card p,html[data-theme=dark] body .community-card .eyebrow{color:#b9d4e7!important}
+html[data-theme=dark] body .community-card .community-icon{background:#23475e!important;border-color:#42677d!important}
+/* Stronger owner announcement colors and readable body copy. */
+body .talk-announcements .talk-bubble{--bubble-fill:#e5efff;--bubble-edge:#8baee1;color:#172b4b!important;background:var(--bubble-fill)!important;border-color:var(--bubble-edge)!important}
+body .talk-announcements .talk-bubble.alert-green{--bubble-fill:#dbf3e9;--bubble-edge:#7fbba4}
+body .talk-announcements .talk-bubble.alert-amber{--bubble-fill:#fff0cb;--bubble-edge:#d9b66a}
+body .talk-announcements .talk-bubble.alert-rose{--bubble-fill:#fce2eb;--bubble-edge:#d995ae}
+body .talk-announcements .talk-bubble.alert-violet{--bubble-fill:#eae3fb;--bubble-edge:#ac97d8}
+body .talk-announcements .talk-bubble.alert-slate{--bubble-fill:#e6ecf3;--bubble-edge:#a0b2c5}
+body .talk-announcements .talk-bubble h2,body .talk-announcements .talk-bubble p,body .talk-announcements .talk-bubble .alert-close{color:#172b4b!important;opacity:1!important}
+body .talk-announcements .talk-bubble .announcement-error{color:#a22947!important}
+html[data-theme=dark] body .talk-announcements .talk-bubble{--bubble-fill:#223a5b;--bubble-edge:#6f94c5}
+html[data-theme=dark] body .talk-announcements .talk-bubble.alert-green{--bubble-fill:#193f36;--bubble-edge:#68ac94}
+html[data-theme=dark] body .talk-announcements .talk-bubble.alert-amber{--bubble-fill:#483a20;--bubble-edge:#b99a55}
+html[data-theme=dark] body .talk-announcements .talk-bubble.alert-rose{--bubble-fill:#4a2a38;--bubble-edge:#be7995}
+html[data-theme=dark] body .talk-announcements .talk-bubble.alert-violet{--bubble-fill:#342c50;--bubble-edge:#9d87c9}
+html[data-theme=dark] body .talk-announcements .talk-bubble.alert-slate{--bubble-fill:#2a3748;--bubble-edge:#879bb3}
+html[data-theme=dark] body .talk-announcements .talk-bubble h2,html[data-theme=dark] body .talk-announcements .talk-bubble p,html[data-theme=dark] body .talk-announcements .talk-bubble .alert-close{color:#f1f5ff!important}
+html[data-theme=dark] body .talk-announcements .talk-bubble .announcement-error{color:#ffb4ca!important}
+@media(max-width:950px){body .community-card{grid-template-columns:44px minmax(0,1fr)!important;padding:16px!important;gap:12px!important}body .community-card .community-actions{grid-column:2!important;justify-content:start;max-width:none}body .community-card h2{font-size:15px}body .community-card .community-icon{width:42px;height:42px}body .community-card .community-icon img{width:32px;height:32px}}
+@media(max-width:420px){body .community-card{gap:10px!important;padding:14px!important}body .community-card .community-actions{grid-column:1/-1!important;gap:7px!important}body .community-card .community-actions a{font-size:10px;padding:6px 9px!important;min-height:32px}}

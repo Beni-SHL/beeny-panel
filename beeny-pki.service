@@ -1,0 +1,7 @@
+[Unit]
+Description=Beeny PKI expiration audit and CRL refresh
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/beeny-panel/scripts/vpn_maintenance.py maintain

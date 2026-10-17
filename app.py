@@ -12,18 +12,22 @@ from datetime import datetime, timedelta
 import shutil
 import json
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import psutil
 from werkzeug.utils import secure_filename
 import ssl
 import requests
+from cluster import node_url
 import io
 import math
 import re
 import socket
 import secrets
 import hashlib
+from flask_login import current_user
+from privileged import call as privileged_call, enabled as privileged_enabled
 from renewal import extend_expiry, activation_error
 from traffic_ledger import parse_status, usage_delta
 
@@ -64,27 +68,51 @@ login_manager.login_view = "login"
 # ==================== MODELS ====================
 
 class Admin(UserMixin, db.Model):
+    language = db.Column(db.String(2),nullable=False,default="en")
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(255))
+    role = db.Column(db.String(20), default="owner", nullable=False)
+    node_scope = db.Column(db.Boolean,nullable=False,default=False)
+    totp_secret = db.Column(db.Text)
+    totp_counter = db.Column(db.BigInteger, default=-1)
+    recovery_codes = db.Column(db.Text, default="[]")
+
+    def get_id(self):
+        token = session.get("panel_session_token")
+        return f"{self.id}:{token}" if token else str(self.id)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True)
+    owner_id = db.Column(db.Integer, index=True)
+    reseller_id = db.Column(db.Integer, index=True)
     protocol = db.Column(db.String(20), default="openvpn")
     max_devices = db.Column(db.Integer, default=1)
     current_devices = db.Column(db.Integer, default=0)
     expire_date = db.Column(db.String(20))
     status = db.Column(db.String(20), default="active")
+    disable_reason = db.Column(db.String(20), nullable=False, default="legacy")
+    removal_pending = db.Column(db.Boolean, default=False, nullable=False)
     customer_paused = db.Column(db.Boolean, default=False, nullable=False)
     pause_sync_pending = db.Column(db.Boolean, default=False, nullable=False)
     notification_revision = db.Column(db.Integer, default=0, nullable=False)
     online = db.Column(db.Boolean, default=False)
     online_status = db.Column(db.String(20), default="offline")
+    quota_mode = db.Column(db.String(20), nullable=False, default='metered')
+    throttle_down_kbps = db.Column(db.Integer, nullable=False, default=2000)
+    throttle_up_kbps = db.Column(db.Integer, nullable=False, default=2000)
+    speed_state = db.Column(db.Text, nullable=False, default='')
+    speed_sync_pending = db.Column(db.Boolean, nullable=False, default=False)
     traffic_limit = db.Column(db.Integer, default=10)
     traffic_usage = db.Column(db.Float, default=0)
     traffic_used = db.Column(db.BigInteger, default=0)
     last_session_bytes = db.Column(db.BigInteger, default=0)
+
+@event.listens_for(User.status, 'set', active_history=True)
+def remember_account_disable_reason(target, value, previous, initiator):
+    if value == 'disabled':target.disable_reason = 'admin'
+    elif value == 'active':target.disable_reason = ''
 
 class Node(db.Model):
     __tablename__ = "nodes"
@@ -185,12 +213,21 @@ def ensure_primary_node():
 
 
 def sync_primary_access(user, primary_selected):
+    from app import representative_credit
+    from app import representative_actions
+    if representative_credit.suspended(user) or representative_actions.blocked(user):primary_selected=False
+    if getattr(user,"id",None) is not None:
+        from app import devices
+        from types import SimpleNamespace
+        for device in devices.Device.query.filter_by(user_id=user.id).all():
+            sync_primary_access(SimpleNamespace(username=device.common_name,status="disabled" if device.blocked else user.status,customer_paused=user.customer_paused),primary_selected)
     """Apply the local node selection using OpenVPN's per-client CCD."""
+    if privileged_enabled():
+        return privileged_call("access", username=user.username, active=bool(user.status == "active" and not user.customer_paused and primary_selected))
     ccd_file = f"/etc/openvpn/ccd/{user.username}"
     if user.status != "active" or getattr(user, 'customer_paused', False) or not primary_selected:
-        os.makedirs("/etc/openvpn/ccd", exist_ok=True)
-        with open(ccd_file, "w") as handle:
-            handle.write("disable\n")
+        from vpn_sessions import disable_ccd
+        disable_ccd(ccd_file)
         if user.status == "active":
             try:
                 with socket.create_connection(("127.0.0.1", 7505), timeout=1) as management:
@@ -198,20 +235,57 @@ def sync_primary_access(user, primary_selected):
             except OSError:
                 pass
     elif os.path.exists(ccd_file):
-        os.remove(ccd_file)
+        from vpn_sessions import enable_ccd
+        enable_ccd(ccd_file)
+
+
+def reconcile_primary_access():
+    """Reapply eligible local access after upgrades without resetting quotas.
+
+    Do not reactivate database accounts, grant new node assignments or touch
+    users paused by their owner. Existing disabled/expired accounts stay blocked.
+    """
+    primary = Node.query.filter_by(api_key=PRIMARY_NODE_KEY).first()
+    if primary is None:
+        return
+    users = User.query.join(UserNode, UserNode.user_id == User.id).filter(
+        UserNode.node_id == primary.id, User.status == 'active',
+        User.customer_paused.is_(False)).all()
+    for user in users:
+        if activation_error(user.expire_date, user.traffic_limit or 0, user.traffic_usage or 0, quota_mode=getattr(user,'quota_mode','metered')):
+            continue
+        if not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}", user.username):
+            continue
+        try:
+            if speed_policy.sync(user):
+                user.pause_sync_pending=True
+            sync_primary_access(user, True)
+        except (OSError, RuntimeError, ValueError):
+            user.pause_sync_pending = True
+            app.logger.warning("Local access reconciliation failed for account ID %s; queued retry", user.id)
+    db.session.commit()
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    return Admin.query.get(int(user_id))
+    return panel_sessions.load(str(user_id))
 
 
 # ==================== GLOBAL UTILITIES ====================
 
 def disable_user_globally(user):
+    if getattr(user,'id',None) is not None:
+        try:experience.sync_access(user)
+        except (OSError,RuntimeError):user.pause_sync_pending=True
+        return
     """غیرفعال سازی کامل کاربر (نوشتن فایل disable در ccd) به دلیل اتمام حجم/زمان"""
     username = user.username
-    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username):
+    if not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}", username):
+        return
+    if privileged_enabled():
+        try: privileged_call("access",username=username,active=False)
+        except RuntimeError: user.pause_sync_pending=True
+        kick_user_globally(user)
         return
     ccd_file = f"/etc/openvpn/ccd/{username}"
     try:
@@ -222,14 +296,19 @@ def disable_user_globally(user):
     kick_user_globally(user)
 
 def kick_user_globally(user):
+    if getattr(user,"id",None) is not None and not getattr(user,"_individual",False):
+        from types import SimpleNamespace
+        for device in devices.Device.query.filter_by(user_id=user.id).all():kick_user_globally(SimpleNamespace(id=user.id,username=device.common_name,_individual=True))
     """فقط اخراج آنی کاربر از کل نودها و سرور اصلی، بدون دستکاری فایل ccd
        این مورد مشکل Ghost Connections را وقتی دیوایس اضافه متصل می‌شود حل میکند"""
     username = user.username
-    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username):
+    if not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}", username):
         return
     try:
-        with socket.create_connection(("127.0.0.1", 7505), timeout=1) as management:
-            management.sendall(f"kill {username}\n".encode("ascii"))
+        if privileged_enabled():privileged_call("kick",username=username)
+        else:
+            with socket.create_connection(("127.0.0.1", 7505), timeout=1) as management:
+                management.sendall(f"kill {username}\n".encode("ascii"))
     except:
         pass
 
@@ -240,9 +319,7 @@ def kick_user_globally(user):
             if node and not is_primary_node(node):
                 target = node.host if node.host else node.ip
                 if not target: continue
-                address = target.strip()
-                if not address.startswith("http"): address = f"http://{address}"
-                if ":" not in address.replace("http://", "").replace("https://", ""): address = f"{address}:5001"
+                address=node_url(node)
 
                 requests.post(
                     f"{address}/api/node/kill-user",
@@ -256,26 +333,32 @@ def kick_user_globally(user):
 
 def update_openvpn_status():
     """Count deltas from each VPN session into a durable, per-node daily ledger."""
+    customer_features.expire_receipt_grants()
     nodes = Node.query.all()
     presence = {}
     today = datetime.utcnow().date().isoformat()
+    from node_snapshots import collect
+    records=[]
+    for n in nodes:
+        try:records.append((n.id,is_primary_node(n),'' if is_primary_node(n) else node_url(n),n.api_key))
+        except ValueError:continue
+    snapshots=collect(records,privileged_enabled,privileged_call)
     for node in nodes:
         try:
-            if is_primary_node(node):
-                with open("/var/log/openvpn-status.log", encoding="utf-8") as stream:
-                    log = stream.read()
-            else:
-                target = (node.host or node.ip).strip()
-                if not target:
-                    continue
-                address = target if target.startswith(("http://", "https://")) else f"http://{target}"
-                if ":" not in address.split("//", 1)[-1]:
-                    address += ":5001"
-                response = requests.get(f"{address}/api/node/status-log",
-                                        headers={"Authorization": f"Bearer {node.api_key}"}, timeout=3)
-                response.raise_for_status()
-                log = response.json().get("log", "")
+            snapshot=snapshots.get(node.id)
+            if not snapshot:raise RuntimeError('Node snapshot unavailable')
+            log=snapshot.get('log','');terminal_events=snapshot.get('events',[])
+            node_api_address='' if is_primary_node(node) else node_url(node)
             clients = parse_status(log)
+            admission.sync(node.id,clients)
+            from terminal_traffic import merge_events
+            prefixes=['|'.join([e['username'],e['address'],str(e['since'])])+'|' for e in terminal_events]
+            from sqlalchemy import or_
+            sample_keys=[]
+            for start in range(0,len(prefixes),100):
+                conditions=[TrafficSample.session_key.startswith(prefix,autoescape=True) for prefix in prefixes[start:start+100]]
+                sample_keys.extend(row.session_key for row in TrafficSample.query.filter(TrafficSample.node_id==node.id,or_(*conditions)))
+            clients,terminal_keys=merge_events(clients,terminal_events,sample_keys)
             node.status = 'online'
             seen = set()
             baseline = db.session.get(TrafficBaseline, node.id)
@@ -307,11 +390,14 @@ def update_openvpn_status():
                     daily.bytes_total += diff
                     daily.bytes_received += diff_received
                     daily.bytes_sent += diff_sent
-                details = presence.setdefault(username, {"bytes": 0, "connections": 0, "address": address})
+                account=devices.owner(username)
+                account_name=account.username if account else username
+                details = presence.setdefault(account_name, {"bytes": 0, "connections": 0, "address": address})
                 details["bytes"] += diff
-                details["connections"] += 1
-                user = User.query.filter_by(username=username).first()
+                details["connections"] += int(session_key not in terminal_keys)
+                user = account
                 if user and diff:
+                    db.session.execute(db.update(User).where(User.id==user.id).values(traffic_used=db.func.coalesce(User.traffic_used,0)+diff))
                     user_daily = TrafficDailyUser.query.filter_by(user_id=user.id, day=today).first()
                     if user_daily is None:
                         user_daily = TrafficDailyUser(user_id=user.id, day=today, bytes_total=0)
@@ -321,34 +407,59 @@ def update_openvpn_status():
             if baseline:
                 baseline.pending = False
             db.session.commit()
+            ack=[event['event_id'] for event in terminal_events if event.get('event_id') and any(key.startswith('|'.join([event['username'],event['address'],str(event['since'])])+'|') for key in terminal_keys)]
+            if ack:
+                try:
+                    if is_primary_node(node):
+                        if privileged_enabled():privileged_call('traffic_ack',ids=ack)
+                        else:__import__('terminal_traffic').acknowledge(ack)
+                    else:requests.post(node_api_address+'/api/node/ack-traffic',json={'ids':ack},headers={'Authorization':'Bearer '+node.api_key},timeout=3).raise_for_status()
+                except Exception:app.logger.warning('Terminal traffic acknowledgement pending on node ID %s',node.id)
         except Exception:
             app.logger.exception("Could not collect VPN status from node %s", node.name)
             db.session.rollback()
             node.status = 'offline'
             continue
     for user in User.query.all():
+        db.session.refresh(user)
         details = presence.get(user.username)
-        user.online = bool(details)
-        user.online_status = "online" if details else "offline"
+        user.online = bool(details and details["connections"])
+        user.online_status = "online" if user.online else "offline"
         user.current_devices = details["connections"] if details else 0
         if details:
-            user.traffic_used = (user.traffic_used or 0) + details["bytes"]
+            # TrafficSample, account counters and daily ledgers were committed atomically above.
             user.traffic_usage = round(user.traffic_used / 1073741824, 3)
             if details["bytes"] and user.expire_date and user.expire_date.isdigit():
+                pending_days=user.expire_date
                 user.expire_date = (datetime.now().date() + timedelta(days=int(user.expire_date))).isoformat()
-            if user.max_devices and user.current_devices > user.max_devices:
-                kick_user_globally(user)
-        if activation_error(user.expire_date, user.traffic_limit, user.traffic_usage or 0):
-            user.status = "disabled"
+                customer_features.receipt_counter_started(user,pending_days,user.expire_date)
+            if user.max_devices and (user.current_devices > user.max_devices or connection_guard.active(user.id)):
+                from session_limits import enforce
+                from vpn_sessions import local_sessions,disconnect_session
+                selected_ids={rel.node_id for rel in UserNode.query.filter_by(user_id=user.id)}
+                names=[user.username]+[d.common_name for d in devices.Device.query.filter_by(user_id=user.id)]
+                failed=enforce(user,[n for n in nodes if n.id in selected_ids],names,is_primary_node,local_sessions,disconnect_session,guard=connection_guard)
+                if failed:app.logger.warning('Session limit reconciliation pending for account ID %s',user.id)
+        if details and (user.customer_paused or representative_credit.suspended(user)):
+            experience.sync_access(user)
+        if activation_error(user.expire_date, user.traffic_limit, user.traffic_usage or 0, quota_mode=getattr(user,'quota_mode','metered')):
+            if user.status == "active":
+                user.status = "disabled"
+                user.disable_reason = "automatic"
             disable_user_globally(user)
+        if user.quota_mode=='fair_use' or user.speed_state or user.speed_sync_pending:
+            if speed_policy.sync(user):experience.sync_access(user)
     db.session.commit()
 
 
 def background_updater():
+    last_crl=0
     while True:
         try:
             with app.app_context():
                 update_openvpn_status()
+                if time.monotonic()-last_crl>60:
+                    crl_sync.sync();last_crl=time.monotonic()
         except Exception as e:
             print(f"[UPDATER ERROR] {e}", flush=True)
         time.sleep(10)
@@ -362,15 +473,19 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         admin = Admin.query.filter_by(username=username).first()
-        if admin and check_password_hash(admin.password, password):
+        allowed, error = security.authorize(admin,password,request.form.get("code",""))
+        if allowed:
+            identity = panel_sessions.start(admin)
             login_user(admin, remember=request.form.get("remember") == "1")
+            session["_user_id"] = identity
             return redirect(f"{PANEL_PATH}")
-        return render_template("login.html", error="Invalid username or password", panel_path=PANEL_PATH)
+        return render_template("login.html", error=error, panel_path=PANEL_PATH)
     return render_template("login.html", panel_path=PANEL_PATH)
 
 @app.route(f"{PANEL_PATH}/logout" if PANEL_PATH != '/' else "/logout")
 @login_required
 def logout():
+    panel_sessions.end()
     logout_user()
     return redirect(f"{PANEL_PATH}/login" if PANEL_PATH != '/' else "/login")
 
@@ -452,7 +567,12 @@ def traffic_page():
     nodes.sort(key=lambda item: item['total'], reverse=True)
     days = [(today - timedelta(days=i)).isoformat() for i in range(29, -1, -1)]
     daily = [{'day': day, 'gb': round(sum(row.bytes_total for row in rows if row.day == day) / 1073741824, 3)} for day in days]
-    return render_template('traffic.html', panel_path=PANEL_PATH, nodes=nodes,
+    host_rows=host_traffic.Daily.query.filter(host_traffic.Daily.day>=start).all()
+    host_total=db.session.query(db.func.sum(host_traffic.Daily.received+host_traffic.Daily.sent)).scalar() or 0
+    host_daily=[dict(day=day,gb=round(sum(r.received+r.sent for r in host_rows if r.day==day)/1073741824,3)) for day in days]
+    measured_ids={r.node_id for r in host_traffic.Sample.query.all()}
+    missing_hosts=[n.name for n in Node.query.all() if n.id not in measured_ids]
+    return render_template('traffic.html',host_total=round(host_total/1073741824,3),host_daily=host_daily,missing_hosts=missing_hosts, panel_path=PANEL_PATH, nodes=nodes,
                            daily=daily, lifetime=round(lifetime / 1073741824, 3),
                            outbound=round(outbound / 1073741824, 3),
                            inbound=round(inbound / 1073741824, 3),
@@ -477,7 +597,7 @@ def add_user():
     # متد GET برای نمایش صفحه فرم
     if request.method == "GET":
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None)
-    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", request.form.get("username", "")):
+    if not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}", request.form.get("username", "")):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="Username must use only letters, numbers, underscore or hyphen."), 400
     if request.form.get("protocol") != "openvpn":
@@ -491,6 +611,9 @@ def add_user():
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="Customer login needs a 3+ character username and a 12+ character password."), 400
 
+    from app import sales_engine
+    sale_form,sale_snapshot=sales_engine.prepare(request.form)
+    request.form=sale_form
     expire_days = request.form.get("expire_days", "").strip()
     if expire_days and (not expire_days.isdigit() or not 1 <= int(expire_days) <= 3650):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
@@ -514,13 +637,20 @@ def add_user():
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="Check the device and data limits."), 400
 
+    try:
+        from speed_policy import validate_policy
+        speed_fields=validate_policy(request.form.get('quota_mode','metered'),request.form.get('throttle_down_kbps',2000),request.form.get('throttle_up_kbps',2000),traffic_limit)
+    except ValueError as exc:
+        return render_template('user_form.html',panel_path=PANEL_PATH,nodes=nodes,mode='add',user=None,error=str(exc)),400
     user = User(
+        owner_id=current_user.id,
         username=request.form["username"],
         protocol=request.form["protocol"],
         max_devices=max_devices,
         expire_date=expire_val,
         status=initial_status,
-        traffic_limit=traffic_limit
+        traffic_limit=traffic_limit,
+        **speed_fields
     )
 
     selected_nodes = request.form.getlist("nodes")
@@ -532,12 +662,13 @@ def add_user():
     if not selected_ids or len(set(selected_ids)) != len(selected_ids) or not set(selected_ids).issubset({node.id for node in nodes}):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="Select at least one available node."), 400
-    if User.query.filter_by(username=user.username).first():
+    if User.query.filter_by(username=user.username).first() or db.session.get(devices.RetiredUsername,user.username):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
-                               error="Username already exists."), 409
+                               error="Username already exists or was retired after deletion. Choose a new username."), 409
     try:
-        subprocess.run(["/opt/beeny-panel/scripts/create_vpn_user.sh", user.username], check=True, timeout=120)
-    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        if privileged_enabled():privileged_call("create_user",username=user.username)
+        else:subprocess.run(["/opt/beeny-panel/scripts/create_vpn_user.sh", user.username], check=True, timeout=120)
+    except (OSError, RuntimeError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return render_template("user_form.html", panel_path=PANEL_PATH, nodes=nodes, mode="add", user=None,
                                error="VPN certificate creation failed; see the panel service log."), 500
 
@@ -552,6 +683,7 @@ def add_user():
 
     for node_id in selected_ids:
         db.session.add(UserNode(user_id=user.id, node_id=node_id))
+    sales_engine.direct_invoice(user,sale_snapshot)
     db.session.commit()
     sync_primary_access(user, primary_id in selected_ids)
     if user.status == "disabled":
@@ -609,6 +741,10 @@ def edit_user(user_id):
                 raise ValueError()
     except (ValueError, KeyError):
         return invalid("Check the device and data limits.")
+    try:
+        from speed_policy import validate_policy
+        speed_fields=validate_policy(request.form.get('quota_mode',user.quota_mode),request.form.get('throttle_down_kbps',user.throttle_down_kbps),request.form.get('throttle_up_kbps',user.throttle_up_kbps),new_limit)
+    except ValueError as exc:return invalid(str(exc))
     requested_status = request.form.get("status")
     if request.form.get("protocol") != "openvpn":
         return invalid("Only OpenVPN is supported by this installation.")
@@ -644,12 +780,14 @@ def edit_user(user_id):
     will_reset = request.form.get("reset_traffic") == "1"
     usage_after_edit = 0 if will_reset else (user.traffic_usage or 0)
     if requested_status == "active":
-        problem = activation_error(next_expiry, new_limit, usage_after_edit)
+        if representative_actions.blocked(user):return invalid("این حساب بایگانی شده است؛ لغو فروش را با فعال‌سازی دستی برنگردانید.")
+        problem = activation_error(next_expiry, new_limit, usage_after_edit, quota_mode=speed_fields['quota_mode'])
         if problem:
             return invalid(problem)
 
     user.protocol = request.form["protocol"]
     user.max_devices = max_devices
+    for key,value in speed_fields.items():setattr(user,key,value)
     user.traffic_limit = new_limit
     user.expire_date = next_expiry
     user.status = requested_status
@@ -690,7 +828,7 @@ def edit_user(user_id):
     for nid in new_node_ids:
         node = Node.query.get(nid)
         if node and not is_primary_node(node):
-            synced, reason = set_user_state_on_node(node, user.username, user.status == 'active' and not user.customer_paused)
+            synced, reason = set_user_state_on_node(node, user.username, user.status == 'active' and not user.customer_paused and not representative_credit.suspended(user) and not representative_actions.blocked(user))
             if not synced:
                 node_sync_failed = True
                 app.logger.error('Node status sync failed for %s on %s: %s', user.username, node.name, reason)
@@ -701,28 +839,74 @@ def edit_user(user_id):
     db.session.commit()
     return redirect(f"{base}/users/view/{user.id}?notice=updated" + ('&sync_warning=1' if node_sync_failed else ''))
 
-@app.route(f"{PANEL_PATH}/users/delete/<int:user_id>" if PANEL_PATH != '/' else "/users/delete/<int:user_id>")
+@app.route(f"{PANEL_PATH}/users/delete/<int:user_id>" if PANEL_PATH != '/' else "/users/delete/<int:user_id>", methods=["POST"])
 @login_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
-    disable_user_globally(user)
+    remove_vpn_account(user)
+    return redirect(f"{PANEL_PATH}/users" if PANEL_PATH != '/' else "/users")
 
-    # حذف کامل از تمامی نودها
+
+def remove_vpn_account(user,owner_cascade=False):
+    """Block every assigned certificate before removing an account; preserve billing history."""
+    from app import representative_credit
+    if owner_cascade and current_user.role!='owner':abort(403)
+    if user.reseller_id and representative_credit.mode(user.reseller_id) and not owner_cascade:abort(409,'حساب مشتری نماینده اعتباری باید از بخش لغو فروش یا بایگانی بسته شود؛ حذف مستقیم مجاز نیست.')
+    user_id=user.id
+    user.status='disabled'
+    user.pause_sync_pending=True
+    db.session.commit()
+    failures=experience.sync_access(user)
+    if failures:
+        abort(409,'Account disabled; deletion waits for node confirmation: '+', '.join(failures))
+    if not db.session.get(devices.RetiredUsername,user.username):
+        db.session.add(devices.RetiredUsername(username=user.username))
+    # sync_access confirms access is disabled for the account and every device.
+    # Node cleanup is best effort; blocked certificates stay unusable on failure.
     from cluster import delete_user_on_node
-    user_nodes = UserNode.query.filter_by(user_id=user_id).all()
-    for rel in user_nodes:
-        node = Node.query.get(rel.node_id)
+    relations=UserNode.query.filter_by(user_id=user_id).all()
+    registered=devices.Device.query.filter_by(user_id=user_id).all()
+    for rel in relations:
+        node=db.session.get(Node,rel.node_id)
         if node and not is_primary_node(node):
-            try: delete_user_on_node(node, user.username)
-            except: pass
-
+            for name in [user.username]+[device.common_name for device in registered]:
+                try:delete_user_on_node(node,name)
+                except Exception:pass
     UserNode.query.filter_by(user_id=user_id).delete()
+    devices.Device.query.filter_by(user_id=user_id).delete()
     customer_features.delete_customer(user_id)
-    TrafficDailyUser.query.filter_by(user_id=user_id).delete()
     AccountLink.query.filter_by(user_id=user_id).delete()
     db.session.delete(user)
     db.session.commit()
-    return redirect(f"{PANEL_PATH}/users" if PANEL_PATH != '/' else "/users")
+
+
+@app.post((PANEL_PATH.rstrip('/') if PANEL_PATH!='/' else '')+'/users/view/<int:user_id>/share-telegram')
+@login_required
+def share_account_telegram(user_id):
+    from html import escape
+    from urllib.parse import urlsplit
+    import hashlib,hmac
+    customer_features.verify_csrf()
+    user=User.query.get_or_404(user_id)
+    profile=db.session.get(customer_features.CustomerProfile,user.id)
+    password=request.form.get('password','')
+    if not profile or not 1<=len(password)<=256 or not check_password_hash(profile.password_hash or '',password):
+        return jsonify(error='Enter the current customer password before sending.'),400
+    url=request.form.get('url','');parsed=urlsplit(url)
+    token=parsed.path.rsplit('/',1)[-1]
+    link=db.session.get(AccountLink,user.id)
+    prefix=PANEL_PATH.rstrip('/')+'/c/' if PANEL_PATH!='/' else '/c/'
+    if parsed.scheme not in {'https','http'} or parsed.netloc!=request.host or parsed.path!=prefix+token or not link or not hmac.compare_digest(link.token_hash,hashlib.sha256(token.encode()).hexdigest()):
+        return jsonify(error='Generate a valid private profile link first.'),400
+    binding=customer_features.TelegramAccount.query.filter_by(user_id=user.id).first()
+    if not binding or binding.chat_id<=0 or not customer_features.is_linked(user.id):
+        return jsonify(error='This customer must connect their private Telegram account first.'),409
+    message=('سلام 👋\nاطلاعات حساب بنی شما:\n\n🔗 صفحهٔ شخصی: '+escape(url,quote=False)+
+             '\n👤 نام کاربری: <code>'+escape(profile.login_username or user.username,quote=False)+'</code>'+
+             '\n🔐 رمز ورود: <code>'+escape(password,quote=False)+'</code>\n\nاین اطلاعات خصوصی است؛ آن را محرمانه نگه دارید.')
+    try:customer_features.telegram('sendMessage',dict(chat_id=binding.chat_id,text=message,parse_mode='HTML',disable_web_page_preview=True))
+    except Exception:return jsonify(error='Telegram delivery failed. Check the bot settings and connection.'),502
+    return jsonify(ok=True)
 
 
 @app.route(f"{PANEL_PATH}/users/view/<int:user_id>" if PANEL_PATH != '/' else "/users/view/<int:user_id>")
@@ -787,14 +971,22 @@ def rotate_account_link(user_id):
 
 def account_from_token(token):
     if token.startswith('t_') and len(token) < 600:
-        return customer_features.resolve_bot_token(token)
+        user=customer_features.resolve_bot_token(token)
+        if request.method not in {'GET','HEAD','OPTIONS'}:
+            from removal_guard import claim
+            claim(db,User,user.id)
+        return user
     if not re.fullmatch(r'[A-Za-z0-9_-]{43}', token):
         abort(404)
     digest = hashlib.sha256(token.encode('ascii')).hexdigest()
     link = AccountLink.query.filter_by(token_hash=digest).first()
     if link is None:
         abort(404)
-    return User.query.get_or_404(link.user_id)
+    user=User.query.get_or_404(link.user_id)
+    if request.method not in {'GET','HEAD','OPTIONS'}:
+        from removal_guard import claim
+        claim(db,User,user.id)
+    return user
 
 
 @app.get(f"{PANEL_PATH}/c/<token>" if PANEL_PATH != '/' else "/c/<token>")
@@ -823,22 +1015,28 @@ def download_config(username):
     return build_config(user, request.args.get('node_id', type=int))
 
 
-def build_config(user, requested_node_id=None):
-    username = user.username
+def build_config(user, requested_node_id=None,certificate_username=None):
+    username = certificate_username or user.username
     try:
-        with open(f"/etc/openvpn/easy-rsa/pki/ca.crt", "r") as f:
-            ca_data = f.read()
-        with open("/etc/openvpn/ta.key", "r") as f:
-            ta_data = f.read()
-        with open(f"/etc/openvpn/easy-rsa/pki/issued/{username}.crt", "r") as f:
-            cert_raw = f.read()
-            cert_match = re.search(r"-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----", cert_raw, re.DOTALL)
-            cert_data = cert_match.group(0) if cert_match else cert_raw
-        with open(f"/etc/openvpn/easy-rsa/pki/private/{username}.key", "r") as f:
-            key_data = f.read()
-    except OSError:
-        app.logger.exception("VPN client material is missing for %s", username)
-        return "VPN configuration is unavailable. Check the panel service log for the missing certificate or key.", 503
+        if privileged_enabled():
+            material=privileged_call('material',username=username)
+            ca_data,ta_data,cert_raw,key_data=material['ca'],material['ta'],material['cert'],material['key']
+            cert_match=re.search(r'-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----',cert_raw,re.DOTALL)
+            cert_data=cert_match.group(0) if cert_match else cert_raw
+        else:
+            with open(f"/etc/openvpn/easy-rsa/pki/ca.crt", "r") as f:
+                ca_data = f.read()
+            with open("/etc/openvpn/ta.key", "r") as f:
+                ta_data = f.read()
+            with open(f"/etc/openvpn/easy-rsa/pki/issued/{username}.crt", "r") as f:
+                cert_raw = f.read()
+                cert_match = re.search(r"-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----", cert_raw, re.DOTALL)
+                cert_data = cert_match.group(0) if cert_match else cert_raw
+            with open(f"/etc/openvpn/easy-rsa/pki/private/{username}.key", "r") as f:
+                key_data = f.read()
+    except (OSError,RuntimeError):
+        app.logger.error('VPN client material unavailable for %s',username)
+        return 'VPN configuration is unavailable. Check the panel service log.',503
 
     user_nodes_relations = UserNode.query.filter_by(user_id=user.id).all()
     assigned_ids = {rel.node_id for rel in user_nodes_relations}
@@ -851,16 +1049,19 @@ def build_config(user, requested_node_id=None):
         return "No available node is assigned to this account.", 409
 
     def clean_address(node_obj):
-        target = (os.environ.get("BEENY_PUBLIC_HOST", "") if is_primary_node(node_obj)
-                  else (node_obj.host or node_obj.ip)).strip()
-        target = target.removeprefix("https://").removeprefix("http://").split("/")[0].split(":")[0]
-        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]*", target):
-            raise ValueError("Invalid VPN node address")
-        return target
+        from urllib.parse import urlsplit
+        import ipaddress
+        target=(os.environ.get('BEENY_PUBLIC_HOST','') if is_primary_node(node_obj) else (node_obj.host or node_obj.ip or '')).strip()
+        try:return str(ipaddress.ip_address(target))
+        except ValueError:pass
+        parsed=urlsplit(target if '://' in target else '//'+target)
+        host=parsed.hostname or ''
+        from speed_policy import endpoint
+        return endpoint(host,110)['host']
 
     try:
         remotes_block = "\n".join(
-            f"remote {clean_address(node)} {os.environ.get('BEENY_VPN_PORT', '110')}"
+            'remote {host} {port} {proto}'.format(**({'proto':'tcp'} | speed_policy.remote(node,clean_address(node),os.environ.get('BEENY_VPN_PORT','110'))))
             for node in nodes_to_download
         )
     except ValueError:
@@ -879,6 +1080,7 @@ persist-key
 persist-tun
 
 remote-cert-tls server
+block-ipv6
 
 cipher AES-256-GCM
 auth SHA256
@@ -913,7 +1115,7 @@ verb 3
     return send_file(mem_file, as_attachment=True, download_name=filename, mimetype='application/x-openvpn-profile')
 
 
-@app.route(f"{PANEL_PATH}/users/reset_traffic/<int:user_id>" if PANEL_PATH != '/' else "/users/reset_traffic/<int:user_id>")
+@app.route(f"{PANEL_PATH}/users/reset_traffic/<int:user_id>" if PANEL_PATH != '/' else "/users/reset_traffic/<int:user_id>", methods=["POST"])
 @login_required
 def reset_traffic(user_id):
     user = User.query.get_or_404(user_id)
@@ -942,20 +1144,35 @@ def api_users_search():
 
     query = User.query
 
-    if q: query = query.filter(User.username.ilike(f"%{q}%"))
+    if q:
+        q=q[:100]
+        literal=q.replace('\\','\\\\').replace('%','\\%').replace('_','\\_')
+        query=query.filter(User.username.ilike('%'+literal+'%',escape='\\'))
     if protocol: query = query.filter(User.protocol == protocol)
     if status: query = query.filter(User.status == status)
 
-    if sort_by == 'traffic_desc': query = query.order_by(User.traffic_usage.desc())
+    if sort_by=='online_first': query=query.order_by(db.case((User.online_status=='online',0),else_=1),User.id.desc())
+    elif sort_by == 'traffic_desc': query = query.order_by(User.traffic_usage.desc())
     elif sort_by == 'traffic_asc': query = query.order_by(User.traffic_usage.asc())
     elif sort_by == 'oldest': query = query.order_by(User.id.asc())
     elif sort_by == 'name_asc': query = query.order_by(db.func.lower(User.username).asc(), User.id.asc())
     elif sort_by == 'name_desc': query = query.order_by(db.func.lower(User.username).desc(), User.id.asc())
     else: query = query.order_by(User.id.desc())
 
+    from sqlalchemy import case
+    overview = query.order_by(None).with_entities(
+        db.func.sum(case((User.online_status == 'online', 1), else_=0)),
+        db.func.coalesce(db.func.sum(User.traffic_usage), 0),
+        db.func.sum(case((db.and_(User.traffic_limit > 0, User.traffic_usage > User.traffic_limit * .8), 1), else_=0))
+    ).first()
     paginated = query.paginate(page=page, per_page=per_page, error_out=False)
     users = paginated.items
 
+    # Fetch node labels once for this page, rather than two queries per account.
+    page_nodes={u.id:[] for u in users}
+    if page_nodes:
+        for user_id,node in db.session.query(UserNode.user_id,Node).join(Node,UserNode.node_id==Node.id).filter(UserNode.user_id.in_(page_nodes)).all():
+            page_nodes[user_id].append({'id':node.id,'name':node.name,'country':node.country})
     users_data = []
     for u in users:
         days_left_text = "Unlimited"
@@ -967,11 +1184,7 @@ def api_users_search():
                 days_left_text = f"{delta} Days left" if delta >= 0 else "Expired"
             except: pass
 
-        relations = UserNode.query.filter_by(user_id=u.id).all()
-        nodes_list_data = []
-        for rel in relations:
-            node = Node.query.get(rel.node_id)
-            if node: nodes_list_data.append({'id': node.id, 'name': node.name, 'country': node.country})
+        nodes_list_data = page_nodes.get(u.id,[])
 
         users_data.append({
             'id': u.id, 'username': u.username, 'protocol': u.protocol, 'status': u.status,
@@ -984,6 +1197,7 @@ def api_users_search():
 
     return jsonify({
         'users': users_data,
+        'overview': {'online': int(overview[0] or 0), 'usage': float(overview[1] or 0), 'near_limit': int(overview[2] or 0)},
         'pagination': {
             'page': paginated.page, 'pages': paginated.pages, 'total': paginated.total,
             'has_prev': paginated.has_prev, 'has_next': paginated.has_next,
@@ -996,85 +1210,22 @@ def api_users_search():
 @app.route(f"{PANEL_PATH}/settings/monitoring" if PANEL_PATH != '/' else "/settings/monitoring")
 @login_required
 def settings_monitoring():
-    db_path = "/opt/beeny-panel/instance/beeny.db"
-    db_size = 0
-    if os.path.exists(db_path):
-        db_size = round(os.path.getsize(db_path) / (1024 * 1024), 2)
-
-    total_users = User.query.count()
-    active_users = User.query.filter_by(status="active").count()
-    online_users = User.query.filter_by(online=True).count()
-    total_traffic = round(db.session.query(db.func.sum(User.traffic_usage)).scalar() or 0, 1)
-
-    return render_template(
-        "settings_monitoring.html",
-        panel_path=PANEL_PATH,
-        db_size=db_size,
-        total_users=total_users,
-        active_users=active_users,
-        online_users=online_users,
-        total_traffic=total_traffic
-    )
+    return render_template('settings_monitoring.html',panel_path=PANEL_PATH)
 
 
 @app.route(f"{PANEL_PATH}/settings/general" if PANEL_PATH != '/' else "/settings/general")
 @login_required
 def settings_general():
-    return render_template("settings_general.html", panel_path=PANEL_PATH)
+    from security import ROLES
+    owner=current_user.role=='owner'
+    return render_template("settings_general.html",panel_path=PANEL_PATH,admins=Admin.query.order_by(Admin.id).all() if owner else [],roles=sorted(ROLES),nodes=Node.query.order_by(Node.name).all() if owner else [],grants={(x.admin_id,x.node_id) for x in security.AdminNodeGrant.query.all()} if owner else set())
 
 
 @app.route(f"{PANEL_PATH}/settings" if PANEL_PATH != '/' else "/settings")
 @login_required
 def settings():
-    try:
-        db_path = "/opt/beeny-panel/instance/beeny.db"
-        db_size = 0
-        if os.path.exists(db_path):
-            db_size = round(os.path.getsize(db_path) / (1024 * 1024), 2)
-
-        total_users = User.query.count()
-        active_users = User.query.filter_by(status="active").count()
-        online_users = User.query.filter_by(online=True).count()
-        total_traffic = round(db.session.query(db.func.sum(User.traffic_usage)).scalar() or 0, 1)
-
-        cpu_percent = psutil.cpu_percent(interval=1)
-        cpu_cores = psutil.cpu_count()
-        memory = psutil.virtual_memory()
-        ram_percent = memory.percent
-        ram_used = round(memory.used / (1024**3), 1)
-        ram_total = round(memory.total / (1024**3), 1)
-        disk = psutil.disk_usage('/')
-        disk_percent = disk.percent
-        disk_used = round(disk.used / (1024**3), 1)
-        disk_free = round(disk.free / (1024**3), 1)
-
-        try:
-            cpu_temp = psutil.sensors_temperatures().get('coretemp', [{}])[0].get('current', 45)
-        except:
-            cpu_temp = 45
-    except:
-        cpu_percent = ram_percent = disk_percent = 0
-        cpu_cores = ram_used = ram_total = disk_used = disk_free = cpu_temp = 0
-        online_users = db_size = total_users = active_users = total_traffic = 0
-
-    return render_template(
-        "settings.html",
-        db_size=db_size,
-        total_users=total_users,
-        active_users=active_users,
-        online_users=online_users,
-        total_traffic=total_traffic,
-        cpu_percent=cpu_percent,
-        cpu_cores=cpu_cores,
-        cpu_temp=cpu_temp,
-        memory_percent=ram_percent,
-        memory_used=ram_used,
-        memory_total=ram_total,
-        disk_percent=disk_percent,
-        disk_used=disk_used,
-        disk_free=disk_free,
-        panel_path=PANEL_PATH
-    )
+    # The hub is navigation only; live measurements belong to the monitoring collector.
+    return render_template("settings.html",panel_path=PANEL_PATH)
 
 
 # ==================== NODES MANAGEMENT ====================
@@ -1082,34 +1233,9 @@ def settings():
 @app.route(f"{PANEL_PATH}/settings/nodes" if PANEL_PATH != '/' else "/settings/nodes")
 @login_required
 def nodes_page():
-    nodes = Node.query.all()
-    for node in nodes:
-        if is_primary_node(node):
-            node.status = "online"
-            continue
-        try:
-            target = node.host if node.host else node.ip
-            if not target:
-                node.status = 'offline'
-                continue
-            host_address = target.strip()
-            if not host_address.startswith("http://") and not host_address.startswith("https://"):
-                host_url = f"http://{host_address}"
-            else:
-                host_url = host_address
-            if ":" not in host_url.replace("http://", "").replace("https://", ""):
-                host_url = f"{host_url}:5001"
+    nodes = Node.query.order_by(Node.id).all()
+    return render_template("nodes.html", nodes=nodes, health={r.node_id:r for r in health.Health.query.all()}, panel_path=PANEL_PATH, is_primary=is_primary_node)
 
-            r = requests.get(f"{host_url}/api/node/stats", headers={"Authorization": f"Bearer {node.api_key}"}, timeout=3)
-            if r.status_code == 200 and r.json().get("status") == "online":
-                node.status = "online"
-            else:
-                node.status = "offline"
-        except Exception:
-            node.status = "offline"
-
-    db.session.commit()
-    return render_template("nodes.html", nodes=nodes, panel_path=PANEL_PATH)
 
 
 @app.route(f"{PANEL_PATH}/settings/nodes/add" if PANEL_PATH != '/' else "/settings/nodes/add", methods=["POST"])
@@ -1135,6 +1261,7 @@ def add_node():
     except Exception as e:
         print(f"Node Bootstrap Error: {str(e)}", flush=True)
 
+    if request.headers.get("X-Requested-With")=="XMLHttpRequest":return jsonify(success=True,message="Node saved.")
     return redirect(f"{PANEL_PATH}/settings/nodes" if PANEL_PATH != '/' else "/settings/nodes")
 
 
@@ -1152,6 +1279,7 @@ def edit_node(node_id):
         node.name = name
         node.country = country
         db.session.commit()
+        if request.headers.get("X-Requested-With")=="XMLHttpRequest":return jsonify(success=True,message="Node saved.")
         return redirect(f"{PANEL_PATH}/settings/nodes" if PANEL_PATH != '/' else "/settings/nodes")
     if request.form.get("api_key") == PRIMARY_NODE_KEY:
         return "Reserved node identifier.", 400
@@ -1160,13 +1288,15 @@ def edit_node(node_id):
     node.host = request.form.get("host")
     node.country = country
     node.protocol = request.form.get("protocol")
-    node.api_key = request.form.get("api_key")
+    if request.form.get("api_key", "").strip():
+        node.api_key = request.form["api_key"].strip()
 
     db.session.commit()
+    if request.headers.get("X-Requested-With")=="XMLHttpRequest":return jsonify(success=True,message="Node saved.")
     return redirect(f"{PANEL_PATH}/settings/nodes")
 
 
-@app.route(f"{PANEL_PATH}/settings/nodes/delete/<int:node_id>")
+@app.route(f"{PANEL_PATH}/settings/nodes/delete/<int:node_id>", methods=["POST"])
 @login_required
 def delete_node(node_id):
     node = Node.query.get_or_404(node_id)
@@ -1175,6 +1305,7 @@ def delete_node(node_id):
     UserNode.query.filter_by(node_id=node_id).delete()
     db.session.delete(node)
     db.session.commit()
+    if request.headers.get("X-Requested-With")=="XMLHttpRequest":return jsonify(success=True,message="Node saved.")
     return redirect(f"{PANEL_PATH}/settings/nodes")
 
 
@@ -1206,41 +1337,36 @@ def system_info():
             "uptime": uptime
         })
     except Exception as e:
-        return jsonify({"hostname": "Unknown", "cpu": 0, "ram": 0, "disk": 0, "uptime": "Unknown"})
+        return jsonify({"hostname": "Unknown", "cpu": None, "ram": None, "disk": None, "uptime": "Unknown"}),503
 
 
 @app.route(f"{PANEL_PATH}/api/system/stats" if PANEL_PATH != '/' else "/api/system/stats")
 @login_required
 def system_stats():
+    from host_metrics import snapshot
+    from flask import g,abort
+    if g.get('admin_node_ids') is not None:
+        primary=next((n for n in Node.query.all() if is_primary_node(n)),None)
+        if primary is None:abort(403)
     try:
-        cpu_percent = psutil.cpu_percent(interval=1)
-        cpu_cores = psutil.cpu_count()
-        memory = psutil.virtual_memory()
-        ram_percent = memory.percent
-        ram_used = round(memory.used / (1024**3), 1)
-        ram_total = round(memory.total / (1024**3), 1)
-        disk = psutil.disk_usage('/')
-        disk_percent = disk.percent
-        disk_used = round(disk.used / (1024**3), 1)
-        disk_free = round(disk.free / (1024**3), 1)
-        net_io = psutil.net_io_counters()
-        net_speed = round((net_io.bytes_sent + net_io.bytes_recv) / (1024**2), 1)
-        net_tx = round(net_io.bytes_sent / (1024**2), 1)
-        net_rx = round(net_io.bytes_recv / (1024**2), 1)
-
-        return jsonify({
-            'cpu': cpu_percent, 'cpu_cores': cpu_cores, 'ram': ram_percent, 'ram_used': ram_used, 'ram_total': ram_total,
-            'disk': disk_percent, 'disk_used': disk_used, 'disk_free': disk_free, 'network': net_speed, 'network_tx': net_tx, 'network_rx': net_rx
-        })
-    except Exception as e:
-        return jsonify({'cpu': 0, 'ram': 0, 'disk': 0, 'network': 0})
+        m=privileged_call('host_metrics') if privileged_enabled() else snapshot()
+        rx=m.get('rx_mbps');tx=m.get('tx_mbps')
+        return jsonify(cpu=m.get('cpu'),cpu_cores=m.get('cpu_cores'),cpu_per_core=m.get('cpu_per_core'),
+            ram=m.get('memory'),ram_used=round(m['memory_used']/1024**3,2),ram_total=round(m['memory_total']/1024**3,2),
+            disk=m.get('disk'),disk_used=round(m['disk_used']/1024**3,2),disk_free=round((m['disk_total']-m['disk_used'])/1024**3,2),
+            network=(rx+tx)/8 if rx is not None and tx is not None else None,
+            network_rx=rx/8 if rx is not None else None,network_tx=tx/8 if tx is not None else None,
+            network_unit='MB/s',network_rx_mbps=rx,network_tx_mbps=tx,interface=m['interface'])
+    except Exception:
+        return jsonify(error='Host telemetry unavailable',cpu=None,ram=None,disk=None,network=None),503
 
 
 @app.route(f"{PANEL_PATH}/api/panel/restart", methods=["POST"])
 @login_required
 def restart_panel():
     try:
-        subprocess.Popen(["bash", "-c", "sleep 1 && systemctl restart beeny-panel"])
+        from privileged_server import dispatch
+        result=privileged_call("service",name="beeny-panel",action="restart") if privileged_enabled() else dispatch("service",dict(name="beeny-panel",action="restart"))
         return jsonify({"success": True, "message": "Panel restart initiated"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -1250,7 +1376,10 @@ def restart_panel():
 @login_required
 def clear_cache():
     try:
-        os.system("find /opt/beeny-panel -name '__pycache__' -type d -exec rm -rf {} +")
+        if privileged_enabled():privileged_call("clear_cache")
+        else:
+            from pathlib import Path
+            for cache in Path("/opt/beeny-panel").glob("__pycache__"):shutil.rmtree(cache)
         return jsonify({"success": True, "message": "Cache cleared"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -1267,8 +1396,8 @@ def system_uptime():
         panel_uptime = f"{hours}h {minutes}m"
 
         try:
-            subprocess.run(['systemctl', 'show', 'openvpn-server@server', '--property=ActiveEnterTimestamp'], capture_output=True, text=True, timeout=5)
-            vpn_uptime = "Running"
+            result=subprocess.run(['systemctl','is-active','openvpn-server@server'],capture_output=True,text=True,timeout=5)
+            vpn_uptime='Running' if result.returncode==0 else (result.stdout.strip() or 'Stopped')
         except:
             vpn_uptime = "Unknown"
         return jsonify({'panel_uptime': panel_uptime, 'vpn_uptime': vpn_uptime})
@@ -1282,11 +1411,17 @@ def panel_settings():
     try:
         data = request.get_json()
         username = data.get("username", "").strip()
-        password = data.get("password", "").strip()
+        password = data.get("password", "")
         panel_path = data.get("panel_path", "").strip()
 
-        admin = Admin.query.first()
+        admin = db.session.get(Admin,current_user.id)
+        if username and (not re.fullmatch(r"[A-Za-z0-9_.-]{3,50}",username) or Admin.query.filter(Admin.username==username,Admin.id!=admin.id).first()):return jsonify(success=False,message="Invalid or already used username."),400
+        if panel_path and (len(panel_path)>128 or not re.fullmatch(r"[A-Za-z0-9_@./-]+",panel_path) or ".." in panel_path.split("/")):return jsonify(success=False,message="Invalid panel path."),400
         changed = False
+        if not check_password_hash(admin.password,data.get("current_password","")):
+            return jsonify(success=False,message="Current password is incorrect."),400
+        if password and not 12<=len(password)<=256:
+            return jsonify(success=False,message="Password must contain 12 to 256 characters."),400
 
         if username:
             admin.username = username
@@ -1297,8 +1432,9 @@ def panel_settings():
 
         db.session.commit()
 
-        redirect_url = "/login"
-        if panel_path:
+        redirect_url = PANEL_PATH.rstrip("/") + "/login"
+        path_changed = bool(panel_path and panel_path.rstrip("/") != PANEL_PATH.rstrip("/"))
+        if path_changed:
             panel_path = panel_path.strip()
             if not panel_path.startswith("/"):
                 panel_path = "/" + panel_path
@@ -1311,13 +1447,15 @@ def panel_settings():
             redirect_url = panel_path + "/login"
             changed = True
 
+        panel_sessions.revoke_all(admin.id)
         session.clear()
         logout_user()
 
-        if changed:
-            subprocess.Popen(["bash", "-c", "sleep 2 && systemctl restart beeny-panel"])
+        if path_changed:
+            from privileged_server import dispatch
+            result=privileged_call("service",name="beeny-panel",action="restart") if privileged_enabled() else dispatch("service",dict(name="beeny-panel",action="restart"))
 
-        return jsonify({"success": True, "message": "Settings saved successfully. Panel restarting...", "redirect": redirect_url})
+        return jsonify(success=True, message="Settings saved. Sign in again." if not path_changed else "Settings saved. Panel restarting…", redirect=redirect_url, restarting=path_changed)
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
@@ -1326,7 +1464,8 @@ def panel_settings():
 @login_required
 def restart_vpn():
     try:
-        os.system("systemctl restart openvpn-server@server >/dev/null 2>&1")
+        if privileged_enabled(): privileged_call("service",name="openvpn-server@server",action="restart")
+        else: subprocess.run(["systemctl","restart","openvpn-server@server"],check=True,timeout=30)
         return jsonify({'success': True, 'message': 'OpenVPN restarted successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
@@ -1336,9 +1475,8 @@ def restart_vpn():
 @login_required
 def reset_vpn():
     try:
-        os.system("systemctl stop openvpn-server@server >/dev/null 2>&1")
-        time.sleep(2)
-        os.system("systemctl start openvpn-server@server >/dev/null 2>&1")
+        if privileged_enabled(): privileged_call("service",name="openvpn-server@server",action="restart")
+        else: subprocess.run(["systemctl","restart","openvpn-server@server"],check=True,timeout=30)
         return jsonify({'success': True, 'message': 'OpenVPN config reset completed'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
@@ -1369,28 +1507,28 @@ def system_settings():
 @login_required
 def create_db_backup():
     try:
-        backup_dir = "/opt/beeny-panel/backups"
-        os.makedirs(backup_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        backup_file = f"{backup_dir}/db_{timestamp}.db"
-        shutil.copy2("/opt/beeny-panel/instance/beeny.db", backup_file)
-        return jsonify({"success": True, "message": "Database backup created", "file": os.path.basename(backup_file)})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)})
+        if privileged_enabled(): filename=privileged_call('backup_create', full=False)
+        else:
+            from backup_engine import create
+            filename=create(full=False)
+        return jsonify(success=True, message="Verified database snapshot created", file=filename)
+    except Exception:
+        app.logger.exception("Database snapshot failed")
+        return jsonify(success=False, message="Backup failed. Check service logs."), 503
 
 
 @app.route(f"{PANEL_PATH}/api/backup/create-full", methods=["POST"])
 @login_required
 def create_full_backup():
     try:
-        backup_dir = "/opt/beeny-panel/backups"
-        os.makedirs(backup_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        archive = f"{backup_dir}/full_{timestamp}.tar.gz"
-        subprocess.run(["tar", "-czf", archive, "/opt/beeny-panel/app.py", "/opt/beeny-panel/config.json", "/opt/beeny-panel/templates", "/opt/beeny-panel/static", "/opt/beeny-panel/instance/beeny.db"])
-        return jsonify({"success": True, "message": "Full backup created", "file": os.path.basename(archive)})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)})
+        if privileged_enabled(): filename=privileged_call('backup_create', full=True)
+        else:
+            from backup_engine import create
+            filename=create(full=True)
+        return jsonify(success=True, message="Verified complete backup created", file=filename)
+    except Exception:
+        app.logger.exception("Complete backup failed")
+        return jsonify(success=False, message="Backup failed. Check service logs."), 503
 
 
 @app.route(f"{PANEL_PATH}/api/backup/list")
@@ -1401,14 +1539,18 @@ def backup_list():
     files = []
     for f in sorted(os.listdir(backup_dir), reverse=True):
         path = os.path.join(backup_dir, f)
-        files.append({"name": f, "size": round(os.path.getsize(path) / 1024 / 1024, 2)})
+        if os.path.isfile(path) and not os.path.islink(path) and re.fullmatch(r"[A-Za-z0-9_-]+\.(?:db|tar\.gz)",f):
+            files.append({"name":f,"size":round(os.path.getsize(path)/1024/1024,2),"kind":"database" if f.endswith(".db") else "complete","created":datetime.utcfromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M UTC")})
     return jsonify(files)
 
 
 @app.route(f"{PANEL_PATH}/api/backup/download/<filename>")
 @login_required
 def download_backup(filename):
-    return send_file(f"/opt/beeny-panel/backups/{filename}", as_attachment=True)
+    from backup_engine import safe_file
+    try: path=safe_file(filename)
+    except ValueError: abort(404)
+    return send_file(path, as_attachment=True)
 
 
 @app.route(f"{PANEL_PATH}/settings/backup" if PANEL_PATH != '/' else "/settings/backup")
@@ -1421,10 +1563,14 @@ def backup_page():
 @login_required
 def delete_backup(filename):
     try:
-        backup_file = os.path.join("/opt/beeny-panel/backups", filename)
+        from backup_engine import safe_file
+        backup_file = str(safe_file(filename))
         if not os.path.exists(backup_file):
             return jsonify({"success": False, "message": "Backup not found"})
-        os.remove(backup_file)
+        if privileged_enabled():privileged_call('backup_delete',name=filename)
+        else:
+            os.remove(backup_file)
+            if filename.endswith('.db'):__import__('pathlib').Path(backup_file+'.sig').unlink(missing_ok=True)
         return jsonify({"success": True, "message": "Backup deleted successfully"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -1439,9 +1585,29 @@ def upload_backup():
         file = request.files["file"]
         if file.filename == "":
             return jsonify({"success": False, "message": "No file selected"})
+        from backup_engine import safe_file
         filename = secure_filename(file.filename)
-        save_path = os.path.join("/opt/beeny-panel/backups", filename)
-        file.save(save_path)
+        save_path = safe_file(filename)
+        if save_path.exists(): return jsonify(success=False,message="A backup with this name already exists."),409
+        if not filename.endswith('.tar.gz'): return jsonify(success=False,message="Upload a signed complete .tar.gz backup."),400
+        if privileged_enabled():
+            from pathlib import Path
+            import secrets
+            upload_root=Path(app.instance_path)/'backup_uploads';upload_root.mkdir(mode=0o700,exist_ok=True)
+            source=secrets.token_hex(16);incoming=upload_root/source
+            try:
+                with incoming.open('xb') as output:shutil.copyfileobj(file.stream,output)
+                privileged_call('backup_upload',source=source,name=filename)
+            except Exception:return jsonify(success=False,message="Unsigned, damaged or incompatible backup rejected."),400
+            finally:incoming.unlink(missing_ok=True)
+        else:
+            with save_path.open('xb') as output:shutil.copyfileobj(file.stream,output)
+            try:
+                from backup_engine import validate
+                validate(save_path)
+            except Exception:
+                save_path.unlink(missing_ok=True)
+                return jsonify(success=False,message="Unsigned, damaged or incompatible backup rejected."),400
         return jsonify({"success": True, "message": "Backup uploaded successfully"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -1451,36 +1617,42 @@ def upload_backup():
 @login_required
 def restore_backup(filename):
     try:
-        backup_file = os.path.join("/opt/beeny-panel/backups", filename)
-        if not os.path.exists(backup_file):
-            return jsonify({"success": False, "message": "Backup file not found"})
-
-        if filename.endswith(".db"):
-            shutil.copy2(backup_file, "/opt/beeny-panel/instance/beeny.db")
-        elif filename.endswith(".tar.gz"):
-            subprocess.run(["tar", "-xzf", backup_file, "-C", "/"])
+        if privileged_enabled(): privileged_call('backup_restore',name=filename)
         else:
-            return jsonify({"success": False, "message": "Unsupported backup type"})
+            from privileged_server import dispatch
+            dispatch('backup_restore',dict(name=filename))
+        return jsonify(success=True,message="Validated backup queued for restore. A recovery backup is created first.")
+    except Exception:
+        app.logger.exception("Backup validation or scheduling failed")
+        return jsonify(success=False,message="Backup rejected or restore could not be scheduled. Check service logs."),400
 
-        subprocess.Popen(["bash", "-c", "sleep 2 && systemctl restart beeny-panel"])
-        return jsonify({"success": True, "message": "Backup restored. Panel restarting..."})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)})
+
+@app.get(f"{PANEL_PATH.rstrip('/')}/api/system/services")
+@login_required
+def system_services():
+    if getattr(current_user,'role','')!='owner':abort(403)
+    services={}
+    for name in ('beeny-panel','beeny-customer-worker','openvpn-server@server'):
+        try:
+            if privileged_enabled():services[name]=privileged_call('service',name=name,action='status')
+            else:
+                from privileged_server import dispatch
+                services[name]=dispatch('service',dict(name=name,action='status'))
+        except Exception:services[name]=dict(active=None,state='Unknown')
+    return jsonify(success=True,services=services)
 
 
 @app.route(f"{PANEL_PATH}/api/system/restart/<service>", methods=["POST"])
 @login_required
 def restart_service(service):
     try:
-        if service == "beeny-panel":
-            subprocess.Popen(["bash", "-c", "sleep 2 && systemctl restart beeny-panel"])
+        if privileged_enabled(): result=privileged_call('service',name=service,action='restart')
         else:
-            subprocess.run(["systemctl", "restart", service], check=True)
-        return jsonify({"success": True, "service": service})
-    except subprocess.CalledProcessError as e:
-        return jsonify({"success": False, "message": str(e)})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)})
+            from privileged_server import dispatch
+            result=dispatch('service',dict(name=service,action='restart'))
+        return jsonify(success=True,service=service,**result)
+    except Exception:
+        return jsonify(success=False,message="Service restart failed or is not permitted."),503
 
 
 @app.route(f"{PANEL_PATH}/settings/ssl" if PANEL_PATH != '/' else "/settings/ssl")
@@ -1489,26 +1661,33 @@ def ssl_page():
     return render_template("ssl.html", panel_path=PANEL_PATH)
 
 
+@app.post(PANEL_PATH.rstrip('/')+'/api/ssl/action')
+@login_required
+def ssl_action():
+    if current_user.role!='owner':abort(403)
+    action=request.form.get('action')
+    try:
+        if privileged_enabled():result=privileged_call('https_action',action=action)
+        else:
+            from https_maintenance import schedule
+            result=schedule(action)
+        return jsonify(result)
+    except ValueError as exc:return jsonify(success=False,message=str(exc)),400
+    except Exception:
+        app.logger.exception('HTTPS maintenance request failed')
+        return jsonify(success=False,message='Could not queue HTTPS action. A job may already be running; refresh status.'),409
+
+
 @app.route(f"{PANEL_PATH}/api/ssl/info", methods=["GET"])
 @login_required
 def ssl_info():
     try:
-        cert_path = "/etc/letsencrypt/live/panel.app2.shop/fullchain.pem"
-        if not os.path.exists(cert_path):
-            return jsonify({"success": False, "message": "SSL certificate not found"})
-        cert = ssl._ssl._test_decode_cert(cert_path)
-        expire_date = datetime.strptime(cert["notAfter"], "%b %d %H:%M:%S %Y %Z")
-        days_left = (expire_date - datetime.utcnow()).days
-        issuer = ""
-        for item in cert["issuer"]:
-            if item[0][0] == "commonName":
-                issuer = item[0][1]
-        return jsonify({
-            "success": True, "domain": "panel.app2.shop", "issuer": issuer, "expire_date": expire_date.strftime("%Y-%m-%d"),
-            "days_left": days_left, "status": "Active" if days_left > 0 else "Expired", "auto_renew": True
-        })
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)})
+        if privileged_enabled():return jsonify(privileged_call('https_status'))
+        from privileged_server import dispatch
+        return jsonify(dispatch('https_status',{}))
+    except Exception:
+        app.logger.exception('HTTPS status unavailable')
+        return jsonify(success=False,message='Could not inspect certificate or renewal scheduler.'),503
 
 
 @app.route(f"{PANEL_PATH}/settings/openvpn" if PANEL_PATH != '/' else "/settings/openvpn")
@@ -1525,23 +1704,21 @@ def openvpn_info():
         status = subprocess.run(["systemctl", "is-active", "openvpn-server@server"], capture_output=True, text=True).stdout.strip()
         protocol = port = cipher = auth = network = "-"
 
-        if os.path.exists(config_file):
-            with open(config_file, "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith("proto "): protocol = line.split()[1].upper()
-                    elif line.startswith("port "): port = line.split()[1]
-                    elif line.startswith("cipher "): cipher = line.split()[1]
-                    elif line.startswith("auth "): auth = line.split()[1]
-                    elif line.startswith("server "):
-                        parts = line.split()
-                        if len(parts) >= 3: network = f"{parts[1]}/24"
-
-        connected_users = 0
+        if privileged_enabled() or os.path.exists(config_file):
+            text=privileged_call('vpn_info')['config'] if privileged_enabled() else open(config_file).read()
+            for line in text.splitlines():
+                line = line.strip()
+                if line.startswith("proto "): protocol = line.split()[1].upper()
+                elif line.startswith("port "): port = line.split()[1]
+                elif line.startswith("cipher "): cipher = line.split()[1]
+                elif line.startswith("auth "): auth = line.split()[1]
+                elif line.startswith("server "):
+                    parts = line.split()
+                    if len(parts) >= 3: network = str(__import__("ipaddress").IPv4Network((parts[1],parts[2]),strict=False))
+        connected_users = None
         try:
-            with open("/var/log/openvpn-status.log", "r") as f:
-                for line in f:
-                    if line.startswith("CLIENT_LIST"): connected_users += 1
+            log=privileged_call('status_log')['log'] if privileged_enabled() else open('/var/log/openvpn-status.log').read()
+            connected_users=len(parse_status(log)) if status=='active' else 0
         except: pass
 
         return jsonify({
@@ -1558,11 +1735,81 @@ customer_features = register_customer_features(app, db, User, AccountLink, Traff
 from experience import register as register_experience
 experience = register_experience(app, db, User, Node, UserNode, customer_features, PANEL_PATH, is_primary_node)
 
+from monitoring import register as register_monitoring
+monitoring=register_monitoring(app,db,Node,PANEL_PATH,is_primary_node,privileged_enabled,privileged_call)
+
+from host_traffic import register as register_host_traffic
+host_traffic=register_host_traffic(db)
+
+from health import register as register_health
+health = register_health(app,db,Node,PANEL_PATH,is_primary_node)
+
+from bulk import register as register_bulk
+bulk=register_bulk(app,db,User,customer_features,experience,PANEL_PATH)
+
+from devices import register as register_devices
+devices=register_devices(app,db,User,Node,UserNode,customer_features,PANEL_PATH,is_primary_node)
+
+from commerce import register as register_commerce
+commerce=register_commerce(app,db,User,customer_features,experience,PANEL_PATH)
+
+from resellers import register as register_resellers
+resellers=register_resellers(app,db,User,Node,UserNode,AccountLink,customer_features,experience,commerce,PANEL_PATH,is_primary_node)
+from commissions import register as register_commissions
+commissions=register_commissions(app,db,User,Node,UserNode,AccountLink,customer_features,experience,commerce,resellers,PANEL_PATH)
+
+from sales_engine import register as register_sales_engine
+sales_engine=register_sales_engine(app,db,commerce,customer_features,PANEL_PATH)
+from representative_credit import register as register_representative_credit
+representative_credit=register_representative_credit(app,db,User,Node,UserNode,AccountLink,customer_features,experience,commerce,resellers,commissions,PANEL_PATH)
+
+from balepay_bridge import register as register_balepay_bridge
+balepay_orders = register_balepay_bridge(app,db,User,customer_features,experience,PANEL_PATH)
+
+from representative_actions import register as register_representative_actions
+representative_actions=register_representative_actions(app,db,User,customer_features,experience,commerce,resellers,commissions,representative_credit,PANEL_PATH)
+
+from crl_sync import register as register_crl_sync
+crl_sync=register_crl_sync(app,db,Node,is_primary_node,privileged_enabled,privileged_call)
+from admission import register as register_admission
+connection_guard=__import__('connection_guard').register(db)
+__import__('connection_guard').register_routes(app,db,connection_guard,User,PANEL_PATH)
+admission=register_admission(app,db,User,Node,UserNode,customer_features,devices,representative_credit,representative_actions,PANEL_PATH)
+from representative_catalog import register as register_representative_catalog
+representative_catalog=register_representative_catalog(app,db,User,customer_features,representative_credit,commissions,resellers,PANEL_PATH)
+
+from support import register as register_support
+support = register_support(app,db,User,customer_features,experience,PANEL_PATH)
+
+from security import register as register_security
+security = register_security(app,db,Admin,customer_features,PANEL_PATH)
+from admin_sessions import register as register_panel_sessions
+panel_sessions = register_panel_sessions(app, db, Admin, customer_features, PANEL_PATH)
+
+from portal_content import register as register_portal_content
+portal_content = register_portal_content(app, db, User, customer_features, PANEL_PATH)
+from portal_i18n import register as register_portal_i18n
+register_portal_i18n(app)
+
+from speed_policy import register as register_speed_policy
+speed_policy=register_speed_policy(app,db,User,Node,UserNode,customer_features,PANEL_PATH,is_primary_node)
+
+from admin_i18n import register as register_admin_i18n
+register_admin_i18n(app,db,Admin,PANEL_PATH)
+
+from representative_removal import register as register_representative_removal
+register_representative_removal(app,db,PANEL_PATH)
+
+from network_settings import register as register_network_settings
+register_network_settings(app,db,Node,PANEL_PATH,is_primary_node,privileged_enabled,privileged_call)
 
 if __name__ == "__main__":
     with app.app_context():
         from migrations import upgrade
         upgrade(db)
         ensure_primary_node()
+        reconcile_primary_access()
+    monitoring.start()
     Thread(target=background_updater, daemon=True).start()
     app.run(host=os.environ.get("BEENY_BIND", "127.0.0.1"), port=int(os.environ.get("BEENY_PORT", "8080")), debug=False)
+

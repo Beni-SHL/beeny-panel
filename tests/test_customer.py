@@ -31,13 +31,22 @@ def jpeg():
 
 
 class CustomerFlowTests(unittest.TestCase):
+    def test_tutorial_cover_is_landscape_and_keeps_whole_artwork(self):
+        source=Image.new('RGB',(1600,900),'#ffffff')
+        source.paste('#ff0000',(0,0,100,900));source.paste('#0000ff',(1500,0,1600,900))
+        data=io.BytesIO();source.save(data,'PNG')
+        result=Image.open(io.BytesIO(clean_image(data.getvalue(),cover=True)))
+        self.assertEqual((result.format,result.size),('WEBP',(1280,720)))
+        self.assertGreater(result.getpixel((10,360))[0],220)
+        self.assertGreater(result.getpixel((1270,360))[2],220)
+        avatar=Image.open(io.BytesIO(clean_image(data.getvalue(),avatar=True)))
+        self.assertEqual(avatar.size,(320,320))
+
     def test_create_account_with_optional_customer_password(self):
         node = panel.Node(name='Primary', ip='127.0.0.1', api_key=panel.PRIMARY_NODE_KEY)
         panel.db.session.add(node)
         panel.db.session.commit()
-        with self.client.session_transaction() as session:
-            session['_user_id'] = str(panel.Admin.query.first().id)
-            session['_fresh'] = True
+        self.admin()
         fields = dict(username='new-customer', protocol='openvpn', max_devices='1',
                       traffic_limit='100', nodes=str(node.id), portal_password='Secure-password-12345')
         with patch('app.subprocess.run'), patch('app.sync_primary_access'):
@@ -51,9 +60,7 @@ class CustomerFlowTests(unittest.TestCase):
         self.assertTrue(profile.auth_version)
 
     def test_short_customer_password_rejected_before_certificate_creation(self):
-        with self.client.session_transaction() as session:
-            session['_user_id'] = str(panel.Admin.query.first().id)
-            session['_fresh'] = True
+        self.admin()
         with patch('app.subprocess.run') as certificate:
             response = self.client.post('/panel/users/add', data=dict(
                 username='new-customer', protocol='openvpn', portal_password='short'))
@@ -77,7 +84,7 @@ class CustomerFlowTests(unittest.TestCase):
         self.assertEqual(self.client.post(url, data={'avatar_choice':'7'}).status_code, 302)
         csrf = self.csrf()
         self.assertEqual(self.client.post(url, data={'avatar_choice':'7'}).status_code, 400)
-        for bad in ('0', '21', '../7', 'abc', ''):
+        for bad in ('0', '30', '../7', 'abc', ''):
             self.assertEqual(self.client.post(url, data={'csrf':csrf,'avatar_choice':bad}).status_code, 400)
         self.assertEqual(self.client.post(url, data={'csrf':csrf,'avatar_choice':'7'}).status_code, 302)
         profile = self.features.CustomerProfile.query.one()
@@ -86,6 +93,20 @@ class CustomerFlowTests(unittest.TestCase):
         self.assertEqual(profile.avatar_choice, 7)
         self.assertEqual(self.client.post('/panel/c/'+'B'*43+'/avatar/select', data={'csrf':csrf,'avatar_choice':'8'}).status_code, 404)
         self.assertEqual(profile.avatar_choice, 7)
+
+    def test_dark_and_wizard_avatar_choices_render_and_personal_photo_stays_neutral(self):
+        csrf=self.csrf()
+        url='/panel/c/'+self.token
+        for choice in range(21,30):
+            self.assertEqual(self.client.post(url+'/avatar/select',data={'csrf':csrf,'avatar_choice':str(choice)}).status_code,302)
+            page=self.client.get(url).get_data(as_text=True)
+            self.assertIn(f'data-avatar-choice="{choice}"',page)
+            self.assertIn(f'monster-{choice}.webp',page)
+            self.assertNotIn('class="section-mascot"',page)
+        self.client.post(url+'/avatar',data={'csrf':csrf,'avatar':(io.BytesIO(jpeg()),'personal.jpg')})
+        page=self.client.get(url).get_data(as_text=True)
+        self.assertIn('data-custom-avatar="true"',page)
+        self.assertNotIn('class="section-mascot"',page)
 
     def test_avatar_choice_replaces_photo_and_preserves_customer_credentials(self):
         csrf = self.csrf()
@@ -176,7 +197,7 @@ class CustomerFlowTests(unittest.TestCase):
         url='/panel/renewals/'+str(request_id)+'/delete'
         self.assertEqual(self.client.post(url).status_code,302)
         csrf=self.csrf();self.admin()
-        self.assertEqual(self.client.post(url).status_code,400)
+        self.assertEqual(self.client.post(url,headers={'X-CSRF-Token':''}).status_code,400)
         self.assertEqual(self.client.post(url,data={'csrf':csrf}).status_code,302)
         self.assertFalse(filename.exists())
         self.assertIsNone(panel.db.session.get(self.features.RenewalRequest,request_id))
@@ -228,6 +249,7 @@ class CustomerFlowTests(unittest.TestCase):
                     card_color='emerald',admin_chat_id='123456',admin_chat_ids='222222, 333333',
                     smtp_port='465',smtp_security='ssl',extra_bank_name='Blue Bank',extra_card_holder='Other Holder',
                     extra_card_number='1111222233334444',extra_card_color='blue')
+        fields.update(pricing_enabled='1',pricing_base='10000',pricing_per_gb='1000',pricing_per_day='2000',pricing_per_device='40000')
         for plan in DEFAULT_PLANS:
             for key in ('title','days','devices','quota','price'):
                 fields[plan['id']+'_'+key]=str(plan[key])
@@ -240,6 +262,11 @@ class CustomerFlowTests(unittest.TestCase):
         self.assertEqual(settings['bank_cards'][1]['number'],'1111222233334444')
         self.assertEqual(settings['plans'][0]['badge'],'Sale')
         self.assertEqual(settings['admin_chat_ids'],'222222,333333')
+        self.assertEqual(settings['custom_pricing'],dict(enabled=True,base=10000,per_gb=1000,per_day=2000,per_device=40000))
+        fields['pricing_per_gb']='-100'
+        self.client.post('/panel/settings/customer',data=fields)
+        self.assertEqual(self.features.settings()['custom_pricing'],settings['custom_pricing'])
+        fields['pricing_per_gb']='1000'
         fields['extra_card_number']='bad'
         self.client.post('/panel/settings/customer',data=fields)
         self.assertEqual(self.features.settings()['bank_cards'],settings['bank_cards'])
@@ -415,16 +442,76 @@ class CustomerFlowTests(unittest.TestCase):
         self.user.traffic_used=25*1073741824
         self.user.traffic_usage=25
         panel.db.session.commit()
-        with patch('builtins.open',mock_open(read_data=SNAPSHOT)):
+        with patch('builtins.open',mock_open(read_data=SNAPSHOT)),patch('app.subprocess.run',return_value=Mock(returncode=0)),patch('app.os.path.isfile',return_value=True),patch('app.os.path.getmtime',return_value=__import__('time').time()):
             panel.update_openvpn_status()
         self.assertEqual(self.user.traffic_usage,25)
         self.assertEqual(panel.TrafficDaily.query.count(),0)
         self.assertFalse(panel.db.session.get(panel.TrafficBaseline,node.id).pending)
         newer=SNAPSHOT.replace('1048576,2097152','2097152,2097152')
-        with patch('builtins.open',mock_open(read_data=newer)):
+        with patch('builtins.open',mock_open(read_data=newer)),patch('app.subprocess.run',return_value=Mock(returncode=0)),patch('app.os.path.isfile',return_value=True),patch('app.os.path.getmtime',return_value=__import__('time').time()):
             panel.update_openvpn_status()
         self.assertEqual(self.user.traffic_used,25*1073741824+1048576)
         self.assertEqual(panel.TrafficDaily.query.one().bytes_total,1048576)
+
+    def test_restart_repairs_only_eligible_local_access_and_preserves_usage(self):
+        node = panel.Node(name='Main', ip='185.208.172.91', api_key=panel.PRIMARY_NODE_KEY)
+        panel.db.session.add(node)
+        panel.db.session.flush()
+        panel.db.session.add(panel.UserNode(user_id=self.user.id, node_id=node.id))
+        self.user.traffic_used = 25 * 1073741824
+        panel.db.session.commit()
+        with patch('app.sync_primary_access') as sync:
+            panel.reconcile_primary_access()
+            sync.assert_called_once_with(self.user, True)
+        self.assertEqual(self.user.traffic_usage, 25)
+        self.assertEqual(self.user.traffic_used, 25 * 1073741824)
+        self.assertEqual(self.user.status, 'active')
+        for fields in ({'status':'disabled'}, {'customer_paused':True},
+                       {'expire_date':'2020-01-01'}, {'traffic_limit':20}):
+            self.user.status = 'active'
+            self.user.customer_paused = False
+            self.user.expire_date = '2027-01-01'
+            self.user.traffic_limit = 100
+            for key,value in fields.items():
+                setattr(self.user,key,value)
+            panel.db.session.commit()
+            with patch('app.sync_primary_access') as sync:
+                panel.reconcile_primary_access()
+                sync.assert_not_called()
+        self.assertEqual(self.user.traffic_used, 25 * 1073741824)
+
+    def test_restart_queues_failed_local_repair_for_retry(self):
+        node = panel.Node(name='Main', ip='185.208.172.91', api_key=panel.PRIMARY_NODE_KEY)
+        panel.db.session.add(node)
+        panel.db.session.flush()
+        panel.db.session.add(panel.UserNode(user_id=self.user.id, node_id=node.id))
+        panel.db.session.commit()
+        with patch('app.sync_primary_access', side_effect=RuntimeError('helper unavailable')):
+            panel.reconcile_primary_access()
+        self.assertTrue(self.user.pause_sync_pending)
+        self.assertEqual(self.user.traffic_usage, 25)
+
+    def test_standard_upgrade_establishes_legacy_baseline_only_once(self):
+        from migrations import upgrade
+        from sqlalchemy import text
+        node = panel.Node(name='Main', ip='185.208.172.91', api_key=panel.PRIMARY_NODE_KEY)
+        panel.db.session.add(node)
+        self.user.traffic_used = 25 * 1073741824
+        panel.db.session.commit()
+        node_id, user_id = node.id, self.user.id
+        panel.db.session.remove()
+        with panel.db.engine.begin() as connection:
+            connection.execute(text('DROP TABLE traffic_sample'))
+        upgrade(panel.db)
+        baseline = panel.db.session.get(panel.TrafficBaseline, node_id)
+        self.assertTrue(baseline.pending)
+        self.assertEqual(panel.db.session.get(panel.User, user_id).traffic_used, 25 * 1073741824)
+        baseline.pending = False
+        panel.db.session.commit()
+        upgrade(panel.db)
+        panel.db.session.expire_all()
+        self.assertFalse(panel.db.session.get(panel.TrafficBaseline, node_id).pending)
+        self.assertEqual(panel.db.session.get(panel.User, user_id).traffic_usage, 25)
 
     def tearDown(self):
         panel.db.session.remove()
@@ -447,9 +534,14 @@ class CustomerFlowTests(unittest.TestCase):
 
     def admin(self):
         g.pop('_login_user',None)
-        with self.client.session_transaction() as session:
-            session['_user_id'] = '1'
-            session['_fresh'] = True
+        admin = panel.Admin.query.first()
+        admin.password = generate_password_hash('admin-test-password-123')
+        panel.db.session.commit()
+        self.client.get('/panel/login')
+        with self.client.session_transaction() as session: csrf=session['_customer_csrf']
+        self.client.environ_base['HTTP_X_CSRF_TOKEN']=csrf
+        self.client.post('/panel/login', data={'csrf':csrf,'username':admin.username, 'password':'admin-test-password-123'})
+        g.pop('_login_user',None)
 
     def test_portal_isolation_and_csrf(self):
         self.assertEqual(self.client.get('/panel/c/'+self.token).status_code,302)
