@@ -4,7 +4,7 @@ if(window.beenyAdminForms)return;window.beenyAdminForms=true;
 const staticRoot=new URL('.',document.currentScript.src);
 // Fixed paths and Subresource Integrity pins generated from this source release.
 const approvedScripts={
-  "admin-language.js": "sha256-34w1mrq2C7wL3a5Y0MTKoiYk4T/VrZazUYAkLtKewmA=",
+  "admin-language.js": "sha256-eAEypkP/V9CyYRx3+PP+hCycNeUGYviKPtDSwA7MIzs=",
   "admin-security.js": "sha256-9G14/BJSrUrzUN6Uv7I95+UdpxrH3g9dPygvgdmYWBo=",
   "auth-bloom.js": "sha256-0ts/0RKWo7h1lFp72nQcenZNomaG0PUKnTnB1gzAek0=",
   "avatar-theme.js": "sha256-I4BgBFFNVz3vCUt73Phb16V0QCrqjsdOzSWB5Irg1Hc=",
@@ -25,7 +25,7 @@ const approvedScripts={
   "monitoring.js": "sha256-keBynFdB5WTp84Mc+pBH+ksQ+jg3E3mu1JKRyWS7Oyw=",
   "network-settings.js": "sha256-YitmThuFKE088JF+qg46fGsXj4P/r0Sn1+r2c+gWUcc=",
   "password-controls.js": "sha256-33sBQ0dV/WTpiC06N9iJI1frv8wB7FQr5JKn/UQQZqw=",
-  "performance.js": "sha256-PVCLwhFnS7OHq52O+MjCcSQaMKRZ7PHraIiDg3oIHbQ=",
+  "performance.js": "sha256-9ArsdDtzT3ttmr6yvGrDJ826M0mqP5JewohTPOpwVpc=",
   "polish.js": "sha256-he3KMKrK8p6Sf2Q25d+UBJahVrZ9wznZ5/C2gsoR6AQ=",
   "portal-content.js": "sha256-E7kjZ3R29D1OqPvx80ZnU9LwSIoaRnAIWSbMUtYIv6M=",
   "portal.js": "sha256-czjN3rlGNtKXUKTKs7FAmNBa4kkPr7QIQ5OA4kGkc/M=",

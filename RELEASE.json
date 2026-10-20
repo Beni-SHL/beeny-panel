@@ -1,49 +1,52 @@
 {
-  "version": "3.7.2",
-  "base_version": "3.7.1",
+  "version": "3.7.3",
+  "base_version": "3.7.2",
   "release_date": "2026-10-21",
+  "bridge_version": "3.7.3",
   "channel": "test",
-  "bridge_version": "3.7.2",
   "features": [
-    "Local Liquid Glass refraction from supplied reference, reduced 4px blur and shared header controls.",
-    "Mobile dark animation with reduced-motion and WebGL fallback; compact nonzero gift chips.",
-    "Country-neutral entry/exit labels and downloads.",
-    "Native Arange Noise/TCP and KCP/UDP carrier; BackPack Noise/TCP and KCP/UDP carrier.",
-    "Pinned source installers for Arange, BackPack, Dragon Fruit Relay, Doctor DNS and HyperDNS.",
-    "Per-account, per-node subscriber DNS endpoints, AJAX diagnostics and private Apple DNS profiles."
+    "Restored original active background settings: 2 streaks, 0.6 density, 0.5 speed; capped pixels and deferred dark-only WebGL startup.",
+    "One glass material with local map and bounded pixel-space refraction, reduced blur and nested filter suppression.",
+    "Shared header controls; main account form and user toolbar surfaces; material CSS in head.",
+    "Removed normal page font gate and redundant pre-reload language GET.",
+    "Omitted unused Persian dictionary from English HTML; language overlay retained.",
+    "Versioned cache for public code/assets; public static delivery avoids session SQL; private routes excluded."
   ],
   "validation": {
-    "python_tests": 413,
-    "skipped": 2,
-    "result": "passed",
-    "native_payload_cases_passed": 7,
-    "notes": "Arange KCP UDP VPN forwarding failed and is explicitly rejected. KCP TCP VPN forwarding passed.",
-    "targeted_final": {
-      "release_tests": 8,
-      "transport_ui_tests": 6,
-      "node_tests": 6,
+    "full_suite": {
+      "tests": 415,
+      "skipped": 2,
+      "initial_failures": 1,
+      "seconds": 343.703,
+      "initial_failure": "Bridge version 3.7.2 did not match panel 3.7.3.",
+      "resolution": "Bridge version constant and updater expectation corrected to 3.7.3; all six related tests passed."
+    },
+    "final_targeted": {
+      "node": 6,
+      "public_assets": 3,
+      "security": 7,
+      "sri": 2,
+      "transport_ui": 6,
       "result": "passed"
     },
+    "javascript_behavior": "Light/dark startup scheduling, first paint without fonts, single language save and reload passed.",
     "static_checks": [
       "Python AST",
-      "Jinja templates",
-      "Bash syntax",
-      "changed JavaScript syntax",
+      "Jinja",
+      "Bash",
+      "changed JavaScript",
+      "CSS declaration parsing",
+      "8 rendered EN/FA documents and header structure",
       "install.sh --check",
-      "five pinned source archive hashes and safe extraction"
+      "archive CRC and SHA256 manifest"
     ],
-    "browser": "not verified: cloud browser could not reach local QA server"
+    "english_settings_html_bytes": {
+      "before": 241592,
+      "after": 25477,
+      "scope": "Same synthetic fixture; HTML bytes only, not real network timing."
+    },
+    "browser_visual": "Unverified: cloud browser rejected local file protocol and could not reach isolated local server. No browser bypass attempted."
   },
-  "limitations": [
-    "Visual browser and live clean-VPS installation were not verified in this environment.",
-    "One managed paired tunnel per host. Source compilation needs internet access and temporary build resources.",
-    "Arange KCP mode is restricted to TCP VPN targets; Noise and BackPack support tested TCP/UDP targets.",
-    "Dragon Fruit Relay uses its own dedicated Debian routing setup, not Beeny pairing/profile generation.",
-    "Doctor DNS/HyperDNS require a dedicated host. Upstream subscriber creation, quotas and renewals remain manual; Beeny stores per-account endpoints and delivers profiles.",
-    "No automatic migration of existing imported VPN profiles; download again after listener/endpoint changes.",
-    "Reachability between hosts and permitted provider firewall ports are required; transport does not guarantee resistance to filtering.",
-    "No Microsoft Defender approval or fresh malware scan is claimed for 3.7.2."
-  ],
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
     "session_limits.py": "9d0e82c793209c038be57a05c2a51035b26ffcdd936b55fc54301d84c31d2d92",
@@ -58,5 +61,12 @@
     "tunnel_settings.py": "26767764d1c08d305f7e47acb6ca88f2db95bef7321697d66ea973849c21c380",
     "network_policy.py": "7642e1f4a2e4b8cd08040a912f0c7ad211f225e1550f7fb68270aae9e7dbfef1",
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
-  }
+  },
+  "limitations": [
+    "Visual approval on an actual desktop/mobile browser and clean-VPS installation remain unverified.",
+    "No real-world load time, FPS or throughput improvement is claimed from the HTML byte measurement.",
+    "Existing 3.7.2 tunnel/DNS scope and operational limitations remain; see GUIDE-3.7.2-FA.md.",
+    "Node runtime change is only the release version string; existing nodes do not need an update for these UI changes.",
+    "No fresh Microsoft Defender approval or malware scan is claimed."
+  ]
 }

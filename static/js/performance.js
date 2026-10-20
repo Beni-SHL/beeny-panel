@@ -2,7 +2,8 @@
  const html=document.documentElement;let scrollTimer,routeTimer,loadingDelay;
  function finish(){html.classList.remove('beeny-page-pending','beeny-route-pending');clearTimeout(routeTimer);clearTimeout(loadingDelay);}
  const frames=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
- Promise.race([document.fonts?.ready||Promise.resolve(),new Promise(resolve=>setTimeout(resolve,800))]).then(frames).then(finish);
+ // Normal page content is never hidden while waiting for every font or asset.
+ frames().then(finish);
  addEventListener('pageshow',()=>{finish();sync();});addEventListener('pagehide',()=>{window.__beenyBackgroundPaused=true;});
  const sync=()=>{window.__beenyBackgroundPaused=document.hidden||html.classList.contains('beeny-scrolling')||matchMedia('(prefers-reduced-motion: reduce)').matches;};
  document.addEventListener('visibilitychange',sync);

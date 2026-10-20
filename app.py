@@ -4,6 +4,7 @@ Beeny Panel - VPN Management System (Fully Integrated & Fixed)
 """
 
 from flask import Flask, render_template, request, redirect, send_file, jsonify, session, abort
+from asset_delivery import register as register_asset_delivery
 import subprocess
 import os
 from threading import Thread
@@ -48,6 +49,7 @@ else:
     PANEL_PATH = "/"
 
 app = Flask(__name__, instance_path=os.environ.get("BEENY_INSTANCE_PATH", os.path.abspath(os.path.join(os.path.dirname(__file__), "instance"))))
+register_asset_delivery(app)
 app.config["SECRET_KEY"] = os.environ.get("BEENY_SECRET_KEY", "")
 if not app.config["SECRET_KEY"]:
     raise RuntimeError("BEENY_SECRET_KEY must be set by the installer")

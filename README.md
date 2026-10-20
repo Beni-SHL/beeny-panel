@@ -1,4 +1,6 @@
-# Beeny Panel 3.7.2 — test release
+# Beeny Panel 3.7.3 — visual/performance test release
+
+راهنمای اصلاح ظاهر و سرعت: [GUIDE-3.7.3-FA.md](GUIDE-3.7.3-FA.md).
 
 راهنمای تغییرات و محدودیت‌های ۳.۷.۲: [GUIDE-3.7.2-FA.md](GUIDE-3.7.2-FA.md).
 

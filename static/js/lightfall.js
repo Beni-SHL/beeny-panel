@@ -3,6 +3,7 @@
  */
 import {vertex, fragment} from './lightfall-shaders.js';
 const root = document.getElementById('react-bg-root');
+const mobileViewport=matchMedia('(max-width:768px)');
 if (!root) throw new Error('Background root missing.');
 const canvas = document.createElement('canvas');
 canvas.setAttribute('aria-hidden', 'true');
@@ -42,10 +43,11 @@ function theme() {
   gl.uniform3fv(uniform('uBgColor'),rgb(light?'#E8EBF2':'#04040a'));
   gl.uniform3fv(uniform('uMouseColor'),[0,1,2].map(i => colors.reduce((sum,c)=>sum+c[i],0)/3));
 }
-for (const [name,value] of Object.entries({uSpeed:1,uStreakWidth:1,uStreakLength:1,uGlow:1,uDensity:1,uTwinkle:1,uZoom:3,uBgGlow:0.5,uOpacity:1,uMouseEnabled:1,uMouseStrength:0.5,uMouseRadius:1})) scalar(name,value);
-gl.uniform1i(uniform('uStreakCount'),8); theme();
+for (const [name,value] of Object.entries({uSpeed:0.5,uStreakWidth:1,uStreakLength:1,uGlow:1,uDensity:0.6,uTwinkle:1,uZoom:3,uBgGlow:0.5,uOpacity:1,uMouseEnabled:1,uMouseStrength:0.5,uMouseRadius:1})) scalar(name,value);
+gl.uniform1i(uniform('uStreakCount'),2); theme();
 function resize() {
-  const rect = root.getBoundingClientRect(), dpr = Math.min(matchMedia('(max-width:768px)').matches ? 0.8 : 1.25,devicePixelRatio||1);
+  const rect = root.getBoundingClientRect(), pixels=mobileViewport.matches?320000:1200000;
+  const dpr = Math.min(mobileViewport.matches ? 0.8 : 1.25,devicePixelRatio||1,Math.sqrt(pixels/Math.max(1,rect.width*rect.height)));
   canvas.width = Math.max(1,Math.round(rect.width*dpr)); canvas.height = Math.max(1,Math.round(rect.height*dpr));
   gl.viewport(0,0,canvas.width,canvas.height); gl.uniform3f(uniform('iResolution'),canvas.width,canvas.height,1);
 }
@@ -56,7 +58,7 @@ function pointer(event) {
 }
 function tick(time) {
   if(stopped)return; frame=requestAnimationFrame(tick);
-  if(document.hidden||window.__beenyBackgroundPaused||time-frameAt<(matchMedia('(max-width:768px)').matches?50:33))return;
+  if(document.hidden||document.body.classList.contains('light')||window.__beenyBackgroundPaused||time-frameAt<(mobileViewport.matches?50:33))return;
   frameAt=time; const dt=previous?Math.min((time-previous)/1000,1):0;previous=time;
   const damping=1-Math.exp(-dt/0.15);
   mouse=mouse.map((v,i)=>v+(target[i]-v)*damping);

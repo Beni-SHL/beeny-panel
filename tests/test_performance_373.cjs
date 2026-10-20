@@ -1,0 +1,15 @@
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+const root=require('node:path').join(__dirname,'../static/js/');
+function background(light,reduced=false){let frames=[],idle=[],observers=[];const body={classList:{contains:()=>light}};const ctx={document:{body,hidden:false,getElementById:()=>({}),addEventListener(){}},window:{requestIdleCallback:true},matchMedia:()=>({matches:reduced}),MutationObserver:class{constructor(cb){observers.push(cb)}observe(){}},requestAnimationFrame:cb=>frames.push(cb),requestIdleCallback:cb=>idle.push(cb),setTimeout:cb=>idle.push(cb)};vm.runInNewContext(fs.readFileSync(root+'background-loader.js','utf8'),ctx);return {frames,idle,observers};}
+const bright=background(true);assert.equal(bright.frames.length,0);assert.equal(bright.idle.length,0);
+const dark=background(false);assert.equal(dark.idle.length,0);dark.frames.shift()();assert.equal(dark.idle.length,0);dark.frames.shift()();assert.equal(dark.idle.length,1);
+const events={},classes=new Set(['beeny-page-pending']);let raf=[];const document={documentElement:{classList:{remove:(...names)=>names.forEach(n=>classes.delete(n)),contains:n=>classes.has(n),add:n=>classes.add(n)}},hidden:false,addEventListener:(name,cb)=>events[name]=cb};Object.defineProperty(document,'fonts',{get(){throw Error('Regular rendering must not await fonts')}});
+vm.runInNewContext(fs.readFileSync(root+'performance.js','utf8'),{document,window:{},requestAnimationFrame:cb=>raf.push(cb),Promise,addEventListener(){},clearTimeout(){},setTimeout(){},matchMedia:()=>({matches:false})});raf.shift()();raf.shift()();
+setImmediate(()=>{assert.equal(classes.has('beeny-page-pending'),false);console.log('PASS: no WebGL startup on light; dark startup waits two frames and idle; regular paint never waits for fonts');});
+(async()=>{
+ let handler,reloads=0,requests=[];const classes=new Set();const button={disabled:false,dataset:{endpoint:'/panel/api/admin/language'},addEventListener:(_,cb)=>handler=cb};const label={};
+ const doc={getElementById:()=>button,documentElement:{lang:'en',classList:{contains:n=>classes.has(n),add:n=>classes.add(n),remove:n=>classes.delete(n)}},querySelector:selector=>selector==='#admin-language-switch'?button:selector==='[data-language-loader-text]'?label:{content:'test-csrf'}};
+ vm.runInNewContext(fs.readFileSync(root+'admin-language.js','utf8'),{document:doc,sessionStorage:{setItem(){},removeItem(){}},fetch:async(url,options)=>{requests.push({url,options});return {ok:true}},URLSearchParams,location:{reload:()=>reloads++},Promise,setTimeout(){},requestAnimationFrame(){}});
+ await handler();assert.equal(requests.length,1);assert.equal(requests[0].options.method,'POST');assert.equal(reloads,1);assert.equal(classes.has('admin-language-pending'),true);
+ console.log('PASS: language change uses one save request and one reload, preserving the language overlay');
+})().catch(e=>{console.error(e);process.exitCode=1});

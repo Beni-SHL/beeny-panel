@@ -1074,7 +1074,7 @@ def register(app,db,Admin,panel_path):
     def language():return getattr(current_user,'language','en') if current_user.is_authenticated else 'en'
     def translate(text):return TRANSLATIONS.get(text,text) if language()=='fa' else text
     @app.context_processor
-    def context():return dict(admin_t=translate,admin_language=language(),admin_dictionary=TRANSLATIONS)
+    def context():return dict(admin_t=translate,admin_language=language(),admin_dictionary=(TRANSLATIONS if language()=='fa' else {}))
     @app.post(panel_path.rstrip('/')+'/api/admin/language')
     @login_required
     def admin_language_save():
