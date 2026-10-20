@@ -7,7 +7,7 @@ from host_traffic import metrics
 from vpn_sessions import local_sessions,disconnect_session
 app=Flask(__name__);app.config['MAX_CONTENT_LENGTH']=4*1024*1024
 KEY=os.environ.get('BEENY_AGENT_KEY','');LEGACY_PORT=int(os.environ.get('BEENY_LEGACY_AGENT_PORT','6200'))
-ALLOWED={'network-policy','set-crl','ack-traffic','bootstrap-openvpn','install-cert','delete-user','kill-user','set-user-state','sessions','disconnect-session','status-log','stats','set-speed-policy','speed-status'}
+ALLOWED={'tunnel','vpn-runtime','network-policy','set-crl','ack-traffic','bootstrap-openvpn','install-cert','delete-user','kill-user','set-user-state','sessions','disconnect-session','status-log','stats','set-speed-policy','speed-status'}
 @app.before_request
 def authorize():
     supplied=request.headers.get('Authorization','').removeprefix('Bearer ')
@@ -19,12 +19,26 @@ def api(method):
         if request.method!='GET':return jsonify(error='Invalid method'),405
         status=subprocess.run(['systemctl','is-active','--quiet','openvpn-server@server'],timeout=5).returncode==0
         path=Path('/var/log/openvpn-status.log');age=time.time()-path.stat().st_mtime if path.exists() else None
-        return jsonify(events=__import__('terminal_traffic').read_events(),success=True,status='online' if status else 'offline',vpn_active=status,status_age=age,log=path.read_text() if status and age is not None and age<90 else '',metrics=metrics(),agent_version='3.6.9',capabilities=['network-policy-v4','network-policy-v3','network-policy-v2','network-policy-v1','monitoring-v1','host-traffic','set-user-state','sessions','disconnect-session','speed-policy'])
+        return jsonify(events=__import__('terminal_traffic').read_events(),success=True,status='online' if status else 'offline',vpn_active=status,status_age=age,log=path.read_text() if status and age is not None and age<90 else '',metrics=metrics(),agent_version='3.7.2',capabilities=['vpn-runtime-v1','network-policy-v4','network-policy-v3','network-policy-v2','network-policy-v1','monitoring-v1','host-traffic','set-user-state','sessions','disconnect-session','speed-policy'])
     if method=='speed-status':
         if request.method!='GET':return jsonify(error='Invalid method'),405
         import bandwidth
         return jsonify(success=not bandwidth.LAST_ERROR),503 if bandwidth.LAST_ERROR else 200
     data=request.get_json(silent=True) or {}
+    if method=='tunnel':
+        if request.method!='POST':return jsonify(error='Invalid method'),405
+        try:return jsonify(__import__('tunnel_manager').handle(data.get('action'),data.get('data')))
+        except ValueError as exc:return jsonify(success=False,message=str(exc)),400
+        except Exception:
+            app.logger.error('Tunnel operation failed')
+            return jsonify(success=False,message='Tunnel operation failed. Check the tunnel journal.'),503
+    if method=='vpn-runtime':
+        if request.method!='POST':return jsonify(error='Invalid method'),405
+        try:return jsonify(__import__('vpn_runtime').handle(data.get('action'),data.get('data'),data.get('revision')))
+        except ValueError as exc:return jsonify(success=False,message=str(exc)),400
+        except Exception:
+            app.logger.exception('VPN listener change failed')
+            return jsonify(success=False,message='Listener change failed. Check node logs; unconfirmed changes roll back.'),503
     if method=='network-policy':
         if request.method!='POST':return jsonify(error='Invalid method'),405
         try:return jsonify(__import__('network_policy').handle(data.get('action'),data.get('policy'),data.get('revision')))

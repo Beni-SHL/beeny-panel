@@ -31,6 +31,8 @@ printf '%s\n' 'BEENY_PRIVILEGE_SOCKET=/run/beeny-panel/privileged.sock' >> "$ENV
 chmod 600 "$ENV_FILE"
 chmod 755 "$DEST/scripts/vpn_disconnect.py" "$DEST/scripts/vpn_admission.py"
 install -m 644 "$DEST/beeny-privileged.service" /etc/systemd/system/beeny-privileged.service
+install -m 644 "$DEST/beeny-vpn-recovery.service" /etc/systemd/system/beeny-vpn-recovery.service
 systemctl daemon-reload
+systemctl enable beeny-vpn-recovery.service
 systemctl enable beeny-privileged
 systemctl restart beeny-privileged

@@ -14,6 +14,7 @@ else
 fi
 
 banner() {
+  python3 "$ROOT_DIR/scripts/beenyctl.py" --banner
   printf '\n%s╭──────────────────────────────────────────────────╮%s\n' "$PURPLE" "$RESET"
   printf '%s│%s  %s◆ BEENY PANEL%s     OpenVPN + Control Panel         %s│%s\n' "$PURPLE" "$RESET" "$BOLD$CYAN" "$RESET" "$PURPLE" "$RESET"
   printf '%s╰──────────────────────────────────────────────────╯%s\n\n' "$PURPLE" "$RESET"
@@ -74,7 +75,7 @@ demo() {
 
 check_source() {
   local needed
-  for needed in maintenance.py scripts/manage_admin.py scripts/beenyctl.py scripts/bootstrap.sh scripts/install_cli.sh connection_guard.py session_identity.py warp_manager.py iran_network.py removal_guard.py network_settings.py network_policy.py beeny-network-policy.service representative_removal.py admin_i18n.py https_maintenance.py monitoring.py host_metrics.py crl_sync.py scripts/preflight_364.py style-bundles.json scripts/build_style_bundles.py scripts/enable_pki_audit.sh admission.py scripts/vpn_admission.py scripts/export_admission.py sales_engine.py financial_reporting.py session_limits.py terminal_traffic.py node_snapshots.py scripts/vpn_maintenance.py scripts/vpn_disconnect.py scripts/configure_vpn_core.py scripts/migrate_sales.py beeny-pki.service beeny-pki.timer sales_reporting.py representative_catalog.py static/i18n/representative-admin-en.json representative_actions.py static/css/release-361.css templates/partials/rep_overview.html templates/partials/rep_create.html templates/partials/rep_debt.html templates/partials/rep_income.html templates/partials/rep_prices.html templates/partials/rep_reports.html templates/partials/rep_cancellations.html templates/partials/rep_identity.html representative_credit.py templates/representative_credit.html templates/representative_credit_admin.html templates/representative_statement.html templates/representative_shell.html templates/representative_login.html static/css/representative-credit.css static/js/representative-credit.js static/brand/balepay.png templates/partials/payment_settings_tabs.html balepay_bridge.py templates/settings_balepay.html commissions.py templates/commission_admin.html templates/commission_workspace.html static/css/commissions.css static/js/commissions.js bandwidth.py speed_policy.py resellers.py templates/auth_login.html templates/partials/auth_scene.html templates/ticket_detail.html templates/renewal_detail.html templates/reseller.html templates/reseller_admin.html static/brand/mark.png static/css/auth-bloom.css static/css/studio.css static/js/auth-bloom.js static/js/studio.js static/js/reseller-controls.js bulk.py host_traffic.py devices.py security.py backup_engine.py privileged.py privileged_server.py health.py support.py commerce.py beeny-privileged.service scripts/harden_services.sh app.py cluster.py renewal.py traffic_ledger.py serve.py admin_sessions.py pricing.py experience.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-customer-worker.service beeny-panel.service beeny-vpn-firewall.service templates/login.html templates/layout.html templates/user_form.html templates/customer_portal.html templates/customer_login.html templates/customer_sessions.html templates/customer_settings.html templates/renewal_inbox.html templates/update.html static/js/portal.js static/js/flags.js static/css/customer-admin.css templates/dashboard.html templates/traffic.html static/css/style.css static/css/brand.css static/css/login.css static/css/portal.css static/fonts/Vazirmatn-variable.woff2 static/beeny-mark.svg scripts/create_vpn_user.sh scripts/vpn-firewall.sh scripts/init_admin.py; do
+  for needed in dns_services.py tunnel_engines.py integration-sources.json scripts/install_integrations.py beeny-vpn-recovery.service vpn_runtime.py transport_settings.py tunnel_manager.py tunnel_settings.py scripts/install_tunnel.py scripts/manage_admin.py maintenance.py scripts/beenyctl.py scripts/bootstrap.sh scripts/install_cli.sh connection_guard.py session_identity.py warp_manager.py iran_network.py removal_guard.py network_settings.py network_policy.py beeny-network-policy.service representative_removal.py admin_i18n.py https_maintenance.py monitoring.py host_metrics.py crl_sync.py scripts/preflight_364.py style-bundles.json scripts/build_style_bundles.py scripts/enable_pki_audit.sh admission.py scripts/vpn_admission.py scripts/export_admission.py sales_engine.py financial_reporting.py session_limits.py terminal_traffic.py node_snapshots.py scripts/vpn_maintenance.py scripts/vpn_disconnect.py scripts/configure_vpn_core.py scripts/migrate_sales.py beeny-pki.service beeny-pki.timer sales_reporting.py representative_catalog.py static/i18n/representative-admin-en.json representative_actions.py static/css/release-361.css templates/partials/rep_overview.html templates/partials/rep_create.html templates/partials/rep_debt.html templates/partials/rep_income.html templates/partials/rep_prices.html templates/partials/rep_reports.html templates/partials/rep_cancellations.html templates/partials/rep_identity.html representative_credit.py templates/representative_credit.html templates/representative_credit_admin.html templates/representative_statement.html templates/representative_shell.html templates/representative_login.html static/css/representative-credit.css static/js/representative-credit.js static/brand/balepay.png templates/partials/payment_settings_tabs.html balepay_bridge.py templates/settings_balepay.html commissions.py templates/commission_admin.html templates/commission_workspace.html static/css/commissions.css static/js/commissions.js bandwidth.py speed_policy.py resellers.py templates/auth_login.html templates/partials/auth_scene.html templates/ticket_detail.html templates/renewal_detail.html templates/reseller.html templates/reseller_admin.html static/brand/mark.png static/css/auth-bloom.css static/css/studio.css static/js/auth-bloom.js static/js/studio.js static/js/reseller-controls.js bulk.py host_traffic.py devices.py security.py backup_engine.py privileged.py privileged_server.py health.py support.py commerce.py beeny-privileged.service scripts/harden_services.sh app.py cluster.py renewal.py traffic_ledger.py serve.py admin_sessions.py pricing.py experience.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-customer-worker.service beeny-panel.service beeny-vpn-firewall.service templates/login.html templates/layout.html templates/user_form.html templates/customer_portal.html templates/customer_login.html templates/customer_sessions.html templates/customer_settings.html templates/renewal_inbox.html templates/update.html static/js/portal.js static/js/flags.js static/css/customer-admin.css templates/dashboard.html templates/traffic.html static/css/style.css static/css/brand.css static/css/login.css static/css/portal.css static/fonts/Vazirmatn-variable.woff2 static/beeny-mark.svg scripts/create_vpn_user.sh scripts/vpn-firewall.sh scripts/init_admin.py; do
     [[ -f "$ROOT_DIR/$needed" ]] || { echo "Missing: $needed" >&2; exit 1; }
   done
   python3 - "$ROOT_DIR" <<'PY'
@@ -193,7 +194,11 @@ if [[ -n "$vpn_domain" ]]; then
   fi
   vpn_host="$vpn_domain"
 fi
-ask vpn_port 'VPN TCP port [110]:'; vpn_port="${vpn_port:-110}"
+ask vpn_proto 'VPN transport: tcp / udp [tcp]:'; vpn_proto="${vpn_proto:-tcp}"
+[[ "$vpn_proto" == tcp || "$vpn_proto" == udp ]] || { echo 'Choose tcp or udp.' >&2; exit 1; }
+vpn_default=110; [[ "$vpn_proto" != udp ]] || vpn_default=1194
+ask vpn_port "VPN $vpn_proto port [$vpn_default]:"; vpn_port="${vpn_port:-$vpn_default}"
+vpn_server_proto=tcp-server; [[ "$vpn_proto" != udp ]] || vpn_server_proto=udp
 [[ "$vpn_port" =~ ^[0-9]{1,5}$ ]] && (( vpn_port >= 1 && vpn_port <= 65535 )) || { echo 'Invalid VPN port' >&2; exit 1; }
 ask panel_port 'Panel local port [8080]:'; panel_port="${panel_port:-8080}"
 [[ "$panel_port" =~ ^[0-9]{4,5}$ ]] && (( panel_port >= 1024 && panel_port <= 65535 && panel_port != vpn_port )) || { echo 'Invalid panel port' >&2; exit 1; }
@@ -249,7 +254,7 @@ install -m 644 /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn/crl.pem
 phase 4 'Configure OpenVPN and routing'
 cat > /etc/openvpn/server/server.conf <<CONF
 port $vpn_port
-proto tcp-server
+proto $vpn_server_proto
 dev tun
 topology subnet
 server 10.8.0.0 255.255.255.0
@@ -296,7 +301,7 @@ install -m 644 "$ROOT_DIR/beeny-vpn-firewall.service" /etc/systemd/system/beeny-
 systemctl daemon-reload
 systemctl enable --now beeny-vpn-firewall
 if command -v ufw >/dev/null && ufw status | grep -q '^Status: active'; then
-  ufw allow "$vpn_port/tcp"
+  ufw allow "$vpn_port/$vpn_proto"
   ufw route allow in on tun0 out on "$iface"
 fi
 systemctl enable --now openvpn-server@server
@@ -317,6 +322,7 @@ panel_bind=127.0.0.1
 secret="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
 printf 'BEENY_SECRET_KEY=%s\nBEENY_PUBLIC_HOST=%s\nBEENY_VPN_PORT=%s\nBEENY_BIND=%s\nBEENY_PORT=%s\nBEENY_PUBLIC_HTTPS=%s\n' "$secret" "$vpn_host" "$vpn_port" "$panel_bind" "$panel_port" "${panel_domain:+1}" > "$ENV_FILE"
 chmod 600 "$ENV_FILE"
+printf 'BEENY_VPN_RUNTIME_MANAGED=1\n' >> "$ENV_FILE"
 python3 - "$DEST/config.json" "$panel_path" "$panel_port" <<'PY'
 import json,sys
 with open(sys.argv[1], 'w') as f:
@@ -397,7 +403,7 @@ printf 'BEENY_PANEL_BASE_URL=%s\n' "${panel_url%$panel_path/login}" >> "$ENV_FIL
 systemctl restart beeny-panel
 systemctl is-active --quiet beeny-panel || { echo 'Panel service failed after public URL configuration.' >&2; exit 1; }
 printf '\n%s╭───────────────── INSTALLATION COMPLETE ─────────────────╮%s\n' "$GREEN" "$RESET"
-printf '  Panel:   %s\n  OpenVPN: %s:%s/TCP\n  Logs:    %s\n' "$panel_url" "$vpn_host" "$vpn_port" "$LOG"
+printf '  Panel:   %s\n  OpenVPN: %s:%s (see active transport in Settings)\n  Logs:    %s\n' "$panel_url" "$vpn_host" "$vpn_port" "$LOG"
 printf '%s╰─────────────────────────────────────────────────────────╯%s\n\n' "$GREEN" "$RESET"
 
 bash "$DEST/scripts/install_cli.sh"

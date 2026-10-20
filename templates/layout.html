@@ -230,10 +230,10 @@
         }
         body.light .close-menu { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); color: #444; }
     </style>
-    <link rel="icon" href="{{ url_for('static', filename='brand/mark.png') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ url_for('static', filename='brand/mark.png',v=panel_version) }}" type="image/png">
     <link href="{{ url_for('static', filename='css/brand.css') }}" rel="stylesheet"><link href="{{ url_for('static', filename='css/customer-admin.css') }}" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static',filename='css/performance.css') }}"><script>document.documentElement.classList.add('beeny-page-pending');setTimeout(function(){document.documentElement.classList.remove('beeny-page-pending')},5000)</script><script src="{{ url_for('static',filename='js/performance.js') }}" defer></script><link rel="stylesheet" href="{{ url_for('static',filename='css/typography.css',v='3.6.9') }}"></head>
-<body><div id="admin-language-overlay" role="status" aria-live="polite"><div class="language-loader-orb">{{ icon('globe') }}</div><strong data-language-loader-text>{{ 'در حال آماده‌سازی پنل…' if admin_language=='fa' else 'Preparing your workspace…' }}</strong><span class="language-loader-dots"><i></i><i></i><i></i></span></div><script>window.adminDictionary={{ admin_dictionary|tojson }};window.adminT=function(s){return document.documentElement.lang==='fa'?(window.adminDictionary[s]||s):s};</script><script defer src="{{ url_for('static',filename='js/admin-language.js') }}"></script><link rel="stylesheet" href="{{ url_for('static',filename='css/admin-language.css') }}">{% include 'partials/page_loader.html' %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/performance.css') }}"><script>document.documentElement.classList.add('beeny-page-pending');setTimeout(function(){document.documentElement.classList.remove('beeny-page-pending')},5000)</script><script src="{{ url_for('static',filename='js/performance.js') }}" defer></script><link rel="stylesheet" href="{{ url_for('static',filename='css/typography.css',v='3.6.9') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/release-370.css',v=panel_version) }}"></head>
+<body>{% include 'partials/liquid_filter.html' %}<div id="admin-language-overlay" role="status" aria-live="polite"><div class="language-loader-orb">{{ icon('globe') }}</div><strong data-language-loader-text>{{ 'در حال آماده‌سازی پنل…' if admin_language=='fa' else 'Preparing your workspace…' }}</strong><span class="language-loader-dots"><i></i><i></i><i></i></span></div><script>window.adminDictionary={{ admin_dictionary|tojson }};window.adminT=function(s){return document.documentElement.lang==='fa'?(window.adminDictionary[s]||s):s};</script><script defer src="{{ url_for('static',filename='js/admin-language.js') }}"></script><link rel="stylesheet" href="{{ url_for('static',filename='css/admin-language.css') }}">{% include 'partials/page_loader.html' %}
 <script>try{if(localStorage.getItem("beeny-theme")==="light")document.body.classList.add("light")}catch(e){}</script>
 
 <!-- جایگزین شد: این دیو برای رندر شدن بک‌گراند توسط جاوااسکریپت (Vite) استفاده می‌شود -->
@@ -244,8 +244,8 @@
 </button>
 
 <div class="mobile-menu" id="mobileMenu">
-    <div class="menu-header">
-        <img src="{{ url_for('static', filename='brand/mark.png') }}" alt=""> BEENY PANEL
+    <div class="menu-header" aria-label="Beeny Panel {{ panel_version }}">
+        <img src="{{ url_for('static', filename='brand/mark.png',v=panel_version) }}" alt=""> BEENY PANEL
     </div>
     <button class="close-menu" id="closeMenuBtn">
         <i class="fa fa-times"></i>
@@ -269,7 +269,7 @@
 <div class="menu-overlay" id="menuOverlay"></div>
 
 <div class="sidebar">
-    <a class="logo brand-lockup" href="{{ base }}"><img src="{{ url_for('static', filename='brand/mark.png') }}" alt=""><span><strong>BEENY</strong><small>CONTROL PANEL</small></span></a>
+    <a class="logo brand-lockup" href="{{ base }}"><img src="{{ url_for('static', filename='brand/mark.png',v=panel_version) }}" alt=""><span><strong>BEENY</strong><small>CONTROL PANEL · v{{ panel_version }}</small></span></a>
     <nav aria-label="Main navigation">
         <span class="nav-label">{{ admin_t('WORKSPACE') }}</span>
         <a href="{{ base }}"><i class="fa fa-chart-line"></i> {{ admin_t('Dashboard') }}</a>
@@ -288,7 +288,7 @@
 
 <div class="content">
     <div class="glass-navbar">
-        <span class="nav-title"><img src="{{ url_for('static', filename='brand/mark.png') }}" alt=""> <span>BEENY <b>PANEL</b></span></span>
+        <span class="nav-title"><img src="{{ url_for('static', filename='brand/mark.png',v=panel_version) }}" alt=""> <span>BEENY <b>PANEL</b><small class="panel-version">v{{ panel_version }}</small></span></span>
         {% with notification_url=customer_base+'/notifications', notification_locale=admin_language %}{% include 'partials/notification_bell.html' %}{% endwith %}<div class="admin-language-control"><button class="glass-btn" type="button" id="admin-language-switch" aria-label="{{ admin_t('Change language') }}" title="{{ admin_t('Change language') }}" data-endpoint="{{ base.rstrip('/') }}/api/admin/language">{{ icon('globe') }}<span class="admin-language-code">{{ 'FA' if admin_language=='fa' else 'EN' }}</span></button></div><button id="themeToggle" class="glass-btn">
             <i class="fa fa-moon"></i>
         </button>
@@ -348,7 +348,7 @@
     });
 </script>
 
-<script type="module" src="{{ url_for('static', filename='js/background-loader.js',v='3.6.9') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/background-loader.js',v=panel_version) }}"></script>
 
-<script src="{{ url_for('static',filename='js/flags.js') }}"></script><script src="{{ url_for('static',filename='js/experience.js') }}" defer></script><script src="{{ url_for('static',filename='js/quality.js') }}" defer></script><script src="{{ url_for('static',filename='js/refinement.js') }}" defer></script><script src="{{ url_for('static',filename='js/studio.js') }}" defer></script><script src="{{ url_for('static',filename='js/portal-content.js') }}" defer></script><script src="{{ url_for('static',filename='js/polish.js') }}" defer></script><script src="{{ url_for('static',filename='js/release-344.js') }}" defer></script><script src="{{ url_for('static',filename='js/commissions.js') }}" defer></script><script defer src="{{ url_for('static',filename='js/admin-forms.js') }}"></script><script defer src="{{ url_for('static',filename='js/control-center.js') }}"></script><link rel="stylesheet" href="{{ url_for('static',filename='css/workspace.css',v='3.6.9') }}"><script defer src="{{ url_for('static',filename='js/workspace.js',v='3.6.9') }}"></script></body>
+<script src="{{ url_for('static',filename='js/flags.js') }}"></script><script src="{{ url_for('static',filename='js/experience.js') }}" defer></script><script src="{{ url_for('static',filename='js/quality.js') }}" defer></script><script src="{{ url_for('static',filename='js/refinement.js') }}" defer></script><script src="{{ url_for('static',filename='js/studio.js') }}" defer></script><script src="{{ url_for('static',filename='js/portal-content.js') }}" defer></script><script src="{{ url_for('static',filename='js/polish.js') }}" defer></script><script src="{{ url_for('static',filename='js/release-344.js') }}" defer></script><script src="{{ url_for('static',filename='js/commissions.js') }}" defer></script><script defer src="{{ url_for('static',filename='js/admin-forms.js',v=panel_version) }}"></script><script defer src="{{ url_for('static',filename='js/control-center.js') }}"></script><link rel="stylesheet" href="{{ url_for('static',filename='css/workspace.css',v='3.6.9') }}"><script defer src="{{ url_for('static',filename='js/workspace.js',v='3.6.9') }}"></script><link rel="stylesheet" href="{{ url_for('static',filename='css/release-372.css',v=panel_version) }}"><script defer src="{{ url_for('static',filename='js/liquid-glass.js',v=panel_version) }}"></script></body>
 </html>

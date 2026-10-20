@@ -60,12 +60,9 @@ class SpeedAccountTests(unittest.TestCase):
         with self.client.session_transaction() as session:csrf=session['_customer_csrf']
         url='/panel/settings/vpn-access'
         response=self.client.post(url,data={'csrf':csrf,'host_'+str(node.id):'vpn.new.test','port_'+str(node.id):'443'})
-        self.assertEqual(response.status_code,302);self.assertEqual(node.ip,'192.0.2.1')
-        with patch('app.privileged_enabled',return_value=True),patch('app.privileged_call',return_value=dict(ca='CA',ta='TA',cert='CERT',key='KEY')):
-            with panel.app.test_request_context():
-                response=panel.build_config(self.user);response.direct_passthrough=False;body=response.get_data(as_text=True)
-        self.assertIn('remote vpn.new.test 443',body)
-        self.assertNotIn('remote 192.0.2.1',body)
+        self.assertEqual(response.status_code,409);self.assertEqual(node.ip,'192.0.2.1')
+        self.assertEqual(panel.speed_policy.endpoints(),{})
+        self.assertEqual(self.client.get(url).location,'/panel/settings/transports')
     def test_fair_use_banner_remains_private_and_has_renewal_action(self):
         self.user.quota_mode='fair_use';self.user.traffic_limit=100;self.user.traffic_usage=101;self.user.expire_date='2099-01-01';self.user.throttle_down_kbps=2000;self.user.throttle_up_kbps=1000;panel.db.session.commit()
         root='/panel/c/'+self.token
@@ -125,8 +122,8 @@ class SpeedSecurityTests(unittest.TestCase):
         with self.client.session_transaction() as session:csrf=session['_customer_csrf']
         self.features.set_setting('vpn_client_endpoints',json.dumps({str(node.id):{'host':'old.test','port':110}}));panel.db.session.commit()
         response=self.client.post(url,data={'csrf':csrf,'host_'+str(node.id):'bad\nremote attacker.test','port_'+str(node.id):110})
-        self.assertEqual(response.status_code,200)
-        self.assertEqual(self.client.get(url).status_code,200)
+        self.assertEqual(response.status_code,409)
+        self.assertEqual(self.client.get(url).status_code,302)
         self.assertEqual(self.client.get('/panel/users/add').status_code,200)
         self.assertEqual(panel.speed_policy.endpoints()[str(node.id)]['host'],'old.test')
     def test_approved_plan_restores_speed_and_preserves_consumption(self):

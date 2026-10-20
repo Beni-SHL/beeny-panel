@@ -1,0 +1,14 @@
+[Unit]
+Description=Recover unconfirmed Beeny VPN listener changes before OpenVPN starts
+Before=openvpn-server@server.service
+ConditionPathExists=/etc/openvpn/beeny-runtime/pending.json
+[Service]
+Type=oneshot
+ExecStart=/opt/beeny-panel/venv/bin/python /opt/beeny-panel/vpn_runtime.py recover-boot
+User=root
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/etc/openvpn
+[Install]
+WantedBy=multi-user.target

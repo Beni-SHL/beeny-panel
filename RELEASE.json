@@ -1,58 +1,62 @@
 {
-  "version": "3.6.9",
-  "base_version": "3.6.8-reconnect-1",
-  "release_date": "2026-10-18",
-  "bridge_version": "3.6.9",
+  "version": "3.7.2",
+  "base_version": "3.7.1",
+  "release_date": "2026-10-21",
+  "channel": "test",
+  "bridge_version": "3.7.2",
   "features": [
-    "Shared Settings-style administration surfaces for portal content, payments, notifications, bulk operations, traffic, representative credit, support, audit and payment/ticket details.",
-    "Local eight-weight Yekan Bakh and local Inter variable font with its OFL license; mobile layouts, list-based audit, restrained animation and reduced-cost administrative backgrounds.",
-    "Retained progressive AJAX form transport; shared tab/page links and accessible show/hide for newly entered secrets only.",
-    "Per-node selected WARP presets for common Telegram, Google, Spotify and Instagram destinations plus custom hostnames/IPv4 networks; IPv4 DNS snapshots and marked, scoped routing.",
-    "Existing all-traffic WARP policies preserve their semantics; verified connected WARP interface required; preview/apply/confirmation and automatic rollback retained.",
-    "Fixed owner maintenance API and SSH menu for account administration, service status/restart, reversible existing-kernel BBR, official WARP package jobs, managed SSL, signed backup and GitHub update.",
-    "GitHub bootstrap and downgrade protection; additive updater with launcher rollback. No suffix-based domain bypass feature."
+    "Local Liquid Glass refraction from supplied reference, reduced 4px blur and shared header controls.",
+    "Mobile dark animation with reduced-motion and WebGL fallback; compact nonzero gift chips.",
+    "Country-neutral entry/exit labels and downloads.",
+    "Native Arange Noise/TCP and KCP/UDP carrier; BackPack Noise/TCP and KCP/UDP carrier.",
+    "Pinned source installers for Arange, BackPack, Dragon Fruit Relay, Doctor DNS and HyperDNS.",
+    "Per-account, per-node subscriber DNS endpoints, AJAX diagnostics and private Apple DNS profiles."
   ],
   "validation": {
-    "python_tests": 384,
-    "python_test_seconds": 341.683,
-    "new_behavioral_tests": 10,
-    "syntax": "Python, Bash, JavaScript and Jinja validated; installer --check passed.",
-    "browser": {
-      "pages": 13,
-      "list_and_detail_pages": 5,
-      "languages": [
-        "en",
-        "fa"
-      ],
-      "themes": [
-        "light",
-        "dark"
-      ],
-      "widths": [
-        375,
-        768,
-        1440
-      ],
-      "layout_failures": 0,
-      "javascript_errors": 0,
-      "checks": [
-        "AJAX portal content and payment saves without document navigation",
-        "WARP selection serialization, preview/apply/confirmation with mocked backend",
-        "Password display toggle shows entered value only",
-        "Populated ticket/audit/representative lists and long money amounts"
-      ]
+    "python_tests": 413,
+    "skipped": 2,
+    "result": "passed",
+    "native_payload_cases_passed": 7,
+    "notes": "Arange KCP UDP VPN forwarding failed and is explicitly rejected. KCP TCP VPN forwarding passed.",
+    "targeted_final": {
+      "release_tests": 8,
+      "transport_ui_tests": 6,
+      "node_tests": 6,
+      "result": "passed"
     },
-    "live_vps_operations": false
+    "static_checks": [
+      "Python AST",
+      "Jinja templates",
+      "Bash syntax",
+      "changed JavaScript syntax",
+      "install.sh --check",
+      "five pinned source archive hashes and safe extraction"
+    ],
+    "browser": "not verified: cloud browser could not reach local QA server"
   },
   "limitations": [
-    "No real VPS apt/Certbot/BBR/nftables/WARP provisioning, traffic egress or mobile client networking was run in this environment. Browser network/maintenance operations were mocked.",
-    "No claim to resolve the observed Germany internet-path stall. Existing reconnect hotfix and VPN core configuration logic are retained unchanged.",
-    "No .ir/.ru/.cn suffix bypass and no domain-aware custom customer client are included. Existing explicit IPv4/hostname snapshots and RIPE import are not suffix routing.",
-    "WARP presets do not cover every CDN, shared IP or IPv6 endpoint. Refresh hostname snapshots explicitly via preview/apply. The existing interface must already be connected and pass the bound-interface trace probe.",
-    "WARP package installation does not register or connect a tunnel automatically. Managed removal retains existing safety restrictions.",
-    "Direct-route delivery still needs deliberate OpenVPN restart and client reconnect; ordinary application and node updates do not perform that restart.",
-    "SSH SSL issuance requires configured, valid Nginx and public certificate validation. BBR enables the current kernel algorithm without replacing live qdiscs.",
-    "Full backups are signed, not encrypted. Stored administrator passwords are hashes and cannot be displayed.",
-    "GitHub source publishing and clean-VPS installation remain operator actions; this ZIP is ready to publish, not already published."
-  ]
+    "Visual browser and live clean-VPS installation were not verified in this environment.",
+    "One managed paired tunnel per host. Source compilation needs internet access and temporary build resources.",
+    "Arange KCP mode is restricted to TCP VPN targets; Noise and BackPack support tested TCP/UDP targets.",
+    "Dragon Fruit Relay uses its own dedicated Debian routing setup, not Beeny pairing/profile generation.",
+    "Doctor DNS/HyperDNS require a dedicated host. Upstream subscriber creation, quotas and renewals remain manual; Beeny stores per-account endpoints and delivers profiles.",
+    "No automatic migration of existing imported VPN profiles; download again after listener/endpoint changes.",
+    "Reachability between hosts and permitted provider firewall ports are required; transport does not guarantee resistance to filtering.",
+    "No Microsoft Defender approval or fresh malware scan is claimed for 3.7.2."
+  ],
+  "preserved_vpn_files": {
+    "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
+    "session_limits.py": "9d0e82c793209c038be57a05c2a51035b26ffcdd936b55fc54301d84c31d2d92",
+    "session_identity.py": "1de2d85924d347a93023e9f3595b89c8b308422992f76bdb1149d9016bc7a9bd",
+    "vpn_sessions.py": "8b0a21edc8b132cb82e68bcfc4a9ec245f54f4c5f7d3971712ac5b5e3331d388",
+    "scripts/configure_vpn_core.py": "485b8637fe4ceff2edbddc5d49ab661c25940217e76f2402120079eb1fed047c",
+    "scripts/vpn_admission.py": "b849acb087e545ce4cd2a4afaf478fa39017b5ff1a7339afbb8457946e796452",
+    "scripts/vpn_disconnect.py": "ac7baaa375fa006b9f52f81bc56a24604075a208dd9891af1021c1fc5720fc7f",
+    "terminal_traffic.py": "81aa7d8ac5264a80122fa90e03a3a903e5c785bda06540ad59ec1b525aaa1102",
+    "vpn_runtime.py": "314260b9bdd952625aa3ea1072e969c07445f569e5b6cd43020f87223e5093bc",
+    "transport_settings.py": "dc417d81901b9cbd7dc6ead0b07630402e2e81f990d4af21ea19c167c0fa4025",
+    "tunnel_settings.py": "26767764d1c08d305f7e47acb6ca88f2db95bef7321697d66ea973849c21c380",
+    "network_policy.py": "7642e1f4a2e4b8cd08040a912f0c7ad211f225e1550f7fb68270aae9e7dbfef1",
+    "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
+  }
 }

@@ -12,6 +12,7 @@ for failure in ('database', 'health'):
   shutil.copytree(release,dest)
   for directory in (etc/'systemd/system',etc/'beeny-panel',run,bins,dest/'instance',dest/'venv/bin'):directory.mkdir(parents=True,exist_ok=True)
   (dest/'app.py').write_text('OLD_APPLICATION = True\n')
+  for retired in ('static/index-CmGPzBYL.js','static/js/index-CmGPzBYL.js'):(dest/retired).write_text('OLD_BACKGROUND_ASSET\n')
   (dest/'config.json').write_text('{"panel_path":"/panel"}')
   (etc/'beeny-panel/panel.env').write_text('BEENY_PORT=8080\n')
   (etc/'systemd/system/beeny-panel.service').write_text('old systemd unit\n')
@@ -30,6 +31,7 @@ for failure in ('database', 'health'):
   result=subprocess.run(['bash',str(release/'scripts/update_panel.sh')],env=env,capture_output=True,text=True)
   assert result.returncode!=0,(failure,result.stdout,result.stderr)
   assert (dest/'app.py').read_text()=='OLD_APPLICATION = True\n',result.stderr
+  for retired in ('static/index-CmGPzBYL.js','static/js/index-CmGPzBYL.js'):assert (dest/retired).read_text()=='OLD_BACKGROUND_ASSET\n',result.stderr
   assert (dest/'venv/bin/python').exists(),result.stderr
   assert (etc/'systemd/system/beeny-panel.service').read_text()=='old systemd unit\n'
   assert (etc/'beeny-panel/panel.env').read_text()=='BEENY_PORT=8080\n'

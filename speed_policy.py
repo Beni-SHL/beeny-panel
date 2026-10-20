@@ -39,25 +39,18 @@ def register(app,db,User,Node,UserNode,features,panel_path,is_primary_node):
     @login_required
     def vpn_access_settings():
         if current_user.role!='owner':abort(403)
-        error=None;values=endpoints();nodes=Node.query.order_by(Node.name).all()
-        if request.method=='POST':
-            features.verify_csrf()
-            try:
-                values={}
-                for node in nodes:
-                    host=request.form.get('host_'+str(node.id),'').strip()
-                    if host:
-                        values[str(node.id)]=endpoint(host,request.form.get('port_'+str(node.id),110))
-                        proto=request.form.get('proto_'+str(node.id),'tcp')
-                        if proto not in {'tcp','udp'}:raise ValueError('Protocol must be TCP or UDP.')
-                        values[str(node.id)]['proto']=proto
-                features.set_setting('vpn_client_endpoints',json.dumps(values));db.session.commit()
-                flash('Client profile endpoints saved. Re-download profiles to use changed addresses.','success')
-                return redirect(request.path)
-            except ValueError as exc:error=str(exc)
-        return render_template('vpn_access_settings.html',panel_path=panel_path,nodes=nodes,values=values,error=error)
+        # Legacy bookmarks lead to the coordinated runtime editor. Old POSTs must
+        # never report a profile-only port change as a successful listener update.
+        if request.method=='GET':return redirect(base+'/settings/transports')
+        features.verify_csrf()
+        abort(409,'Use OpenVPN → Transport & ports to change the actual server listener.')
     def remote(node,default_host,default_port):
         saved=endpoints().get(str(node.id))
+        if (saved and saved.get('managed')) or (is_primary_node(node) and __import__('os').environ.get('BEENY_VPN_RUNTIME_MANAGED')=='1'):
+            from app import transport_settings
+            state=transport_settings.call(node,'status')
+            if not state.get('active'):raise ValueError('The selected VPN node is stopped.')
+            return dict(**endpoint((saved or {}).get('host') or default_host,state['port']),proto=state['proto'])
         if saved:
             result=endpoint(saved['host'],saved['port'])
             if saved.get('proto')=='udp':result['proto']='udp'

@@ -1,7 +1,21 @@
 """Explicit template translations: never translate usernames or stored customer text."""
 from flask import request,jsonify,session
 from flask_login import current_user,login_required
-PAIRS='''Payment review|بررسی پرداخت
+PAIRS='''Entry host|میزبان ورودی
+Exit host|میزبان خروجی
+1 · Entry host|۱ · میزبان ورودی
+2 · Exit host|۲ · میزبان خروجی
+Entry public domain or IP|دامنه یا IP عمومی ورودی
+Via entry tunnel|از طریق تونل ورودی
+Smart DNS|دی‌ان‌اس هوشمند
+Doctor DNS & HyperDNS · account-specific delivery and diagnostics|Doctor DNS و HyperDNS · تنظیم اختصاصی حساب و بررسی اتصال
+Installation|نصب و راه‌اندازی
+Account access|دسترسی حساب
+Subscriber DNS|دی‌ان‌اس مشترک
+Test DNS|آزمایش DNS
+Connect an entry host to an OpenVPN exit node in any country, with direct and tunnel downloads.|اتصال میزبان ورودی به نود OpenVPN خروجی در هر کشور، همراه با دانلود مستقیم و تونلی.
+Install the verified engine on both hosts using the Beeny SSH menu. Create the entry host, then import its private invitation on the exit node. Either host can be in any country. Keep the invitation secret.|موتور بررسی‌شده را از منوی SSH بنی روی هر دو میزبان نصب کنید. ورودی را بسازید و دعوت خصوصی آن را روی نود خروجی وارد کنید. هر دو میزبان می‌توانند در هر کشوری باشند. دعوت را محرمانه نگه دارید.
+Payment review|بررسی پرداخت
 Check the saved order and receipt before approving payment.|پیش از تأیید پرداخت، سفارش ثبت‌شده و رسید را بررسی کنید.
 Routing mode|حالت مسیریابی
 Selected destinations only|فقط مقصدهای انتخاب‌شده
@@ -998,6 +1012,63 @@ succeeded|موفق
 interrupted|متوقف‌شده
 '''
 TRANSLATIONS=dict(line.split('|',1) for line in PAIRS.splitlines() if '|' in line)
+TRANSLATIONS.update({
+  "Transport & ports": "پروتکل و پورت‌ها",
+  "Paired tunnels": "تونل بین دو سرور",
+  "Change the actual OpenVPN listener and keep new client downloads in sync.": "پورت و پروتکل سرویس واقعی OpenVPN را تغییر دهید؛ کانفیگ‌های جدید با آن هماهنگ می‌شوند.",
+  "One active transport per node. TCP and UDP ports are saved separately. Switching restarts this node VPN and reconnects its users. Certificates and account traffic are preserved.": "هر نود یک پروتکل فعال دارد. پورت‌های TCP و UDP جدا ذخیره می‌شوند. تغییر پروتکل، سرویس همان نود را ری‌استارت می‌کند و کاربران دوباره متصل می‌شوند. گواهی‌ها و مصرف حساب‌ها حفظ می‌شوند.",
+  "Open the selected protocol and port in the provider firewall first. Existing imported profiles must be downloaded again. Confirm within 120 seconds after testing a new connection; otherwise the previous listener is restored.": "ابتدا پورت و پروتکل انتخابی را در فایروال دیتاسنتر باز کنید. کانفیگ‌های قبلی باید دوباره دانلود و وارد برنامه شوند. پس از آزمایش اتصال، تا ۱۲۰ ثانیه تغییر را تأیید کنید؛ در غیر این صورت تنظیم قبلی برمی‌گردد.",
+  "Active transport": "پروتکل فعال",
+  "TCP port": "پورت TCP",
+  "UDP port": "پورت UDP",
+  "Apply listener": "اعمال روی سرویس",
+  "Confirm connection works": "اتصال سالم است؛ تأیید تغییر",
+  "Roll back": "بازگشت به تنظیم قبلی",
+  "I accept that users on this node will reconnect.": "می‌پذیرم که اتصال کاربران این نود هنگام تغییر دوباره برقرار می‌شود.",
+  "Applied temporarily. Test a new VPN connection and confirm within 120 seconds.": "تغییر موقت اعمال شد. اتصال جدید را آزمایش کنید و تا ۱۲۰ ثانیه تأیید کنید.",
+  "Listener verified. New downloads use the active transport and port.": "تنظیم سرویس بررسی شد. کانفیگ‌های جدید از پورت و پروتکل فعال استفاده می‌کنند.",
+  "Connect an entry host to an OpenVPN exit node in any country, with direct and tunnel downloads.": "سرور ورودی را به نود OpenVPN خروجی در هر کشوری وصل کنید؛ دانلود مستقیم و تونلی کنار هم در دسترس است.",
+  "Install the verified engine on both hosts using the Beeny SSH menu. Create the entry host, then import its private invitation on the exit node. Either host can be in any country. Keep the invitation secret.": "موتور تونل را از منوی SSH بنی روی هر دو سرور نصب کنید. پنل دیگری لازم نیست. ابتدا سرور ورودی را بسازید، سپس دعوت‌نامه خصوصی آن را روی نود خروجی وارد کنید. دعوت‌نامه را محرمانه نگه دارید.",
+  "TLS, WebSocket + TLS and QUIC encrypt the link with a pinned certificate. They do not guarantee access during a national shutdown or prevent fingerprinting. The entry and exit hosts must be able to reach each other.": "حالت‌های TLS، WebSocket + TLS و QUIC ارتباط را با گواهی تأییدشده رمز می‌کنند. عبور هنگام قطع اینترنت بین‌الملل یا غیرقابل‌شناسایی بودن تضمین نمی‌شود. دو سرور باید امکان ارتباط با یکدیگر داشته باشند.",
+  "Selected host": "سرور انتخاب‌شده",
+  "Enable tunnel": "فعال‌سازی تونل",
+  "Disable tunnel": "غیرفعال‌سازی تونل",
+  "Export private invitation": "دریافت دعوت‌نامه خصوصی",
+  "1 · Entry host": "۱ · میزبان ورودی",
+  "2 · Exit host": "۲ · میزبان خروجی",
+  "Entry public domain or IP": "دامنه یا IP عمومی سرور ورودی",
+  "Tunnel transport": "روش انتقال تونل",
+  "Control port": "پورت ارتباط دو سرور",
+  "Public VPN port": "پورت ورودی کاربران",
+  "Create entry & download invitation": "ساخت ورودی و دریافت دعوت‌نامه",
+  "Private pairing invitation": "دعوت‌نامه خصوصی اتصال",
+  "Pair & enable": "اتصال دو سرور و فعال‌سازی",
+  "Connection notes": "نکات اتصال",
+  "Open the control port (TCP for TLS/WebSocket, TCP and UDP for QUIC) and the public VPN port in the provider firewall. Use ports not occupied by this host VPN or website.": "پورت ارتباط دو سرور را با TCP برای TLS و WebSocket، و با TCP و UDP برای QUIC باز کنید. پورت ورودی کاربران را هم با پروتکل VPN در فایروال دیتاسنتر باز کنید. پورت‌ها نباید در اختیار VPN یا وب‌سایت این سرور باشند.",
+  "Select the exit node above. Paste the invitation exported by the entry Beeny panel. The current OpenVPN transport and port are detected automatically. No CA or user certificate is replaced.": "نود خروجی را از بالای صفحه انتخاب کنید. دعوت‌نامه دریافت‌شده از پنل بنی ورودی را وارد کنید. پورت و پروتکل فعال OpenVPN خودکار تشخیص داده می‌شود. CA و گواهی کاربران تغییر نمی‌کند.",
+  "Direct profiles use the exit node address; tunnel profiles use the entry host address. Download links appear for paired exit nodes after refreshing the customer page. Disabling the tunnel removes tunnel downloads; direct profiles continue working.": "کانفیگ مستقیم آدرس نود خروجی و کانفیگ تونلی آدرس سرور ورودی را دارد. پس از اتصال دو سرور و تازه‌سازی صفحه کاربر، لینک تونلی برای نود خروجی ظاهر می‌شود. با غیرفعال‌سازی تونل، لینک تونلی حذف می‌شود و مسیر مستقیم باقی می‌ماند.",
+  "The VPN sees the forwarding host IP for tunneled connections. Device limits remain account-based, but IP restrictions cannot distinguish original client IPs through this relay. Re-pair after changing the exit listener. Pair certificates last one year.": "در اتصال تونلی، VPN آدرس سرور واسط را می‌بیند. محدودیت دستگاه همچنان برای هر حساب اعمال می‌شود، اما محدودیت IP نمی‌تواند IP اصلی کاربران پشت واسط را تفکیک کند. پس از تغییر پورت یا پروتکل خروجی، دو سرور را دوباره متصل کنید. اعتبار گواهی اتصال یک سال است.",
+  "Dokodemo-door is a destination forwarder, not an encrypted tunnel by itself. It is not offered as an anti-filtering transport.": "dokodemo-door ترافیک را به مقصد مشخص می‌فرستد و به‌تنهایی تونل رمز‌شده نیست؛ به‌عنوان روش ضدشناسایی ارائه نشده است.",
+  "Direct": "مستقیم",
+  "Via entry tunnel": "از طریق تونل ورودی",
+  "Tunnel status refreshed.": "وضعیت تونل به‌روز شد.",
+  "Tunnel operation completed.": "عملیات تونل انجام شد.",
+  "Enabled": "فعال",
+  "Disabled": "غیرفعال",
+  "Proxy registered": "مسیر تونل ثبت شده",
+  "Waiting for registration": "در انتظار ثبت مسیر تونل",
+  "Ready for pairing.": "آماده اتصال دو سرور است.",
+  "Install the tunnel engine from the Beeny SSH menu first.": "ابتدا موتور تونل را از منوی SSH بنی نصب کنید.",
+  "Invalid pairing invitation.": "دعوت‌نامه اتصال معتبر نیست.",
+  "Working…": "در حال انجام…",
+  "No nodes available.": "نودی ثبت نشده است.",
+  "Use the secured HTTPS node bridge first.": "ابتدا API امن HTTPS نود را راه‌اندازی کنید.",
+  "Update this node bridge to 3.7.0 before changing listeners.": "پیش از تغییر پورت، عامل این نود را به ۳.۷.۰ ارتقا دهید.",
+  "Update this node bridge to 3.7.0 before pairing tunnels.": "پیش از اتصال تونل، عامل این نود را به ۳.۷.۰ ارتقا دهید.",
+  "Acknowledge the VPN reconnect before applying.": "قبل از اعمال تغییر، اتصال دوباره کاربران را تأیید کنید.",
+  "Could not verify this node listener. Check its helper/bridge logs.": "بررسی سرویس این نود انجام نشد. لاگ سرویس کمکی یا عامل نود را بررسی کنید.",
+  "Disable the paired tunnel before changing this listener, then pair it again with the new port.": "ابتدا تونل را غیرفعال کنید؛ سپس پورت را تغییر دهید و تونل را با پورت جدید دوباره متصل کنید."
+})
 
 def register(app,db,Admin,panel_path):
     def language():return getattr(current_user,'language','en') if current_user.is_authenticated else 'en'

@@ -1,0 +1,60 @@
+/* Beeny 3.7.2 — adapted from supplied DM Sans liquid-glass reference.
+   Existing local panel fonts retained. No imports, remote textures, or runtime dependency. */
+:root{--beeny-glass-fill:rgba(245,248,255,.46);--beeny-glass-light:rgba(255,255,255,.88);--beeny-glass-dark:rgba(20,28,50,.10);--beeny-glass-blur:6px;--beeny-tool-ink:#29344d}
+html[data-theme=dark],body:not(.light):has(#admin-page){--beeny-glass-fill:rgba(27,30,49,.48);--beeny-glass-light:rgba(255,255,255,.28);--beeny-glass-dark:rgba(0,0,0,.30);--beeny-tool-ink:#eff3ff}
+:is(.admin-glass,.glass-card,.glass-box,.glass-navbar,.glass,.sidebar,.shell-nav,.cc-surface,.workspace-top,.notification-popover){
+ background:var(--beeny-glass-fill)!important;
+ border:1px solid color-mix(in srgb,var(--beeny-glass-light) 42%,transparent)!important;
+ box-shadow:inset 1.8px 3px 0 -2px var(--beeny-glass-light),inset -2px -2px 0 -2px var(--beeny-glass-light),inset -3px -8px 1px -6px var(--beeny-glass-light),inset -.3px -1px 4px var(--beeny-glass-dark),inset 0 3px 4px -2px var(--beeny-glass-dark),0 6px 20px #18213c0d!important;
+ backdrop-filter:blur(var(--beeny-glass-blur)) saturate(150%)!important;-webkit-backdrop-filter:blur(var(--beeny-glass-blur)) saturate(150%)!important}
+:is(.top-actions,.top-controls,.header-actions,.admin-language-control) :is(.glass-btn,.icon-button,.language-picker button,.notification-bell),.notification-bell,.shell-theme,#themeToggle,#admin-language-switch{
+ width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;gap:0;border-radius:14px!important;position:relative;color:var(--beeny-tool-ink)!important;background:var(--beeny-glass-fill)!important;border:1px solid color-mix(in srgb,var(--beeny-glass-light) 50%,transparent)!important;box-shadow:inset 1px 2px 0 -1px var(--beeny-glass-light),inset -1px -1px 3px var(--beeny-glass-dark)!important;backdrop-filter:blur(6px) saturate(150%);-webkit-backdrop-filter:blur(6px) saturate(150%)}
+:is(.notification-bell,#themeToggle,#admin-language-switch,.icon-button) svg{width:20px;height:20px;flex:none}
+.notification-center{flex:0 0 auto}.notification-popover{z-index:100;isolation:isolate}.notification-badge[hidden]{display:none!important}
+.plan-gifts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0;min-width:0}
+.plan-gift{display:inline-flex!important;align-items:center;gap:5px;padding:5px 9px!important;border-radius:10px;background:color-mix(in srgb,#8069ef 12%,transparent);color:inherit;font-size:12px!important;line-height:1.6;max-width:100%;white-space:normal!important}
+.plan-gift svg{width:16px;height:16px}.plan-grid .plan{min-width:0}.plan-grid .plan h3{overflow-wrap:anywhere}.plan-grid .plan strong{font-variant-numeric:tabular-nums}.plan-grid{align-items:stretch}
+#react-bg-root{isolation:isolate;overflow:hidden}#react-bg-root canvas{pointer-events:none!important}
+@supports not (backdrop-filter:blur(6px)){:is(.glass,.cc-surface,.admin-glass,.notification-popover){background:var(--surface,#eef1f8)!important}}
+@media(max-width:600px){.plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.plan-grid .plan{padding:18px 12px!important}.plan-gift{font-size:11px!important;padding:4px 7px!important}.plan-grid .plan strong{font-size:clamp(19px,5vw,28px)}.top-actions{gap:7px!important}.notification-popover{position:fixed;top:76px;inset-inline:12px;width:auto}}
+@media(max-width:350px){.plan-grid{grid-template-columns:1fr!important}}
+.dns-service-row{padding:20px 0;border-bottom:1px solid #8793b82b}.dns-service-row:last-child{border:0}.dns-service-row header{display:flex;gap:12px;align-items:center;justify-content:space-between}.dns-service-row dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 16px}.dns-service-row dd{margin:0;overflow-wrap:anywhere;direction:ltr;text-align:start}.dns-service-row .cc-actions{display:flex;flex-wrap:wrap;gap:10px}#dns-services pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+body:has(#react-bg-root){isolation:isolate}
+body :is(.admin-glass,.glass-card,.glass-box,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat,.glass){backdrop-filter:blur(6px) saturate(150%)!important;-webkit-backdrop-filter:blur(6px) saturate(150%)!important}
+body :is(.glass,.admin-glass,.glass-card) :is(.glass,.admin-glass,.glass-card){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* Supplied Vadik switcher optical material, adapted to Beeny surfaces. */
+:root{--c-glass:#bbbbbc;--c-light:#fff;--c-dark:#000;--glass-reflex-dark:1;--glass-reflex-light:1;--saturation:150%}
+html[data-theme=dark],body:not(.light):has(#admin-page){--glass-reflex-dark:2;--glass-reflex-light:.3}
+.beeny-liquid-defs{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+body :is(.admin-glass,.glass-card,.glass-box,.glass-navbar,.glass,.sidebar,.shell-nav,.cc-surface,.workspace-top,.notification-popover,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat){
+ background-color:rgba(187,187,188,.12)!important;background-image:none!important;
+ background-color:color-mix(in srgb,var(--c-glass) 12%,transparent)!important;
+ box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent), 
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 1px 5px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 6px 16px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent)!important;
+ backdrop-filter:blur(4px) url(#beeny-liquid) saturate(var(--saturation))!important;
+ -webkit-backdrop-filter:blur(4px) saturate(var(--saturation))!important}
+body :is(.notification-bell,.glass-btn,.icon-button,.shell-theme,.language-picker button){background-color:color-mix(in srgb,var(--c-glass) 12%,transparent)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent), 
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 1px 5px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 6px 16px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent)!important;backdrop-filter:blur(4px) url(#beeny-liquid) saturate(var(--saturation));-webkit-backdrop-filter:blur(4px) saturate(var(--saturation))}
+body :is(.glass,.admin-glass,.glass-card,.cc-surface) :is(.glass,.admin-glass,.glass-card){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body :is(.notification-popover,.dropdown-menu,dialog){background-color:var(--surface,#edf0f8)!important}
+[data-liquid-switcher]{position:relative;isolation:isolate}
+[data-liquid-switcher] [data-liquid-active]{animation:beeny-glass-select 440ms ease}
+@keyframes beeny-glass-select{50%{scale:1.04 1}}
+@media(prefers-reduced-motion:reduce){[data-liquid-switcher] [data-liquid-active]{animation:none}}

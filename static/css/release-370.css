@@ -1,0 +1,21 @@
+/* Theme-aware finishing, loaded after the original dashboard and shared styles. */
+.panel-version{display:block;font-size:9px;font-weight:600;letter-spacing:.12em;opacity:.6;margin-top:3px}
+.dashboard .stat-top{justify-content:flex-start;gap:12px;align-items:center}
+.dashboard .stat-top>div:last-child{min-width:0;flex:1}
+.dashboard .stat-label{line-height:1.6;letter-spacing:.025em;overflow-wrap:anywhere}
+.dashboard .chart-tooltip{background:rgba(29,48,76,.94);color:#f1f7ff;border:1px solid #79b6ec66;box-shadow:0 5px 16px #0e284624;backdrop-filter:blur(18px);padding:9px 12px;transform:translate(-50%,0);font-family:var(--beeny-font,BeenyInter),sans-serif;font-weight:700}
+.dashboard .chart-tooltip span{color:#a9c8e8;margin-inline-end:7px}
+body.light .dashboard .chart-tooltip{background:rgba(245,251,255,.97);color:#17375d;border-color:#b9d7ef;box-shadow:0 5px 16px #54799d24}
+body.light .dashboard .chart-tooltip span{color:#597594}
+.cc-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:20px 0}
+.cc-form-grid label{display:flex;flex-direction:column;gap:8px;min-width:0;font-weight:600}
+.cc-form-grid small{font-size:11px;font-weight:400;opacity:.7;line-height:1.7}
+.cc-form-grid input,.cc-form-grid select,.cc-form-grid textarea{width:100%;min-width:0;border:1px solid #859cb940;border-radius:12px;padding:12px;background:#748db414;color:inherit;font:inherit}
+.cc-form-grid select option{color:#172a43;background:#f3f7fc}
+.transport-node [hidden],.cc-page [hidden]{display:none!important}
+.brand-lockup img,.nav-title img,.menu-header img,.shell-brand img,.brand img{object-fit:contain;filter:drop-shadow(0 3px 8px #2582d933)}
+@media(max-width:600px){.dashboard .stat-card{padding:14px 12px}.dashboard .stat-top{gap:9px}.dashboard .stat-icon{width:32px;height:32px;border-radius:10px;font-size:13px}.dashboard .stat-value{font-size:26px}.dashboard .stat-label{font-size:10px}.cc-form-grid{grid-template-columns:minmax(0,1fr)}.panel-version{letter-spacing:0}.cc-actions{flex-wrap:wrap}}
+
+#admin-page .dashboard .chart-tooltip{background:rgba(29,48,76,.94)!important;color:#f1f7ff!important}
+body.light #admin-page .dashboard .chart-tooltip{background:rgba(245,251,255,.97)!important;color:#17375d!important}
+body.light #admin-page .dashboard .chart-tooltip span{color:#597594!important}

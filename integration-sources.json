@@ -1,0 +1,32 @@
+{
+  "arange": {
+    "repo": "MAHDI-byte64/Arange-tun",
+    "commit": "f10849338e2b9182f041c5ea14d4d07557925e66",
+    "url": "https://codeload.github.com/MAHDI-byte64/Arange-tun/tar.gz/f10849338e2b9182f041c5ea14d4d07557925e66",
+    "sha256": "fdb3d87f1488147bf16d4d43fe852b1de577e36381f73c4815019dffa72e5af8"
+  },
+  "backpack": {
+    "repo": "AminMGMT/BackPack",
+    "commit": "9d58f8449ac04705b2b47f4869dc9f6db0e034af",
+    "url": "https://codeload.github.com/AminMGMT/BackPack/tar.gz/9d58f8449ac04705b2b47f4869dc9f6db0e034af",
+    "sha256": "b7dcb10e86d460c1c7f3f331b2ec28ce53c6520211ed5b415a805197bb23a158"
+  },
+  "dragon": {
+    "repo": "ozimellow/dragon-fruit-relay",
+    "commit": "58ac9af94cb2192a4fedbde438ed838e70f8d7fb",
+    "url": "https://codeload.github.com/ozimellow/dragon-fruit-relay/tar.gz/58ac9af94cb2192a4fedbde438ed838e70f8d7fb",
+    "sha256": "48eec29c9505f7c70815db41c610afd0171bc34b79ae6d393cf725cbd8d51599"
+  },
+  "doctor": {
+    "repo": "mehdi047/doctor-dns",
+    "commit": "e31bbc959a00d4907988d9d163407180851c2d23",
+    "url": "https://codeload.github.com/mehdi047/doctor-dns/tar.gz/e31bbc959a00d4907988d9d163407180851c2d23",
+    "sha256": "729585210dbec4818d778e96873b629554667fce968f961a78ca0cea1af25ff3"
+  },
+  "hyperdns": {
+    "repo": "IzumiRain/HyperDNS",
+    "commit": "4a899a90c682d14aa8fdc4506dd6efd84316956c",
+    "url": "https://codeload.github.com/IzumiRain/HyperDNS/tar.gz/4a899a90c682d14aa8fdc4506dd6efd84316956c",
+    "sha256": "6cab5bbecd98284ea57ad83194162c7240dc49c8145bae75bb65628c9462813b"
+  }
+}

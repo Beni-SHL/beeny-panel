@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}{% from 'partials/settings_ui.html' import hero,heading,action with context %}
+{% block content %}<div class="cc-page">
+{{ hero('devices','Transport & ports','Change the actual OpenVPN listener and keep new client downloads in sync.') }}
+<div class="cc-callout">{{ icon('info') }}<span>{{ admin_t('One active transport per node. TCP and UDP ports are saved separately. Switching restarts this node VPN and reconnects its users. Certificates and account traffic are preserved.') }}</span></div>
+<div class="cc-callout">{{ icon('shield') }}<span>{{ admin_t('Open the selected protocol and port in the provider firewall first. Existing imported profiles must be downloaded again. Confirm within 120 seconds after testing a new connection; otherwise the previous listener is restored.') }}</span></div>
+{% for node in nodes %}{% set ep=endpoints.get(node.id|string,{}) %}
+<section class="cc-surface cc-pad transport-node" id="node-{{ node.id }}" data-url="{{ panel_path.rstrip('/') }}/api/settings/transports/{{ node.id }}">
+<div class="cc-heading"><span class="cc-icon">{% if node.country %}<span class="flag" data-code="{{ node.country }}">{{ node.country|upper }}</span>{% else %}{{ icon('globe') }}{% endif %}</span><div><h2>{{ node.name }}</h2><small>#{{ node.id }}</small></div></div>
+<form data-transport-form><div class="cc-form-grid">
+<label>{{ admin_t('VPN domain or IP') }}<input name="host" value="{{ ep.host or '' }}" placeholder="{{ node.ip }}" dir="ltr" maxlength="253"><small>{{ admin_t('Empty = existing node / installer address.') }}</small></label>
+<label>{{ admin_t('Active transport') }}<select name="proto"><option value="tcp">TCP</option><option value="udp">UDP</option></select></label>
+<label>{{ admin_t('TCP port') }}<input name="tcp_port" type="number" min="1" max="65535" required dir="ltr"></label>
+<label>{{ admin_t('UDP port') }}<input name="udp_port" type="number" min="1" max="65535" required dir="ltr"></label>
+</div><label class="cc-note"><input name="accept" type="checkbox" required> {{ admin_t('I accept that users on this node will reconnect.') }}</label>
+<div class="cc-actions">{{ action('check','Apply listener','type="submit" disabled') }}{{ action('clock','Refresh','type="button" data-runtime-action="status"') }}{{ action('shield','Confirm connection works','type="button" data-runtime-action="confirm" hidden') }}{{ action('clock','Roll back','type="button" data-runtime-action="rollback" hidden') }}</div>
+<p class="cc-feedback" role="status"></p><p class="cc-note" data-live-listener></p></form></section>
+{% else %}<p>{{ admin_t('No nodes available.') }}</p>{% endfor %}</div><script src="{{ url_for('static',filename='js/transports.js',v=panel_version) }}" defer></script>{% endblock %}

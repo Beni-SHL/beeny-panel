@@ -20,7 +20,7 @@ class CCDPermissionTests(unittest.TestCase):
         from node_agent import bridge
         with patch.object(bridge,'KEY','test'),patch.object(bridge.subprocess,'run',return_value=Mock(returncode=0)),patch.object(bridge,'metrics',return_value={}):
             response=bridge.app.test_client().get('/api/node/stats',headers={'Authorization':'Bearer test'})
-            self.assertEqual(response.status_code,200);self.assertEqual(response.json['status'],'online');self.assertEqual(response.json['agent_version'],'3.6.9')
+            self.assertEqual(response.status_code,200);self.assertEqual(response.json['status'],'online');self.assertEqual(response.json['agent_version'],Path('VERSION').read_text().strip())
     def test_node_editor_has_independent_api_host_and_local_modal_handler(self):
         source=(Path(__file__).resolve().parents[1]/'templates/nodes.html').read_text()
         self.assertIn('name="host"',source);self.assertIn('data-cc-toggle="node-editor-',source);self.assertIn('data-settings-ajax',source)

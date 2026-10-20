@@ -14,8 +14,12 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y python3-venv iproute2 nftables
 DEST=/opt/beeny-node-bridge
 install -d -m 755 "$DEST"
 python3 -m venv "$DEST/venv"
-"$DEST/venv/bin/python" -m pip install 'Flask>=3.1,<4' 'requests>=2.32,<3' 'psutil>=7,<8' 'waitress>=3,<4'
+"$DEST/venv/bin/python" -m pip install 'Flask>=3.1,<4' 'requests>=2.32,<3' 'psutil>=7,<8' 'waitress>=3,<4' 'cryptography>=46,<49'
 install -m 644 "$ROOT_DIR/node_agent/bridge.py" "$DEST/bridge.py"
+install -m 644 "$ROOT_DIR/vpn_runtime.py" "$DEST/vpn_runtime.py"
+install -m 644 "$ROOT_DIR/tunnel_manager.py" "$DEST/tunnel_manager.py"
+install -m 644 "$ROOT_DIR/tunnel_engines.py" "$DEST/tunnel_engines.py"
+install -m 644 "$ROOT_DIR/integration-sources.json" "$DEST/integration-sources.json"
 install -m 644 "$ROOT_DIR/network_policy.py" "$DEST/network_policy.py"
 install -m 644 "$ROOT_DIR/warp_manager.py" "$DEST/warp_manager.py"
 install -m 644 "$ROOT_DIR/host_metrics.py" "$DEST/host_metrics.py"
@@ -27,7 +31,7 @@ install -m 644 "$ROOT_DIR/bandwidth.py" "$DEST/bandwidth.py"
 install -m 644 "$ROOT_DIR/terminal_traffic.py" "$DEST/terminal_traffic.py"
 install -m 644 "$ROOT_DIR/privileged.py" "$DEST/privileged.py"
 install -d -m 755 "$DEST/scripts"
-for script in collect_vpn_diagnostics.py vpn_disconnect.py vpn_admission.py vpn_maintenance.py configure_vpn_core.py; do install -m 755 "$ROOT_DIR/scripts/$script" "$DEST/scripts/$script"; done
+for script in install_integrations.py install_tunnel.py collect_vpn_diagnostics.py vpn_disconnect.py vpn_admission.py vpn_maintenance.py configure_vpn_core.py; do install -m 755 "$ROOT_DIR/scripts/$script" "$DEST/scripts/$script"; done
 
 install -d -m 700 /etc/beeny-node-bridge
 printf 'BEENY_AGENT_KEY=%s\nBEENY_LEGACY_AGENT_PORT=%s\nBEENY_MANAGEMENT_PORT=%s\n' "$agent_key" "$legacy_port" "$management_port" > /etc/beeny-node-bridge/bridge.env
@@ -61,7 +65,9 @@ UMask=0077
 WantedBy=multi-user.target
 UNIT
 sed 's@/opt/beeny-panel@/opt/beeny-node-bridge@g' "$ROOT_DIR/beeny-network-policy.service" > /etc/systemd/system/beeny-network-policy.service
+sed 's@/opt/beeny-panel@/opt/beeny-node-bridge@g' "$ROOT_DIR/beeny-vpn-recovery.service" > /etc/systemd/system/beeny-vpn-recovery.service
 systemctl daemon-reload
+systemctl enable beeny-vpn-recovery.service
 systemctl enable beeny-network-policy.service
 systemctl enable --now beeny-node-bridge
 systemctl is-active --quiet beeny-node-bridge

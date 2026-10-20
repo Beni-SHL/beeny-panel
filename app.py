@@ -1060,18 +1060,24 @@ def build_config(user, requested_node_id=None,certificate_username=None):
         return endpoint(host,110)['host']
 
     try:
-        remotes_block = "\n".join(
-            'remote {host} {port} {proto}'.format(**({'proto':'tcp'} | speed_policy.remote(node,clean_address(node),os.environ.get('BEENY_VPN_PORT','110'))))
-            for node in nodes_to_download
-        )
-    except ValueError:
-        return "An assigned node has an invalid VPN address.", 503
+        route_mode=request.args.get('route','direct')
+        if route_mode not in {'direct','tunnel'}:return 'Invalid profile route.',400
+        def node_remote(node):
+            if route_mode=='tunnel':
+                if not tunnel_settings.configured(node.id):raise ValueError('This node has no enabled paired tunnel.')
+                return tunnel_settings.call(node,'endpoint')['endpoint']
+            return {'proto':'tcp'} | speed_policy.remote(node,clean_address(node),os.environ.get('BEENY_VPN_PORT','110'))
+        remotes=[node_remote(node) for node in nodes_to_download]
+        profile_proto='udp' if all(remote['proto']=='udp' for remote in remotes) else 'tcp'
+        remotes_block = "\n".join('remote {host} {port} {proto}'.format(**remote) for remote in remotes)
+    except (ValueError,RuntimeError,requests.RequestException):
+        return "An assigned node endpoint could not be verified. Check its VPN listener and bridge.", 503
     if len(nodes_to_download) > 1:
         remotes_block = "remote-random\n" + remotes_block
 
     ovpn_template = f"""client
 dev tun
-proto tcp
+proto {profile_proto}
 {remotes_block.strip()}
 
 resolv-retry infinite
@@ -1110,6 +1116,7 @@ verb 3
     mem_file.seek(0)
 
     suffix = f"Node_{requested_node_id}" if requested_node_id else "MultiLocation"
+    if route_mode=='tunnel':suffix+='_Tunnel'
     filename = f"Beeny_{username}_{suffix}.ovpn"
 
     return send_file(mem_file, as_attachment=True, download_name=filename, mimetype='application/x-openvpn-profile')
@@ -1172,7 +1179,7 @@ def api_users_search():
     page_nodes={u.id:[] for u in users}
     if page_nodes:
         for user_id,node in db.session.query(UserNode.user_id,Node).join(Node,UserNode.node_id==Node.id).filter(UserNode.user_id.in_(page_nodes)).all():
-            page_nodes[user_id].append({'id':node.id,'name':node.name,'country':node.country})
+            page_nodes[user_id].append({'id':node.id,'name':node.name,'country':node.country,'tunnel':tunnel_settings.configured(node.id)})
     users_data = []
     for u in users:
         days_left_text = "Unlimited"
@@ -1793,6 +1800,13 @@ register_portal_i18n(app)
 
 from speed_policy import register as register_speed_policy
 speed_policy=register_speed_policy(app,db,User,Node,UserNode,customer_features,PANEL_PATH,is_primary_node)
+from transport_settings import register as register_transport_settings
+transport_settings=register_transport_settings(app,db,Node,customer_features,PANEL_PATH,is_primary_node)
+from tunnel_settings import register as register_tunnel_settings
+tunnel_settings=register_tunnel_settings(app,db,Node,customer_features,PANEL_PATH,is_primary_node)
+
+from dns_services import register as register_dns_services
+register_dns_services(app,db,User,Node,UserNode,customer_features,PANEL_PATH)
 
 from admin_i18n import register as register_admin_i18n
 register_admin_i18n(app,db,Admin,PANEL_PATH)

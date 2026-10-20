@@ -54,6 +54,12 @@ def username(value, session_only=False):
     return value
 
 def dispatch(operation, parameters):
+    if operation=='tunnel':
+        try:return __import__('tunnel_manager').handle(parameters.get('action'),parameters.get('data'))
+        except ValueError as exc:return dict(success=False,message=str(exc))
+    if operation=='vpn_runtime':
+        try:return __import__('vpn_runtime').handle(parameters.get('action'),parameters.get('data'),parameters.get('revision'))
+        except ValueError as exc:return dict(success=False,message=str(exc))
     if operation=='maintenance':return __import__('maintenance').queue(parameters.get('action'))
     if operation=='network_policy':return __import__('network_policy').handle(parameters.get('action'),parameters.get('policy'),parameters.get('revision'))
     if operation=='https_action':return __import__('https_maintenance').schedule(parameters.get('action'))
