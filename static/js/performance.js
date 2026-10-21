@@ -5,7 +5,7 @@
  // Normal page content is never hidden while waiting for every font or asset.
  frames().then(finish);
  addEventListener('pageshow',()=>{finish();sync();});addEventListener('pagehide',()=>{window.__beenyBackgroundPaused=true;});
- const sync=()=>{window.__beenyBackgroundPaused=document.hidden||html.classList.contains('beeny-scrolling')||matchMedia('(prefers-reduced-motion: reduce)').matches;};
+ const sync=()=>{window.__beenyBackgroundPaused=document.hidden||html.classList.contains('beeny-scrolling')||matchMedia('(prefers-reduced-motion: reduce)').matches;html.classList.toggle('beeny-background-paused',window.__beenyBackgroundPaused);};
  document.addEventListener('visibilitychange',sync);
  function scrolling(){if(!html.classList.contains('beeny-scrolling')){html.classList.add('beeny-scrolling');sync();}clearTimeout(scrollTimer);scrollTimer=setTimeout(()=>{html.classList.remove('beeny-scrolling');sync();},180);}
  document.addEventListener('scroll',scrolling,{capture:true,passive:true});sync();

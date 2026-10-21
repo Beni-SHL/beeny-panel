@@ -37,10 +37,10 @@ const scalar = (name,value) => gl.uniform1f(uniform(name),value);
 function rgb(hex) {return [1,3,5].map(i => parseInt(hex.slice(i,i+2),16)/255);}
 function theme() {
   const light = document.body.classList.contains('light');
-  const colors = (light?['#5a8cff','#a855f7','#6366f1']:['#A6C8FF','#5227FF','#FF9FFC']).map(rgb);
+  const colors = (light?['#5a8cff','#a855f7','#6366f1']:['#BEBEBE','#888888','#ECECEC']).map(rgb);
   for (let i=0;i<8;i++) gl.uniform3fv(uniform('uColor'+i),colors[Math.min(i,2)]);
   gl.uniform1i(uniform('uColorCount'),3);
-  gl.uniform3fv(uniform('uBgColor'),rgb(light?'#E8EBF2':'#04040a'));
+  gl.uniform3fv(uniform('uBgColor'),rgb(light?'#E8EBF2':'#121212'));
   gl.uniform3fv(uniform('uMouseColor'),[0,1,2].map(i => colors.reduce((sum,c)=>sum+c[i],0)/3));
 }
 for (const [name,value] of Object.entries({uSpeed:0.5,uStreakWidth:1,uStreakLength:1,uGlow:1,uDensity:0.6,uTwinkle:1,uZoom:3,uBgGlow:0.5,uOpacity:1,uMouseEnabled:1,uMouseStrength:0.5,uMouseRadius:1})) scalar(name,value);

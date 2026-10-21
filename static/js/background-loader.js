@@ -3,6 +3,8 @@ const root=document.getElementById('react-bg-root');
 if(root){
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');let loaded=false,queued=false;
  const ambient=()=>import('./ambient.js');
+ // CSS-only pastel motion is ready without compiling WebGL on light pages.
+ ambient();
  function start(){if(loaded||queued||document.body.classList.contains('light')||reduced.matches)return;queued=true;
   const boot=async()=>{queued=false;if(document.body.classList.contains('light')||document.hidden)return;loaded=true;
    try{await import('./lightfall.js')}catch(_){await ambient()}};

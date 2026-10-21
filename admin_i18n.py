@@ -1,7 +1,39 @@
 """Explicit template translations: never translate usernames or stored customer text."""
 from flask import request,jsonify,session
 from flask_login import current_user,login_required
-PAIRS='''Entry host|میزبان ورودی
+PAIRS='''Update panel|آپدیت پنل
+Connectivity|اتصال‌ها
+DNS services|سرویس‌های DNS
+TCP and UDP listeners|پورت‌های TCP و UDP
+Connect two servers|اتصال دو سرور
+Subscriber DNS endpoints, profiles and checks|آدرس‌ها، پروفایل‌ها و بررسی DNS کاربران
+Check versions and install GitHub updates|بررسی نسخه و نصب آپدیت گیتاب
+Release status|وضعیت نسخه
+Installed version|نسخهٔ نصب‌شده
+GitHub version|نسخهٔ گیتاب
+Source|منبع
+Commit|کامیت
+Check GitHub|بررسی گیتاب
+Install update|نصب آپدیت
+Update progress|روند آپدیت
+Queued|در صف
+Download|دریافت
+Backup, install and health check|بکاپ، نصب و بررسی سلامت
+Completed|تکمیل شد
+Open updated panel|باز کردن پنل آپدیت‌شده
+Recovery & data|بازیابی و اطلاعات
+Update is running.|آپدیت در حال اجراست.
+A newer version is available.|نسخهٔ جدید آمادهٔ نصب است.
+No newer release is available.|نسخهٔ جدیدتری موجود نیست.
+Checking GitHub…|در حال بررسی گیتاب…
+Panel is reconnecting. Status will retry automatically.|پنل در حال راه‌اندازی مجدد است؛ بررسی وضعیت خودکار ادامه دارد.
+Install this GitHub release? The panel will briefly restart.|این نسخه از گیتاب نصب شود؟ پنل برای مدت کوتاهی راه‌اندازی مجدد می‌شود.
+Update queued.|آپدیت در صف قرار گرفت.
+Downloading the verified GitHub commit.|در حال دریافت نسخهٔ بررسی‌شده از گیتاب.
+Creating backups, installing and checking panel health. The panel may briefly reconnect.|در حال بکاپ، نصب و بررسی سلامت؛ ممکن است اتصال پنل کوتاه‌مدت قطع شود.
+Update completed and panel health verified.|آپدیت انجام و سلامت پنل تأیید شد.
+Update failed. Inspect the update journal and backup report before retrying.|آپدیت ناموفق بود؛ پیش از تلاش مجدد گزارش آپدیت و بکاپ را بررسی کنید.
+Entry host|میزبان ورودی
 Exit host|میزبان خروجی
 1 · Entry host|۱ · میزبان ورودی
 2 · Exit host|۲ · میزبان خروجی

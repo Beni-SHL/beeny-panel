@@ -933,7 +933,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
     @app.get(base+'/settings/update')
     @login_required
     def update_page():
-        abort(410, 'Use the documented SSH updater; the update UI was removed.')
+        if current_user.role!='owner':abort(403)
         root = Path(app.root_path)
         version = (root/'VERSION').read_text().strip() if (root/'VERSION').exists() else 'Legacy'
         try:

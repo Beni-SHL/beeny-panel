@@ -1,5 +1,5 @@
-/* Beeny 3.7.3: one material, bounded refraction, original sparse Lightfall. */
-:root{--c-glass:#bbbbbc;--c-light:#fff;--c-dark:#000;--glass-reflex-dark:1;--glass-reflex-light:1;--saturation:150%;--beeny-glass-fill:rgba(29,31,52,.52);--beeny-glass-line:rgba(255,255,255,.14);--beeny-tool-ink:#eff3ff}
+/* Beeny 3.7.4: one material, bounded refraction, original sparse Lightfall. */
+:root{--c-glass:#bbbbbc;--c-light:#fff;--c-dark:#000;--glass-reflex-dark:1;--glass-reflex-light:1;--saturation:150%;--beeny-glass-fill:rgba(30,30,30,.52);--beeny-glass-line:rgba(255,255,255,.14);--beeny-tool-ink:#eff3ff}
 body.light{--beeny-glass-fill:rgba(255,255,255,.48);--beeny-glass-line:rgba(255,255,255,.78);--beeny-tool-ink:#29344d}
 body:not(.light){--glass-reflex-dark:2;--glass-reflex-light:.3}
 body{--beeny-glass-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c-light) calc(var(--glass-reflex-light)*10%),transparent),inset 1.8px 3px 0 -2px color-mix(in srgb,var(--c-light) calc(var(--glass-reflex-light)*90%),transparent),inset -2px -2px 0 -2px color-mix(in srgb,var(--c-light) calc(var(--glass-reflex-light)*80%),transparent),inset -3px -8px 1px -6px color-mix(in srgb,var(--c-light) calc(var(--glass-reflex-light)*60%),transparent),inset -.3px -1px 4px color-mix(in srgb,var(--c-dark) calc(var(--glass-reflex-dark)*12%),transparent),inset -1.5px 2.5px 0 -2px color-mix(in srgb,var(--c-dark) calc(var(--glass-reflex-dark)*20%),transparent),inset 0 3px 4px -2px color-mix(in srgb,var(--c-dark) calc(var(--glass-reflex-dark)*20%),transparent),inset 2px -6.5px 1px -4px color-mix(in srgb,var(--c-dark) calc(var(--glass-reflex-dark)*10%),transparent),0 1px 5px #0000000c,0 6px 16px #00000008}
@@ -7,7 +7,7 @@ body:has(#react-bg-root){isolation:isolate}
 #react-bg-root{isolation:isolate;overflow:hidden}
 #react-bg-root canvas{pointer-events:none!important;opacity:1}
 .beeny-liquid-defs{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
-html body :is(.admin-glass,.glass-card,.glass-box,.glass-navbar,.glass,.sidebar,.shell-nav,.cc-surface,.workspace-top,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat,.glass-toolbar,.ac-submitbar,.ac-page) {background:var(--beeny-glass-fill)!important;border:1px solid var(--beeny-glass-line)!important;box-shadow:var(--beeny-glass-shadow)!important;backdrop-filter:blur(4px) saturate(var(--saturation))!important;backdrop-filter:blur(4px) url(#beeny-liquid) saturate(var(--saturation))!important;-webkit-backdrop-filter:blur(4px) saturate(var(--saturation))!important}
+html body :is(.admin-glass,.glass-card,.glass-box,.glass-navbar,.glass,.sidebar,.shell-nav,.cc-surface,.cc-hero,.workspace-top,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat,.glass-toolbar,.ac-submitbar,.ac-page) {background:var(--beeny-glass-fill)!important;border:1px solid var(--beeny-glass-line)!important;box-shadow:var(--beeny-glass-shadow)!important;backdrop-filter:blur(6px) saturate(var(--saturation))!important;backdrop-filter:blur(6px) url(#beeny-liquid) saturate(var(--saturation))!important;-webkit-backdrop-filter:blur(6px) saturate(var(--saturation))!important}
 /* Nested surfaces retain the material, without recursively filtering ancestor layers. */
 html body :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-panel,.ac-page) :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-panel){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html body .beeny-header-controls{display:flex;align-items:center;gap:10px;flex:none}
@@ -18,7 +18,7 @@ html body .glass-navbar :is(.notification-bell,#themeToggle,#admin-language-swit
 html body .glass-navbar :is(.notification-bell,#admin-language-switch) svg{width:20px!important;height:20px!important;flex:none}
 html body .glass-navbar #themeToggle i{font-size:18px!important;line-height:1}
 html body .glass-navbar .admin-language-code{position:absolute;inset-inline-end:4px;bottom:3px;font-size:8px!important;line-height:1;font-weight:700}
-html body .notification-popover{z-index:100;background:rgba(24,27,45,.97)!important;color:#eef2ff;backdrop-filter:blur(4px)!important;-webkit-backdrop-filter:blur(4px)!important;box-shadow:0 14px 35px #0002!important}
+html body .notification-popover{z-index:100;background:rgba(28,28,28,.97)!important;color:#eef2ff;backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important;box-shadow:0 14px 35px #0002!important}
 html body.light .notification-popover{background:rgba(249,250,255,.97)!important;color:#29344d}
 .notification-badge[hidden]{display:none!important}
 .plan-gifts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0;min-width:0}
@@ -31,8 +31,51 @@ html body.light .notification-popover{background:rgba(249,250,255,.97)!important
 @media(max-width:350px){.plan-grid{grid-template-columns:1fr!important}}
 [data-liquid-switcher]{position:relative;isolation:isolate}[data-liquid-switcher] [data-liquid-active]{animation:beeny-glass-select 440ms ease}@keyframes beeny-glass-select{50%{scale:1.04 1}}
 @media(prefers-reduced-motion:reduce){[data-liquid-switcher] [data-liquid-active]{animation:none}}
-@supports not (backdrop-filter:blur(4px)){html body :is(.glass,.cc-surface,.admin-glass,.ac-panel,.glass-toolbar){background:#23263d!important}html body.light :is(.glass,.cc-surface,.admin-glass,.ac-panel,.glass-toolbar){background:#f2f4fc!important}}
+@supports not (backdrop-filter:blur(6px)){html body :is(.glass,.cc-surface,.admin-glass,.ac-panel,.glass-toolbar){background:#242424!important}html body.light :is(.glass,.cc-surface,.admin-glass,.ac-panel,.glass-toolbar){background:#f2f4fc!important}}
 
 html body main.ac-page{padding:24px;border-radius:24px}
 html body main.ac-page .ac-panel{background:rgba(150,150,180,.035)!important;box-shadow:inset 0 1px 0 #ffffff08!important}
 @media(max-width:768px){html body main.ac-page{padding:16px!important;border-radius:20px;margin-top:0}.ac-submitbar{flex-wrap:wrap;bottom:8px}}
+
+/* Theme surfaces stay neutral in dark mode; light mode has a quiet pastel wash. */
+body:not(.light):has(#admin-page){background:#121212!important;color:#ececec;--bg:#121212;--surface:#242424;--soft:#ffffff0b;--ink:#ececec;--muted:#aaa;--line:#ffffff20}
+body:not(.light) #admin-page :is(.cc-hero,.cc-surface,.admin-glass){--bg:#121212;--surface:#242424;--ink:#ececec;--muted:#aaa}
+body:not(.light) #admin-page .dash-header-left h1{background-image:linear-gradient(115deg,#fff,#aaa 58%,#eee)!important}
+body:not(.light) #react-bg-root.beeny-ambient{background:#121212!important}
+body:not(.light) #react-bg-root .ambient-glow{background:#aaa;opacity:.045}
+body:not(.light) #react-bg-root:has(canvas) .ambient-glow{display:none}
+body.light #react-bg-root canvas{visibility:hidden!important}
+body.light #react-bg-root.beeny-ambient{background:#f3f4fa!important}
+body.light #react-bg-root .ambient-glow{width:65vmax;height:65vmax;max-width:1000px;max-height:1000px;filter:none;opacity:1;will-change:transform;background:radial-gradient(ellipse,rgba(196,181,253,.55),rgba(196,181,253,.12) 45%,transparent 70%);animation:beeny-pastel-drift 32s ease-in-out infinite}
+body.light #react-bg-root .glow-0{top:-22%;left:-24%}
+body.light #react-bg-root .glow-1{bottom:-32%;right:-26%;background:radial-gradient(ellipse,rgba(167,225,222,.5),rgba(167,225,222,.1) 45%,transparent 70%);animation-delay:-11s}
+body.light #react-bg-root .glow-2{top:22%;left:35%;background:radial-gradient(ellipse,rgba(250,202,221,.44),rgba(250,202,221,.1) 45%,transparent 70%);animation-delay:-21s}
+@keyframes beeny-pastel-drift{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(5vw,4vh,0) scale(1.08)}}
+html.beeny-background-paused #react-bg-root .ambient-glow{animation-play-state:paused}
+.cc-settings-dns{grid-column:1/-1}.panel-update-log{max-height:280px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;direction:ltr;text-align:left}
+@media(max-width:768px){body.light #react-bg-root .ambient-glow{width:100vmax;height:100vmax;animation-duration:40s;will-change:auto}}
+@media(prefers-reduced-motion:reduce){body.light #react-bg-root .ambient-glow{animation:none;will-change:auto}}
+
+/* Content cards have breathing room; list/table cards keep their own row insets. */
+#admin-page .cc-traffic>.host-traffic{padding:24px!important;border-radius:24px}
+#admin-page :is(.cc-page>.admin-glass,.cc-page>.cc-surface.cc-pad){padding:24px}
+body:not(.light) #admin-page .cc-page{--cc-ink:#ededed;--cc-muted:#aaa;--cc-panel:#24242490;--cc-field:#ffffff08;--cc-line:#ffffff20}
+@media(max-width:760px){#admin-page .cc-traffic>.host-traffic,#admin-page :is(.cc-page>.admin-glass,.cc-page>.cc-surface.cc-pad){padding:18px!important}}
+
+/* One quiet action family across user cards and compact rows. */
+#admin-page .action-row .glass-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:40px;min-height:36px;padding:8px 12px!important;border-radius:12px!important;color:#e4e4e4!important;background:#ffffff0c!important;border:1px solid #ffffff20!important;box-shadow:inset 0 1px 0 #ffffff08!important;transition:background .18s,border-color .18s,transform .18s;text-decoration:none}
+body.light #admin-page .action-row .glass-btn{color:#535264!important;background:#ffffff80!important;border-color:#77718c26!important;box-shadow:0 2px 6px #30294306!important}
+#admin-page .action-row .glass-btn:hover{background:#ffffff18!important;border-color:#ffffff40!important;transform:translateY(-1px)}
+body.light #admin-page .action-row .glass-btn:hover{background:#eeebf6!important;border-color:#8a7da64a!important}
+#admin-page .action-row .glass-btn:focus-visible{outline:2px solid #9e8ac7;outline-offset:3px}
+#admin-page .action-row .glass-btn.danger:is(:hover,:focus-visible){color:#e8798c!important;border-color:#e8798c66!important}
+#admin-page .action-row .glass-btn.warning:is(:hover,:focus-visible){color:#c39548!important;border-color:#c3954866!important}
+#admin-page .action-row .glass-btn:disabled{opacity:.45;transform:none;cursor:wait}
+#admin-page .action-row .glass-btn i{font-size:13px}
+.update-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0;list-style:none;counter-reset:update-step}.update-progress li{counter-increment:update-step;font-size:12px;color:var(--cc-muted);border-top:2px solid var(--cc-line);padding-top:12px;line-height:1.7}.update-progress li::before{content:counter(update-step);display:block;font-size:18px;font-weight:600}.update-progress li.active{color:var(--cc-ink);border-color:var(--cc-accent)}.update-progress li.done{border-color:#64b497}.update-progress li.done::before{content:'✓'}
+@media(max-width:600px){.update-progress{grid-template-columns:repeat(2,minmax(0,1fr))}.action-row{gap:8px!important}#admin-page .action-row .glass-btn{min-width:40px;min-height:40px;padding:9px 11px!important}}
+
+.beeny-scrolling #react-bg-root .ambient-glow{animation-play-state:paused!important}
+body:not(.light) #admin-language-overlay{background:#121212f5}body.light #admin-language-overlay{background:#f3f4faf5;color:#535264}
+
+body:not(.light) #admin-page .cc-hero::before{background:radial-gradient(ellipse,#ffffff0a,transparent 70%)}

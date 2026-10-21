@@ -71,3 +71,25 @@ def register(app,db,Node,panel_path,is_primary,privileged_enabled,privileged_cal
         except Exception:
             app.logger.exception('Maintenance action failed')
             return jsonify(success=False,message='Maintenance failed. Check the helper journal.'),503
+
+    @app.post(base+'/api/settings/update')
+    @login_required
+    def panel_update_action():
+        if current_user.role!='owner':abort(403)
+        data=request.get_json(silent=True) or {}
+        if data.get('action') not in {'status','check','install'}:
+            return jsonify(success=False,message='Invalid update action.'),400
+        try:
+            args=dict(action=data['action'],commit=data.get('commit'))
+            if privileged_enabled():result=privileged_call('panel_update',**args)
+            else:
+                from privileged_server import dispatch
+                result=dispatch('panel_update',args)
+            response=jsonify(result)
+            response.headers['Cache-Control']='no-store'
+            return response
+        except ValueError as exc:
+            return jsonify(success=False,message=str(exc)),400
+        except Exception:
+            app.logger.exception('Panel update operation failed')
+            return jsonify(success=False,message='Update service unavailable. Check GitHub access and the privileged helper journal.'),503

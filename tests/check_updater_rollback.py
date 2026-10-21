@@ -7,10 +7,10 @@ python=sys.executable
 for failure in ('database', 'health'):
  with tempfile.TemporaryDirectory() as tmp:
   root=Path(tmp); dest=root/'panel'; etc=root/'etc'; run=root/'run'; bins=root/'bin'; release=root/'release'
-  shutil.copytree(source,release,ignore=shutil.ignore_patterns('.git','__pycache__','instance','venv','backups'))
+  shutil.copytree(source,release,ignore=shutil.ignore_patterns('.git','__pycache__','instance','venv','.venv','backups'))
   (release/'scripts/harden_services.sh').write_text('#!/bin/bash\necho \"BEENY_PRIVILEGE_SOCKET=/run/beeny-panel/privileged.sock\" >> '+str(etc/'beeny-panel/panel.env')+'\n')
   shutil.copytree(release,dest)
-  for directory in (etc/'systemd/system',etc/'beeny-panel',run,bins,dest/'instance',dest/'venv/bin'):directory.mkdir(parents=True,exist_ok=True)
+  for directory in (etc/'systemd/system',etc/'beeny-panel',run,run/'lock',bins,dest/'instance',dest/'venv/bin'):directory.mkdir(parents=True,exist_ok=True)
   (dest/'app.py').write_text('OLD_APPLICATION = True\n')
   for retired in ('static/index-CmGPzBYL.js','static/js/index-CmGPzBYL.js'):(dest/retired).write_text('OLD_BACKGROUND_ASSET\n')
   (dest/'config.json').write_text('{"panel_path":"/panel"}')

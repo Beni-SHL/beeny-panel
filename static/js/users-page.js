@@ -175,7 +175,7 @@ function renderUsers(users) {
               <a href="${panelPath}/users/view/${user.id}" class="glass-btn" title="Profile" aria-label="Profile"><i class="fa fa-id-card"></i></a>
               <a href="${panelPath}/users/edit/${user.id}" class="glass-btn" title="Edit" aria-label="Edit"><i class="fa fa-pen"></i></a>
 
-              <button type="button" class="glass-btn configs-trigger" title="Download config" aria-label="Download config" onclick="toggleConfigsMenu(this)" style="background: linear-gradient(135deg, rgba(96,165,250,0.2), rgba(96,165,250,0.05)); border-color:rgba(96,165,250,0.4); color:var(--blue);">
+              <button type="button" class="glass-btn configs-trigger" title="Download config" aria-label="Download config" onclick="toggleConfigsMenu(this)">
                 <i class="fa fa-cloud-arrow-down"></i> <i class="fa fa-chevron-down" style="font-size:9px; margin-left:4px;"></i>
               </button>
 

@@ -1,51 +1,25 @@
 {
-  "version": "3.7.3",
-  "base_version": "3.7.2",
+  "version": "3.7.4",
+  "base_version": "3.7.3",
   "release_date": "2026-10-21",
-  "bridge_version": "3.7.3",
+  "bridge_version": "3.7.4",
   "channel": "test",
   "features": [
-    "Restored original active background settings: 2 streaks, 0.6 density, 0.5 speed; capped pixels and deferred dark-only WebGL startup.",
-    "One glass material with local map and bounded pixel-space refraction, reduced blur and nested filter suppression.",
-    "Shared header controls; main account form and user toolbar surfaces; material CSS in head.",
-    "Removed normal page font gate and redundant pre-reload language GET.",
-    "Omitted unused Persian dictionary from English HTML; language overlay retained.",
-    "Versioned cache for public code/assets; public static delivery avoids session SQL; private routes excluded."
+    "Pastel CSS-only light background with reduced-motion support; neutral gray/black dark background.",
+    "Shared six-pixel Liquid Glass, including Settings heroes; grouped Settings with dedicated DNS and Update panel rows.",
+    "Bounded intrinsic SVGs and early hidden language overlay prevent unstyled black-circle flash; loader fades.",
+    "Responsive traffic/content card padding, consistent user action buttons, and tunnel section spacing.",
+    "Owner-only AJAX GitHub updater: automatic version check on page entry, explicit install, fixed repository and pinned commit, separate background worker, progress polling and reconnect retry.",
+    "Existing backed-up updater with health checks and rollback; exclusive install lock; no VPN restart."
   ],
   "validation": {
-    "full_suite": {
-      "tests": 415,
-      "skipped": 2,
-      "initial_failures": 1,
-      "seconds": 343.703,
-      "initial_failure": "Bridge version 3.7.2 did not match panel 3.7.3.",
-      "resolution": "Bridge version constant and updater expectation corrected to 3.7.3; all six related tests passed."
-    },
-    "final_targeted": {
-      "node": 6,
-      "public_assets": 3,
-      "security": 7,
-      "sri": 2,
-      "transport_ui": 6,
-      "result": "passed"
-    },
-    "javascript_behavior": "Light/dark startup scheduling, first paint without fonts, single language save and reload passed.",
-    "static_checks": [
-      "Python AST",
-      "Jinja",
-      "Bash",
-      "changed JavaScript",
-      "CSS declaration parsing",
-      "8 rendered EN/FA documents and header structure",
-      "install.sh --check",
-      "archive CRC and SHA256 manifest"
-    ],
-    "english_settings_html_bytes": {
-      "before": 241592,
-      "after": 25477,
-      "scope": "Same synthetic fixture; HTML bytes only, not real network timing."
-    },
-    "browser_visual": "Unverified: cloud browser rejected local file protocol and could not reach isolated local server. No browser bypass attempted."
+    "targeted_python_tests": 35,
+    "final_update_worker_tests": 9,
+    "rendered_pages": 12,
+    "local_checks": "Python AST, Jinja, changed CSS/JS, Bash, installer source completeness, SRI pins and JS VM checks passed.",
+    "rollback": "Database and health-check failures restored application/environment/service in a temporary fake-systemd installation.",
+    "browser_visual": "Unverified: cloud browser access restrictions prevented real desktop/mobile visual review.",
+    "live_github_install": "Unverified: GitHub network/install path was mocked in tests; no production or fresh VPS update was performed."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -63,10 +37,10 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Visual approval on an actual desktop/mobile browser and clean-VPS installation remain unverified.",
-    "No real-world load time, FPS or throughput improvement is claimed from the HTML byte measurement.",
-    "Existing 3.7.2 tunnel/DNS scope and operational limitations remain; see GUIDE-3.7.2-FA.md.",
-    "Node runtime change is only the release version string; existing nodes do not need an update for these UI changes.",
-    "No fresh Microsoft Defender approval or malware scan is claimed."
+    "Publish the complete source to GitHub main. Future UI installs require a strictly newer semantic VERSION; this feature first needs local/SSH installation on older panels.",
+    "Auto-check is on entry to the update page; unattended scheduled installation is not enabled.",
+    "Requires server access to GitHub/raw GitHub and dependency sources, plus git, systemd and the privileged helper.",
+    "Existing 3.7.2 tunnel/DNS limitations remain; see GUIDE-3.7.2-FA.md.",
+    "Visual browser approval, fresh VPS installation and fresh Microsoft Defender approval are not claimed."
   ]
 }

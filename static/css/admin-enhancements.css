@@ -451,11 +451,11 @@ body :is(.admin-glass,.glass-card,.gc,.ac-panel,.glass) :is(.admin-glass,.glass-
 body .speed-status-card{animation:none!important}
 .beeny-scrolling *, .beeny-scrolling *::before, .beeny-scrolling *::after{animation-play-state:paused!important}
 .beeny-scrolling .beeny-page-loader::after{animation-play-state:running!important}
-.beeny-page-loader{display:none;position:fixed;inset:0;z-index:2147483000;place-content:center;justify-items:center;gap:18px;background:#f2f5fb;color:#34415a;visibility:visible!important;font:500 14px Vazirmatn,system-ui,sans-serif}
+.beeny-page-loader{display:grid;opacity:0;pointer-events:none;transition:opacity .16s ease,visibility .16s;position:fixed;inset:0;z-index:2147483000;place-content:center;justify-items:center;gap:18px;background:#f2f5fb;color:#34415a;visibility:hidden!important;font:500 14px Vazirmatn,system-ui,sans-serif}
 .beeny-page-loader::after{content:'';width:28px;height:28px;border:3px solid #acbad733;border-top-color:#7694d1;border-radius:50%;animation:beeny-loading-spin .8s linear infinite}
-.beeny-page-pending .beeny-page-loader,.beeny-route-pending .beeny-page-loader{display:grid}
+.beeny-page-pending .beeny-page-loader,.beeny-route-pending .beeny-page-loader{opacity:1;visibility:visible!important;pointer-events:auto}
 .beeny-page-pending body>:not(.beeny-page-loader):not(script):not(link):not(style){visibility:hidden}
-html[data-theme=dark] .beeny-page-loader,body:not(.light):has(.sidebar) .beeny-page-loader{background:#171b29;color:#e2e8f0}
+html[data-theme=dark] .beeny-page-loader,body:not(.light):has(.sidebar) .beeny-page-loader{background:#121212;color:#e2e8f0}
 @keyframes beeny-loading-spin{to{transform:rotate(360deg)}}
 @media(max-width:700px){body :is(.admin-glass,.glass-card,.glass-box,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat,.glass){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}body :is(.sidebar,.glass-navbar,.portal-nav,.shell-nav,.mobile-shortcuts){backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important}body .quota-glass{animation:none!important;filter:none!important}}
 @media(prefers-reduced-motion:reduce){.beeny-page-loader::after{animation:none}}
