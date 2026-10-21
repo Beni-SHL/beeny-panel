@@ -892,6 +892,8 @@ def share_account_telegram(user_id):
     user=User.query.get_or_404(user_id)
     profile=db.session.get(customer_features.CustomerProfile,user.id)
     password=request.form.get('password','')
+    language=request.form.get('language','fa')
+    if language not in {'fa','en'}:return jsonify(error='Invalid message language.'),400
     if not profile or not 1<=len(password)<=256 or not check_password_hash(profile.password_hash or '',password):
         return jsonify(error='Enter the current customer password before sending.'),400
     url=request.form.get('url','');parsed=urlsplit(url)
@@ -903,9 +905,14 @@ def share_account_telegram(user_id):
     binding=customer_features.TelegramAccount.query.filter_by(user_id=user.id).first()
     if not binding or binding.chat_id<=0 or not customer_features.is_linked(user.id):
         return jsonify(error='This customer must connect their private Telegram account first.'),409
-    message=('سلام 👋\nاطلاعات حساب بنی شما:\n\n🔗 صفحهٔ شخصی: '+escape(url,quote=False)+
-             '\n👤 نام کاربری: <code>'+escape(profile.login_username or user.username,quote=False)+'</code>'+
-             '\n🔐 رمز ورود: <code>'+escape(password,quote=False)+'</code>\n\nاین اطلاعات خصوصی است؛ آن را محرمانه نگه دارید.')
+    if language=='en':
+        message=('Hello 👋\nYour Beeny account details:\n\n🔗 Personal page: '+escape(url,quote=False)+
+                 '\n👤 Username: <code>'+escape(profile.login_username or user.username,quote=False)+'</code>'+
+                 '\n🔐 Password: <code>'+escape(password,quote=False)+'</code>\n\nThese details are private. Keep them confidential.')
+    else:
+        message=('سلام 👋\nاطلاعات حساب بنی شما:\n\n🔗 صفحهٔ شخصی: '+escape(url,quote=False)+
+                 '\n👤 نام کاربری: <code>'+escape(profile.login_username or user.username,quote=False)+'</code>'+
+                 '\n🔐 رمز ورود: <code>'+escape(password,quote=False)+'</code>\n\nاین اطلاعات خصوصی است؛ آن را محرمانه نگه دارید.')
     try:customer_features.telegram('sendMessage',dict(chat_id=binding.chat_id,text=message,parse_mode='HTML',disable_web_page_preview=True))
     except Exception:return jsonify(error='Telegram delivery failed. Check the bot settings and connection.'),502
     return jsonify(ok=True)

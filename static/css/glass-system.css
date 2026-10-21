@@ -52,3 +52,6 @@ html[dir=rtl] #admin-page .settings-hub>section{direction:rtl}
 @keyframes portal-renew-sheen{0%,78%{inset-inline-start:-75%;opacity:0}79%{opacity:1}94%,100%{inset-inline-start:145%;opacity:0}}
 @media(max-width:540px){:root body .workspace>.workspace-top{min-height:66px;padding:12px;margin-block:12px 8px;border-radius:18px;gap:10px}:root body .workspace-top>span{font-size:10px;max-width:none}:root body .workspace-top .top-actions{gap:6px}:root body .workspace-top .top-actions :is(.icon-button,.logout-button,.language-picker button){width:36px;height:36px;min-width:36px;min-height:36px;border-radius:12px!important}:root body .welcome-account-actions .portal-renew-cta{width:100%;min-height:48px}}
 @media(prefers-reduced-motion:reduce){:root body .welcome-account-actions .portal-renew-cta{transition:none}:root body .welcome-account-actions .portal-renew-cta::after{animation:none;display:none}}
+/* User actions stay neutral in light mode, including danger/reset hover states. */
+:root body.light #admin-page .action-row .glass-btn:is(.danger,.warning){color:#535264!important;background:#ffffff80!important;border-color:#77718c26!important;box-shadow:0 2px 6px #30294306!important}
+:root body.light #admin-page .action-row .glass-btn:is(.danger,.warning):is(:hover,:focus-visible){color:#535264!important;background:#eeebf6!important;border-color:#8a7da64a!important}

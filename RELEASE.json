@@ -1,20 +1,24 @@
 {
-  "version": "3.7.6",
-  "base_version": "3.7.5",
+  "version": "3.7.7",
+  "base_version": "3.7.6",
   "release_date": "2026-10-21",
-  "bridge_version": "3.7.6",
+  "bridge_version": "3.7.7",
   "channel": "test",
   "features": [
-    "Customer portal header geometry: padded rounded glass surface, consistent controls and responsive spacing, scoped away from admin header.",
-    "Profile photo upload mark uses an explicit high-contrast inline SVG instead of a low-contrast font character; transparent file input and focus visibility retained.",
-    "Primary mint/turquoise renewal action with dark text, subtle periodic sheen and reduced-motion fallback; wallet remains secondary and neutral."
+    "Updater no longer requires Markdown documentation to be published. Existing docs still join backup/install/rollback; missing essential runtime source still fails preflight.",
+    "Customer credential sharing now offers FA/EN message selection, with exact credentials preserved and the original private-draft expiry/clear behavior retained.",
+    "Verified Telegram credential delivery accepts fa/en while preserving password, CSRF, private-link and recipient-binding checks.",
+    "Fixed an undefined-variable error in private-draft pagehide cleanup.",
+    "Delete/reset user action buttons remain neutral in light mode, including hover/focus states, while confirmations remain in place."
   ],
   "validation": {
-    "targeted_python_tests": 11,
-    "rendered_en_fa_pages": 42,
-    "source_checks": "All Python/Jinja, changed CSS/JS, Bash and installer source checks passed.",
-    "portal_dom": "Both languages rendered with four header controls, SVG plus/upload input and renewal anchor.",
-    "visual_browser": "Unverified: no real desktop/mobile browser visual approval or VPS deployment is claimed."
+    "targeted_python_tests": 27,
+    "rendered_en_fa_pages": 44,
+    "source_checks": "Python/Jinja, changed CSS/JS, Bash/installer checks and SRI passed.",
+    "preflight": "Real Bash preflight tested with docs present, docs absent, and essential app.py absent; no live installation touched.",
+    "rollback": "Database and health failures restored application/environment/service in temporary fake-systemd installation.",
+    "js_checks": "FA/EN exact credentials, chosen-language copy, non-resurrecting clear/expiry and pagehide cleanup passed in Node VM.",
+    "live_deployment": "No production/fresh-VPS deployment or real-browser visual approval is claimed."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -32,9 +36,8 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Appearance remains subject to real-browser visual review.",
-    "No VPN core, session guard, network policy or updater runtime changes.",
-    "Prior 3.7.4 updater and 3.7.2 tunnel/DNS limitations remain.",
+    "Publish the complete source to GitHub main, then run Check GitHub again before retrying Install update.",
+    "Existing 3.7.4 updater and 3.7.2 tunnel/DNS limits remain.",
     "No fresh Microsoft Defender approval is claimed."
   ]
 }

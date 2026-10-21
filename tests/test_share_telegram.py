@@ -23,6 +23,18 @@ class TelegramCredentialTests(unittest.TestCase):
             args=send.call_args.args
             self.assertEqual(args[1]['parse_mode'],'HTML');self.assertEqual(args[1]['chat_id'],123)
             self.assertIn('<code>customer-password-123</code>',args[1]['text'])
+    def test_english_message_keeps_verified_recipient_and_password(self):
+        fields=self.fields();url='/panel/users/view/'+str(self.user.id)+'/share-telegram'
+        with patch.object(panel.customer_features,'telegram') as send:
+            self.assertEqual(self.client.post(url,data={**fields,'language':'en'}).status_code,200)
+            message=send.call_args.args[1]
+            self.assertEqual(message['chat_id'],123)
+            self.assertIn('Your Beeny account details:',message['text'])
+            self.assertIn('<code>customer-password-123</code>',message['text'])
+            self.assertNotIn('سلام',message['text'])
+            send.reset_mock()
+            self.assertEqual(self.client.post(url,data={**fields,'language':'invalid'}).status_code,400)
+            send.assert_not_called()
     def test_rotated_binding_and_missing_csrf_cannot_send(self):
         fields=self.fields();url='/panel/users/view/'+str(self.user.id)+'/share-telegram'
         panel.customer_features.TelegramAccount.query.one().link_hash='b'*64;panel.db.session.commit()
