@@ -61,8 +61,9 @@ def fetch(url):
 
 
 def check():
-    head = json.loads(fetch(API + '/commits/main'))
-    commit = head.get('sha', '')
+    # Branch refs contain only the head identifier, not a potentially huge diff.
+    head = json.loads(fetch(API + '/git/ref/heads/main'))
+    commit = head.get('object', {}).get('sha', '')
     if not re.fullmatch('[0-9a-f]{40}', commit):
         raise ValueError('GitHub returned an invalid commit.')
     latest = fetch('https://raw.githubusercontent.com/Beni-SHL/beeny-panel/' + commit + '/VERSION').decode().strip()

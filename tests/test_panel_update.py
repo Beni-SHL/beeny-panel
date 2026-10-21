@@ -22,10 +22,20 @@ class UpdateWorkerTests(unittest.TestCase):
         data=dict(commit='a'*40,version='3.7.5',checked_at=time.time(),available=True)
         data.update(changes);updater.save('release.json',data)
     def test_fixed_commit_version_check(self):
-        with patch.object(updater,'fetch',side_effect=[json.dumps(dict(sha='b'*40)).encode(),b'3.7.5\n']) as fetch:
+        with patch.object(updater,'fetch',side_effect=[json.dumps(dict(object=dict(sha='b'*40))).encode(),b'3.7.5\n']) as fetch:
             result=updater.check()
         self.assertTrue(result['release']['available'])
+        self.assertEqual(fetch.call_args_list[0].args[0],updater.API+'/git/ref/heads/main')
         self.assertEqual(fetch.call_args_list[1].args[0],'https://raw.githubusercontent.com/Beni-SHL/beeny-panel/'+'b'*40+'/VERSION')
+    def test_large_response_guard_and_ref_validation_remain(self):
+        with patch.object(updater.urllib.request,'build_opener') as build:
+            build.return_value.open.return_value.__enter__.return_value.read.return_value=b'x'*262145
+            with self.assertRaisesRegex(ValueError,'too large'):updater.fetch(updater.API+'/git/ref/heads/main')
+        with patch.object(updater,'fetch',return_value=b'{"object":{"sha":"main; unsafe"}}') as fetch:
+            with self.assertRaisesRegex(ValueError,'invalid commit'):updater.check()
+            self.assertEqual(fetch.call_count,1)
+        self.assertIsNone(updater.read('release.json'))
+
     def test_invalid_or_older_versions_never_queue(self):
         for data in ['main','a'*39,'a'*40+'; reboot',None]:
             with self.subTest(data=data),self.assertRaises(ValueError):updater.queue(data)

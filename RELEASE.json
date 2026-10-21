@@ -1,17 +1,19 @@
 {
-  "version": "3.7.8",
-  "base_version": "3.7.7",
+  "version": "3.7.9",
+  "base_version": "3.7.9",
   "release_date": "2026-10-21",
-  "bridge_version": "3.7.8",
+  "bridge_version": "3.7.9",
   "channel": "test",
   "features": [
+    "Use the compact GitHub branch-ref endpoint instead of a full commit diff for version checks; preserve the response-size guard and pinned SHA validation.",
     "Fix root-worker UMask=0077 creating unreadable virtualenv directories: scope umask 022 to new virtualenv creation/public dependency installation; keep backup/environment secrets private.",
     "Check the staged Python and imported dependencies as the beeny service account before stopping application services.",
     "Report the update stage and exit status when rollback is triggered.",
     "Remove version GUIDE Markdown files from source/package and updater references."
   ],
   "validation": {
-    "targeted_python_tests": 17,
+    "inherited_validation": "Venv mode, optional-doc preflight and rollback checks were executed for 3.7.8; unchanged in this patch.",
+    "targeted_python_tests": 18,
     "real_venv_mode_test": "Actual updater venv block executed under umask 0077 with offline empty requirements; venv traversal/read bits and subsequent private file mode 0600 verified.",
     "preflight": "Essential code is still required; optional documentation can be absent.",
     "rollback": "Database and health failures restored old code/environment/service in temporary installation with fake systemd and UID switch.",
@@ -34,7 +36,7 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Publish the complete source to GitHub main, re-check version 3.7.8, then install.",
+    "Publish complete source to main and bootstrap once with scripts/update_panel.sh --github because older installed checkers cannot process a large commit response.",
     "No VPN core, session guard or network policy changes.",
     "Version guides have been removed as requested. README and license notices remain.",
     "No fresh Microsoft Defender approval is claimed."
