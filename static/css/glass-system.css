@@ -1,0 +1,54 @@
+/* Single material authority. Loaded last in every shared shell. */
+:root body{--beeny-glass-fill:rgba(255,255,255,.48);--beeny-glass-line:rgba(255,255,255,.78);--beeny-tool-ink:#353341;--glass-reflex-dark:1;--glass-reflex-light:1;--beeny-material-filter:blur(6px) url(#beeny-liquid) saturate(125%);--beeny-material-fallback:blur(6px) saturate(125%);--lg-surface:var(--beeny-glass-fill);--lg-edge:var(--beeny-glass-line);--lg-shadow:var(--beeny-glass-shadow);--glass-bg:var(--beeny-glass-fill);--glass-line:var(--beeny-glass-line)}
+:root body:not(.light):has(.sidebar),:root[data-theme=dark] body:not(.light){--beeny-glass-fill:rgba(29,29,29,.68);--beeny-glass-line:rgba(255,255,255,.15);--beeny-tool-ink:#ececec;--glass-reflex-dark:2;--glass-reflex-light:.3;--beeny-material-filter:grayscale(1) blur(6px) url(#beeny-liquid);--beeny-material-fallback:grayscale(1) blur(6px);--bg:#121212;--surface:#242424;--soft:#ffffff0b;--ink:#ececec;--text:#ececec;--muted:#aaa;--border:#ffffff26;--line:#ffffff26;color:#ececec;background-color:#121212}
+/* Explicit root/body scope beats the old compound selectors on every page. */
+:root body:is(.light,:not(.light)) :is(.sidebar,.mobile-menu,.glass-navbar,.portal-nav,.shell-nav,.mobile-shortcuts,.customer-admin .admin-tabs,.glass,.admin-glass,.glass-card,.glass-box,.cc-surface,.cc-hero,.workspace-top,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat,.glass-toolbar,.ac-submitbar,.ac-page,.stat-card,.stat-chip,.user-card,.user-row,.profile-card,.offcanvas,.modal-content,.feedback-dialog,.announcement-dialog,.configs-menu,.notification-popover),
+:root body #admin-page :is(.glass,.admin-glass,.glass-card,.cc-surface,.cc-hero,.gc,.ac-page,.ac-panel,.ac-stat,.stat-card,.stat-chip,.user-card,.user-row,.node-card,.glass-toolbar,.hero-card,.hero-stat,.general-hero,.system-hero,.backup-hero,.hero-panel,.glass-panel,.tr-card,.tr-stat,.tr-hero,.action-card,.detail-card,.table-card,.chart-card,.monitor-card,.resource-card,.status-card){background:var(--beeny-glass-fill)!important;border:1px solid var(--beeny-glass-line)!important;box-shadow:var(--beeny-glass-shadow)!important;backdrop-filter:var(--beeny-material-fallback)!important;backdrop-filter:var(--beeny-material-filter)!important;-webkit-backdrop-filter:var(--beeny-material-fallback)!important}
+/* Nested cards share edges/reflections without repeatedly filtering the same pixels. */
+:root body:is(.light,:not(.light)) :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-page,.ac-panel,.user-card) :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-panel,.detail-card),
+:root body #admin-page :is(.glass,.admin-glass,.cc-surface,.ac-page,.ac-panel,.user-card) :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-panel,.detail-card){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:root body:not(.light):has(.sidebar) :is(.sidebar,.mobile-menu,.glass-navbar){color:#e9e9e9!important}
+:root body:not(.light):has(.sidebar) :is(.sidebar nav a,.mobile-menu a,.brand-lockup small,.nav-label,.nav-title,.nav-title b,.sidebar nav i){color:#c8c8c8!important}
+:root body:not(.light):has(.sidebar) :is(.sidebar nav a,.mobile-menu a):is(:hover,.active){color:#fff!important;background:#ffffff12!important}
+:root body:not(.light):has(.sidebar) .sidebar nav{scrollbar-color:#626262 transparent}
+:root body:not(.light):has(.sidebar) :is(.sidebar nav .logout,.sidebar,.glass-navbar){border-color:var(--beeny-glass-line)!important}
+:root body:not(.light):has(.sidebar) :is(.admin-tabs,.tabs,.tab-buttons) :is(.active,[aria-selected=true]),:root[data-theme=dark] body .shell-nav [aria-current=page]{background:#ffffff16!important;color:#eee!important;box-shadow:inset 0 0 0 1px #ffffff1a!important}
+:root body:not(.light):has(.sidebar) :is(.notification-bell,#themeToggle,#admin-language-switch){color:#ededed!important;background:var(--beeny-glass-fill)!important;border-color:var(--beeny-glass-line)!important;box-shadow:var(--beeny-glass-shadow)!important}
+:root body:not(.light):has(.sidebar) .dashboard .chart-tooltip{background:#242424f5!important;color:#eee!important;border-color:#ffffff26!important}
+:root body:not(.light):has(.sidebar) .dashboard .chart-tooltip span{color:#aaa!important}
+:root body:not(.light):has(.sidebar) :is(.cc-page,.customer-admin,.host-traffic){--cc-ink:#ededed;--cc-muted:#aaa;--cc-panel:var(--beeny-glass-fill);--cc-field:#ffffff08;--cc-line:#ffffff26;--ca-surface:var(--beeny-glass-fill);--ca-ink:#ededed;--ca-muted:#aaa;--ca-line:#ffffff26;--ca-input:#ffffff08}
+:root body.light .telegram-card :is(h2,p,.eyebrow,small,.muted){color:var(--beeny-tool-ink)!important}
+/* Layout order is physical, so switching EN/FA does not swap the requested columns. */
+#admin-page .settings-hub{grid-template-areas:'workspace connectivity' 'operations infrastructure' 'dns .';direction:ltr}
+#admin-page .settings-hub>section{min-width:0}
+html[dir=rtl] #admin-page .settings-hub>section{direction:rtl}
+.settings-hub [data-settings-group=workspace]{grid-area:workspace}.settings-hub [data-settings-group=connectivity]{grid-area:connectivity}.settings-hub [data-settings-group=operations]{grid-area:operations}.settings-hub [data-settings-group=infrastructure]{grid-area:infrastructure}.settings-hub [data-settings-group=dns]{grid-area:dns;grid-column:auto}
+@media(max-width:760px){#admin-page .settings-hub{grid-template-areas:'workspace' 'connectivity' 'operations' 'infrastructure' 'dns';grid-template-columns:minmax(0,1fr)}}
+@supports not (backdrop-filter:blur(6px)){:root body{--beeny-glass-fill:#f5f6fb}:root body:not(.light):has(.sidebar),:root[data-theme=dark] body:not(.light){--beeny-glass-fill:#242424}}
+
+/* Portal header geometry and controls, scoped away from the admin header. */
+:root body .workspace>.workspace-top{height:auto;min-height:72px;padding:14px 20px;margin-block:20px 8px;border-radius:22px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-sizing:border-box}
+:root body .workspace-top>span{min-width:0;flex:1;line-height:1.8;overflow-wrap:anywhere}
+:root body .workspace-top .top-actions{display:flex;align-items:center;flex-wrap:nowrap;flex:none;gap:8px}
+:root body .workspace-top .top-actions form{margin:0;display:flex;align-items:center}
+:root body .workspace-top .top-actions :is(.icon-button,.logout-button,.language-picker button){display:inline-flex;align-items:center;justify-content:center;flex:none;position:relative;width:40px;height:40px;min-width:40px;min-height:40px;padding:0;margin:0;border:1px solid var(--beeny-glass-line)!important;border-radius:13px!important;background:var(--beeny-glass-fill)!important;box-shadow:var(--beeny-glass-shadow)!important;color:var(--beeny-tool-ink)!important;transform:none;box-sizing:border-box}
+:root body .workspace-top .top-actions button svg{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7}
+:root body .workspace-top .top-actions .language-badge{position:absolute;inset-inline-end:3px;bottom:3px;font-size:8px;line-height:1}
+:root body .workspace-top .top-actions button:focus:not(:focus-visible){outline:none}
+:root body .workspace-top .top-actions button:focus-visible{outline:2px solid #56cdb1;outline-offset:3px}
+/* An explicit SVG stays crisp and readable regardless of avatar accent/font. */
+:root body .welcome .avatar-edit{width:36px;height:36px;display:grid;place-items:center;isolation:isolate;overflow:hidden;background:#d9f6ee!important;color:#184b40!important;border:2px solid var(--bg)!important;border-radius:50%;box-shadow:0 2px 8px #0002;cursor:pointer}
+:root body .welcome .avatar-edit .avatar-edit-mark{width:18px;height:18px;display:block;pointer-events:none;fill:none!important;stroke:currentColor!important;stroke-width:2.4}
+:root body .welcome .avatar-edit input{inset:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;opacity:0!important;border:0!important;cursor:pointer}
+:root body .welcome .avatar-edit:focus-within{outline:2px solid #56cdb1;outline-offset:3px}
+/* Renewal is the primary account action; no persistent scale or flashing pulse. */
+:root body .welcome-account-actions .portal-renew-cta{display:flex;align-items:center;justify-content:center;gap:10px;position:relative;isolation:isolate;overflow:hidden;min-height:48px;padding:12px 20px;border-radius:15px;background:#77dfc5!important;color:#103e34!important;border:1px solid #a0eedb!important;box-shadow:0 5px 16px #32bca91a!important;font-size:13px;font-weight:700;text-decoration:none;transition:background .2s,box-shadow .2s,transform .2s}
+:root body .welcome-account-actions .portal-renew-cta::after{content:'';position:absolute;inset-block:-60%;inset-inline-start:-75%;width:35%;background:linear-gradient(90deg,transparent,#ffffff55,transparent);transform:skewX(-18deg);pointer-events:none;animation:portal-renew-sheen 9s ease-in-out 2s infinite}
+:root body .welcome-account-actions .portal-renew-cta:hover{background:#95ead5!important;box-shadow:0 7px 20px #32bca92b!important;transform:translateY(-1px)}
+:root body .welcome-account-actions .portal-renew-cta:focus-visible{outline:3px solid #46b99e;outline-offset:3px}
+:root body .welcome-account-actions .portal-renew-cta svg{width:19px;height:19px;flex:none}
+:root body .welcome-account-actions .portal-renew-cta>.ui-icon{width:16px;height:16px;margin-inline-start:auto}
+:root body .welcome-account-actions .wallet-quick{background:var(--beeny-glass-fill);border-color:var(--beeny-glass-line);color:var(--beeny-tool-ink);box-shadow:none}
+@keyframes portal-renew-sheen{0%,78%{inset-inline-start:-75%;opacity:0}79%{opacity:1}94%,100%{inset-inline-start:145%;opacity:0}}
+@media(max-width:540px){:root body .workspace>.workspace-top{min-height:66px;padding:12px;margin-block:12px 8px;border-radius:18px;gap:10px}:root body .workspace-top>span{font-size:10px;max-width:none}:root body .workspace-top .top-actions{gap:6px}:root body .workspace-top .top-actions :is(.icon-button,.logout-button,.language-picker button){width:36px;height:36px;min-width:36px;min-height:36px;border-radius:12px!important}:root body .welcome-account-actions .portal-renew-cta{width:100%;min-height:48px}}
+@media(prefers-reduced-motion:reduce){:root body .welcome-account-actions .portal-renew-cta{transition:none}:root body .welcome-account-actions .portal-renew-cta::after{animation:none;display:none}}

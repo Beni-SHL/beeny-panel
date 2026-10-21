@@ -1,7 +1,8 @@
 /* Beeny Lightfall: native WebGL, using the existing panel shaders.
  * No framework, network requests, dynamic code evaluation or third-party runtime.
  */
-import {vertex, fragment} from './lightfall-shaders.js';
+const shaderURL=new URL('./lightfall-shaders.js',import.meta.url);shaderURL.search=new URL(import.meta.url).search;
+const {vertex,fragment}=await import(shaderURL.href);
 const root = document.getElementById('react-bg-root');
 const mobileViewport=matchMedia('(max-width:768px)');
 if (!root) throw new Error('Background root missing.');
@@ -70,7 +71,7 @@ function cleanup() {
   canvas.removeEventListener('pointermove',pointer);gl.deleteBuffer(buffer);gl.deleteProgram(program);
   gl.getExtension('WEBGL_lose_context')?.loseContext();canvas.remove();
 }
-canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();cleanup();import('./ambient.js');},{once:true});
+canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();cleanup();import(new URL('./ambient.js'+new URL(import.meta.url).search,import.meta.url).href);},{once:true});
 root.append(canvas);resize();observer.observe(root);themeObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
 canvas.addEventListener('pointermove',pointer);window.addEventListener('pagehide',cleanup,{once:true});
 window.addEventListener('pageshow',event=>{if(event.persisted&&stopped)location.reload();});

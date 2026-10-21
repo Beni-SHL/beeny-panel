@@ -18,3 +18,8 @@ html[lang=fa] body :is(h2,h3,b){font-weight:600}
 html[lang=fa] body :is(label,button){font-weight:500}
 html[lang] body [lang=fa] :is(div,span,p,a,label,input,button,b,small){font-family:BeenyYekan,system-ui,sans-serif!important}
 html[lang] body [lang=en] :is(div,span,p,a,label,input,button,b,small){font-family:BeenyInter,system-ui,sans-serif!important}
+
+/* The English face is the bundled Inter variable font; no remote font service. */
+html[lang=en] :is(.sidebar,.glass-navbar,#admin-page,.customer-shell,.customer-subpage) :is(div,span,p,h1,h2,h3,h4,h5,h6,a,b,strong,small,label,button,input,select,textarea,td,th,dt,dd,summary,legend,option,li,section,article){font-family:BeenyInter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
+html[lang=en] :is(.sidebar,.glass-navbar,#admin-page,.customer-shell,.customer-subpage) :is(.fa,.fas,.far,.fa-solid,.fa-regular){font-family:"Font Awesome 6 Free"!important}
+html[lang=en] :is(.sidebar,.glass-navbar,#admin-page,.customer-shell,.customer-subpage) :is(.fab,.fa-brands){font-family:"Font Awesome 6 Brands"!important}

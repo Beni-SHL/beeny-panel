@@ -1,25 +1,20 @@
 {
-  "version": "3.7.4",
-  "base_version": "3.7.3",
+  "version": "3.7.6",
+  "base_version": "3.7.5",
   "release_date": "2026-10-21",
-  "bridge_version": "3.7.4",
+  "bridge_version": "3.7.6",
   "channel": "test",
   "features": [
-    "Pastel CSS-only light background with reduced-motion support; neutral gray/black dark background.",
-    "Shared six-pixel Liquid Glass, including Settings heroes; grouped Settings with dedicated DNS and Update panel rows.",
-    "Bounded intrinsic SVGs and early hidden language overlay prevent unstyled black-circle flash; loader fades.",
-    "Responsive traffic/content card padding, consistent user action buttons, and tunnel section spacing.",
-    "Owner-only AJAX GitHub updater: automatic version check on page entry, explicit install, fixed repository and pinned commit, separate background worker, progress polling and reconnect retry.",
-    "Existing backed-up updater with health checks and rollback; exclusive install lock; no VPN restart."
+    "Customer portal header geometry: padded rounded glass surface, consistent controls and responsive spacing, scoped away from admin header.",
+    "Profile photo upload mark uses an explicit high-contrast inline SVG instead of a low-contrast font character; transparent file input and focus visibility retained.",
+    "Primary mint/turquoise renewal action with dark text, subtle periodic sheen and reduced-motion fallback; wallet remains secondary and neutral."
   ],
   "validation": {
-    "targeted_python_tests": 35,
-    "final_update_worker_tests": 9,
-    "rendered_pages": 12,
-    "local_checks": "Python AST, Jinja, changed CSS/JS, Bash, installer source completeness, SRI pins and JS VM checks passed.",
-    "rollback": "Database and health-check failures restored application/environment/service in a temporary fake-systemd installation.",
-    "browser_visual": "Unverified: cloud browser access restrictions prevented real desktop/mobile visual review.",
-    "live_github_install": "Unverified: GitHub network/install path was mocked in tests; no production or fresh VPS update was performed."
+    "targeted_python_tests": 11,
+    "rendered_en_fa_pages": 42,
+    "source_checks": "All Python/Jinja, changed CSS/JS, Bash and installer source checks passed.",
+    "portal_dom": "Both languages rendered with four header controls, SVG plus/upload input and renewal anchor.",
+    "visual_browser": "Unverified: no real desktop/mobile browser visual approval or VPS deployment is claimed."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -37,10 +32,9 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Publish the complete source to GitHub main. Future UI installs require a strictly newer semantic VERSION; this feature first needs local/SSH installation on older panels.",
-    "Auto-check is on entry to the update page; unattended scheduled installation is not enabled.",
-    "Requires server access to GitHub/raw GitHub and dependency sources, plus git, systemd and the privileged helper.",
-    "Existing 3.7.2 tunnel/DNS limitations remain; see GUIDE-3.7.2-FA.md.",
-    "Visual browser approval, fresh VPS installation and fresh Microsoft Defender approval are not claimed."
+    "Appearance remains subject to real-browser visual review.",
+    "No VPN core, session guard, network policy or updater runtime changes.",
+    "Prior 3.7.4 updater and 3.7.2 tunnel/DNS limitations remain.",
+    "No fresh Microsoft Defender approval is claimed."
   ]
 }
