@@ -1,24 +1,16 @@
 {
-  "version": "3.7.9",
+  "version": "3.7.10",
   "base_version": "3.7.9",
   "release_date": "2026-10-21",
-  "bridge_version": "3.7.9",
+  "bridge_version": "3.7.10",
   "channel": "test",
   "features": [
-    "Use the compact GitHub branch-ref endpoint instead of a full commit diff for version checks; preserve the response-size guard and pinned SHA validation.",
-    "Fix root-worker UMask=0077 creating unreadable virtualenv directories: scope umask 022 to new virtualenv creation/public dependency installation; keep backup/environment secrets private.",
-    "Check the staged Python and imported dependencies as the beeny service account before stopping application services.",
-    "Report the update stage and exit status when rollback is triggered.",
-    "Remove version GUIDE Markdown files from source/package and updater references."
+    "Remove grayscale from both dark glass backdrop filter paths to preserve background colors.",
+    "Use neutral black translucent fill at 56% opacity, with 6px blur and 125% saturation; retain shared borders and refraction."
   ],
   "validation": {
-    "inherited_validation": "Venv mode, optional-doc preflight and rollback checks were executed for 3.7.8; unchanged in this patch.",
-    "targeted_python_tests": 18,
-    "real_venv_mode_test": "Actual updater venv block executed under umask 0077 with offline empty requirements; venv traversal/read bits and subsequent private file mode 0600 verified.",
-    "preflight": "Essential code is still required; optional documentation can be absent.",
-    "rollback": "Database and health failures restored old code/environment/service in temporary installation with fake systemd and UID switch.",
-    "source": "Python syntax and Bash checks passed; code-manifest hashes and ZIP CRC verified.",
-    "live_deployment": "Sandbox cannot switch UID, so real beeny-user execution and actual VPS upgrade remain unverified here. The updater performs that identity check on the target host before downtime."
+    "targeted_python_tests": 8,
+    "visual": "Real-browser rendering has not been verified in this environment."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -34,11 +26,5 @@
     "tunnel_settings.py": "26767764d1c08d305f7e47acb6ca88f2db95bef7321697d66ea973849c21c380",
     "network_policy.py": "7642e1f4a2e4b8cd08040a912f0c7ad211f225e1550f7fb68270aae9e7dbfef1",
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
-  },
-  "limitations": [
-    "Publish complete source to main and bootstrap once with scripts/update_panel.sh --github because older installed checkers cannot process a large commit response.",
-    "No VPN core, session guard or network policy changes.",
-    "Version guides have been removed as requested. README and license notices remain.",
-    "No fresh Microsoft Defender approval is claimed."
-  ]
+  }
 }
