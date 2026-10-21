@@ -238,7 +238,7 @@
 <script>try{if(localStorage.getItem("beeny-theme")==="light")document.body.classList.add("light")}catch(e){}</script>
 
 <!-- جایگزین شد: این دیو برای رندر شدن بک‌گراند توسط جاوااسکریپت (Vite) استفاده می‌شود -->
-<div id="react-bg-root"></div>
+{% include 'partials/background.html' %}
 
 <button class="hamburger" id="hamburgerBtn">
     <i class="fa fa-bars"></i>
@@ -349,7 +349,7 @@
     });
 </script>
 
-<script type="module" src="{{ url_for('static', filename='js/background-loader.js',v=panel_version) }}"></script>
+
 
 <script src="{{ url_for('static',filename='js/flags.js') }}"></script><script src="{{ url_for('static',filename='js/experience.js') }}" defer></script><script src="{{ url_for('static',filename='js/quality.js') }}" defer></script><script src="{{ url_for('static',filename='js/refinement.js') }}" defer></script><script src="{{ url_for('static',filename='js/studio.js') }}" defer></script><script src="{{ url_for('static',filename='js/portal-content.js') }}" defer></script><script src="{{ url_for('static',filename='js/polish.js') }}" defer></script><script src="{{ url_for('static',filename='js/release-344.js') }}" defer></script><script src="{{ url_for('static',filename='js/commissions.js') }}" defer></script><script defer src="{{ url_for('static',filename='js/admin-forms.js',v=panel_version) }}"></script><script defer src="{{ url_for('static',filename='js/control-center.js') }}"></script><link rel="stylesheet" href="{{ url_for('static',filename='css/workspace.css',v=panel_version) }}"><script defer src="{{ url_for('static',filename='js/workspace.js',v=panel_version) }}"></script><script defer src="{{ url_for('static',filename='js/liquid-glass.js',v=panel_version) }}"></script></body>
 </html>

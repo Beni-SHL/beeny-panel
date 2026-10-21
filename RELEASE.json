@@ -1,16 +1,22 @@
 {
-  "version": "3.7.10",
-  "base_version": "3.7.9",
-  "release_date": "2026-10-21",
-  "bridge_version": "3.7.10",
+  "version": "3.7.11",
+  "base_version": "3.7.10",
+  "release_date": "2026-10-22",
+  "bridge_version": "3.7.11",
   "channel": "test",
   "features": [
-    "Remove grayscale from both dark glass backdrop filter paths to preserve background colors.",
-    "Use neutral black translucent fill at 56% opacity, with 6px blur and 125% saturation; retain shared borders and refraction."
+    "Use the user-supplied GradFlow Glass Fold vertex and fragment shaders verbatim in a dependency-free native WebGL host.",
+    "Share the renderer across admin, customer, representative and all login shells; replace prior Lightfall/CSS ambient/auth ribbon backgrounds.",
+    "Keep supplied dark colors #1e3cc8 / #06081e / #96d7ff, speed .5, scale 1 and noise .12. Light palette uses #d8dde5 / #ffffff / #e4f3ff to match the white reference (both supplied code blocks contained identical dark defaults).",
+    "Handle class/data-theme changes, reduced motion, hidden tabs, context restoration and bfcache without duplicate canvases; cap mobile pixel budget.",
+    "Restore separate rounded original user cards and a single compact list surface; remove generic glass overrides from rows and repair mobile grid, pills and expanded detail height."
   ],
   "validation": {
     "targeted_python_tests": 8,
-    "visual": "Real-browser rendering has not been verified in this environment."
+    "rendered_pages": "44 EN/FA Flask SSR pages plus shared-background shell assertions.",
+    "native_host": "Node VM mocked-WebGL lifecycle checks: palettes, admin/auth theme switching, duplicate prevention, reduced motion, hidden tabs, context recovery, bfcache and mobile pixel budget.",
+    "shader_integrity": "Vertex and fragment text compared exactly against uploaded source.",
+    "source": "Python/Jinja/CSS/JS/Bash syntax, installer preflight, archive manifest and CRC checks."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -26,5 +32,10 @@
     "tunnel_settings.py": "26767764d1c08d305f7e47acb6ca88f2db95bef7321697d66ea973849c21c380",
     "network_policy.py": "7642e1f4a2e4b8cd08040a912f0c7ad211f225e1550f7fb68270aae9e7dbfef1",
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
-  }
+  },
+  "limitations": [
+    "Real-browser rendering, GPU shader compilation and live VPS installation are not verified here.",
+    "WebGL-unavailable clients use a plain theme-colored fallback.",
+    "No VPN core, network policy or account data logic changes."
+  ]
 }

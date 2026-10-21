@@ -1,18 +1,8 @@
-// Present the workspace first. Compile WebGL only when a dark background is visible.
-const moduleURL=name=>{const url=new URL(name,import.meta.url);url.search=new URL(import.meta.url).search;return url.href};
-const load=name=>import(moduleURL(name));
+// One shared Glass Fold background for admin, customer, partner and login shells.
 const root=document.getElementById('react-bg-root');
-if(root){
- const reduced=matchMedia('(prefers-reduced-motion: reduce)');let loaded=false,queued=false;
- const ambient=()=>load('./ambient.js');
- // CSS-only pastel motion is ready without compiling WebGL on light pages.
- ambient();
- function start(){if(loaded||queued||document.body.classList.contains('light')||reduced.matches)return;queued=true;
-  const boot=async()=>{queued=false;if(document.body.classList.contains('light')||document.hidden)return;loaded=true;
-   try{await load('./lightfall.js')}catch(_){await ambient()}};
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{if('requestIdleCallback' in window)requestIdleCallback(boot,{timeout:1200});else setTimeout(boot,100)}));
- }
- if(reduced.matches)ambient();else start();
- new MutationObserver(start).observe(document.body,{attributes:true,attributeFilter:['class']});
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)start()});
+if(root&&!root.dataset.backgroundLoading){
+ root.dataset.backgroundLoading='true';
+ const boot=async()=>{const url=new URL('./glass-fold.js',import.meta.url);url.search=new URL(import.meta.url).search;
+  try{const {mountGlassFold}=await import(url.href);mountGlassFold(root)}catch(_){root.classList.add('background-fallback')}};
+ requestAnimationFrame(()=>requestAnimationFrame(boot));
 }
