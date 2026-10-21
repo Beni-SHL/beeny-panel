@@ -5,7 +5,7 @@ root=Path(__file__).resolve().parents[1]
 # Copy source files with the current manifest, excluding local environments/data.
 import json
 names=set(json.loads((root/'SOURCE-SHA256.json').read_text()))
-names.update(['SOURCE-SHA256.json','GUIDE-3.7.7-FA.md'])
+names.add('SOURCE-SHA256.json')
 with tempfile.TemporaryDirectory() as tmp:
     stage=Path(tmp)
     for name in names:
@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory() as tmp:
     (stage/'scripts/update_panel.sh').write_text(prefix+'\nprintf "%s\\n" "${FILES[@]}"\n')
     def run():return subprocess.run(['bash',str(stage/'scripts/update_panel.sh'),'--check'],text=True,capture_output=True,timeout=15)
     present=run();assert present.returncode==0,present.stderr
-    assert 'GUIDE-3.7.7-FA.md' in present.stdout.splitlines()
+    assert 'README.md' in present.stdout.splitlines()
     for p in stage.glob('*.md'):p.unlink()
     missing_docs=run();assert missing_docs.returncode==0,missing_docs.stderr
     assert not any(line.endswith('.md') and '/' not in line for line in missing_docs.stdout.splitlines())

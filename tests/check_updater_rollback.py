@@ -24,6 +24,8 @@ for failure in ('database', 'health'):
   # Package staging is prevalidated separately; emulate an already prepared venv.
   (bins/'python3').write_text('#!/bin/bash\nif [[ "${1:-}" == -m && "${2:-}" == venv ]]; then mkdir -p "$3/bin"; cp "'+str(bins/'stage-python')+'" "$3/bin/python"; else exec '+python+' "$@"; fi\n')
   (bins/'stage-python').write_text('#!/bin/bash\nif [[ "${1:-}" == -m && "${2:-}" == pip ]]; then exit 0; fi\nif [[ "${1:-}" == - && "${2:-}" == "'+str(dest)+'" ]]; then cat >/dev/null; exit 1; fi\nexec '+python+' "$@"\n')
+  # Only the UID switch is mocked; sandbox cannot setuid.
+  (bins/'runuser').write_text('#!/bin/bash\n[[ "$1" == -u && "$2" == beeny && "$3" == -- ]] || exit 2\nshift 3\nexec "$@"\n')
   for file in bins.iterdir():file.chmod(0o755)
   script=(release/'scripts/update_panel.sh').read_text().replace('DEST=/opt/beeny-panel','DEST='+str(dest)).replace('/etc/',str(etc)+'/').replace('/run/',str(run)+'/').replace('[[ $EUID == 0 ]]', '[[ 0 == 0 ]]')
   (release/'scripts/update_panel.sh').write_text(script)

@@ -1,24 +1,22 @@
 {
-  "version": "3.7.7",
-  "base_version": "3.7.6",
+  "version": "3.7.8",
+  "base_version": "3.7.7",
   "release_date": "2026-10-21",
-  "bridge_version": "3.7.7",
+  "bridge_version": "3.7.8",
   "channel": "test",
   "features": [
-    "Updater no longer requires Markdown documentation to be published. Existing docs still join backup/install/rollback; missing essential runtime source still fails preflight.",
-    "Customer credential sharing now offers FA/EN message selection, with exact credentials preserved and the original private-draft expiry/clear behavior retained.",
-    "Verified Telegram credential delivery accepts fa/en while preserving password, CSRF, private-link and recipient-binding checks.",
-    "Fixed an undefined-variable error in private-draft pagehide cleanup.",
-    "Delete/reset user action buttons remain neutral in light mode, including hover/focus states, while confirmations remain in place."
+    "Fix root-worker UMask=0077 creating unreadable virtualenv directories: scope umask 022 to new virtualenv creation/public dependency installation; keep backup/environment secrets private.",
+    "Check the staged Python and imported dependencies as the beeny service account before stopping application services.",
+    "Report the update stage and exit status when rollback is triggered.",
+    "Remove version GUIDE Markdown files from source/package and updater references."
   ],
   "validation": {
-    "targeted_python_tests": 27,
-    "rendered_en_fa_pages": 44,
-    "source_checks": "Python/Jinja, changed CSS/JS, Bash/installer checks and SRI passed.",
-    "preflight": "Real Bash preflight tested with docs present, docs absent, and essential app.py absent; no live installation touched.",
-    "rollback": "Database and health failures restored application/environment/service in temporary fake-systemd installation.",
-    "js_checks": "FA/EN exact credentials, chosen-language copy, non-resurrecting clear/expiry and pagehide cleanup passed in Node VM.",
-    "live_deployment": "No production/fresh-VPS deployment or real-browser visual approval is claimed."
+    "targeted_python_tests": 17,
+    "real_venv_mode_test": "Actual updater venv block executed under umask 0077 with offline empty requirements; venv traversal/read bits and subsequent private file mode 0600 verified.",
+    "preflight": "Essential code is still required; optional documentation can be absent.",
+    "rollback": "Database and health failures restored old code/environment/service in temporary installation with fake systemd and UID switch.",
+    "source": "Python syntax and Bash checks passed; code-manifest hashes and ZIP CRC verified.",
+    "live_deployment": "Sandbox cannot switch UID, so real beeny-user execution and actual VPS upgrade remain unverified here. The updater performs that identity check on the target host before downtime."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -36,8 +34,9 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Publish the complete source to GitHub main, then run Check GitHub again before retrying Install update.",
-    "Existing 3.7.4 updater and 3.7.2 tunnel/DNS limits remain.",
+    "Publish the complete source to GitHub main, re-check version 3.7.8, then install.",
+    "No VPN core, session guard or network policy changes.",
+    "Version guides have been removed as requested. README and license notices remain.",
     "No fresh Microsoft Defender approval is claimed."
   ]
 }

@@ -36,7 +36,7 @@ if [[ "$MODE" == '' ]]; then
 fi
 FILES=(panel_update.py asset_delivery.py dns_services.py tunnel_engines.py integration-sources.json scripts/install_integrations.py scripts/build_script_pins.py RELEASE.json SOURCE-SHA256.json beeny-vpn-recovery.service vpn_runtime.py transport_settings.py tunnel_manager.py tunnel_settings.py scripts/install_tunnel.py scripts/manage_admin.py maintenance.py scripts/beenyctl.py scripts/bootstrap.sh scripts/install_cli.sh scripts/collect_vpn_diagnostics.py connection_guard.py session_identity.py warp_manager.py iran_network.py removal_guard.py network_settings.py network_policy.py beeny-network-policy.service representative_removal.py admin_i18n.py https_maintenance.py monitoring.py host_metrics.py crl_sync.py scripts/preflight_364.py style-bundles.json scripts/build_style_bundles.py scripts/enable_pki_audit.sh admission.py scripts/vpn_admission.py scripts/export_admission.py sales_engine.py financial_reporting.py session_limits.py terminal_traffic.py node_snapshots.py scripts/vpn_maintenance.py scripts/vpn_disconnect.py scripts/configure_vpn_core.py scripts/migrate_sales.py beeny-pki.service beeny-pki.timer sales_reporting.py representative_catalog.py representative_actions.py representative_credit.py balepay_bridge.py commissions.py scripts/update_node_speed.sh bandwidth.py speed_policy.py portal_i18n.py portal_content.py resellers.py scripts/repair_local_access.py node_agent/bridge.py node_agent/host_traffic.py scripts/reset_admin_access.py scripts/close_legacy_node_api.sh scripts/install_node_bridge.sh scripts/secure_node_api.sh scripts/cleanup_storage.py beeny-cleanup.service beeny-cleanup.timer bulk.py host_traffic.py devices.py scripts/harden_services.sh scripts/enable_backups.sh scripts/decrypt_backup.py beeny-privileged.service commerce.py beeny-backup.service beeny-backup.timer scripts/scheduled_backup.py health.py support.py security.py backup_engine.py privileged.py privileged_server.py app.py cluster.py renewal.py traffic_ledger.py serve.py admin_sessions.py pricing.py experience.py customer_features.py customer_worker.py vpn_sessions.py migrations.py VERSION requirements.txt beeny-panel.service beeny-customer-worker.service scripts/create_vpn_user.sh scripts/check_users.py scripts/init_admin.py scripts/manage_user_config.py scripts/update_panel.sh scripts/upgrade_legacy.py scripts/configure_uploads.py)
 # Documentation is copied when published, but must not block application updates.
-OPTIONAL_DOCS=(GUIDE-3.7.7-FA.md GUIDE-3.7.6-FA.md GUIDE-3.7.5-FA.md GUIDE-3.7.4-FA.md GUIDE-3.7.3-FA.md GUIDE-3.7.2-FA.md SECURITY-REVIEW-3.7.1.md GUIDE-3.7.0-FA.md README.md)
+OPTIONAL_DOCS=(README.md SECURITY-REVIEW-3.7.1.md)
 for rel in "${OPTIONAL_DOCS[@]}"; do
   if [[ -f "$ROOT_DIR/$rel" ]]; then FILES+=("$rel"); fi
 done
@@ -95,9 +95,16 @@ fi
 stamp="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 backup="$DEST/backups/update-$stamp"
 next_venv="$DEST/.venv-releases/$stamp"
-install -d -m 700 "$backup" "$DEST/.venv-releases"
-python3 -m venv "$next_venv"
-"$next_venv/bin/python" -m pip install -r "$ROOT_DIR/requirements.txt"
+install -d -m 700 "$backup"
+install -d -m 755 "$DEST/.venv-releases"
+# The root update worker uses UMask=0077. Dependencies are public code and must
+# be traversable/readable by the unprivileged beeny services. Keep this umask
+# scoped to the new virtualenv; backups and environment secrets stay private.
+(
+  umask 022
+  python3 -m venv "$next_venv"
+  "$next_venv/bin/python" -m pip install -r "$ROOT_DIR/requirements.txt"
+)
 "$next_venv/bin/python" - "$ROOT_DIR" <<'PY'
 import pathlib, sys
 from jinja2 import Environment, FileSystemLoader
@@ -106,6 +113,8 @@ for file in (root/'templates').rglob('*.html'):
     env.parse(file.read_text())
 print('Templates parsed successfully.')
 PY
+echo 'Checking staged Python as the beeny service user.'
+runuser -u beeny -- "$next_venv/bin/python" -c 'import flask, flask_sqlalchemy, flask_login, psutil, requests, waitress, PIL, cryptography; print("Service-user Python preflight passed.")'
 for rel in "${FILES[@]}" "${RETIRED[@]}"; do
   if [[ -f "$DEST/$rel" ]]; then
     install -d -m 700 "$backup/code/$(dirname "$rel")"
@@ -132,10 +141,11 @@ systemctl is-active --quiet beeny-customer-worker && worker_was_active=1
 cli_existed=0
 if [[ -e /usr/local/bin/beeny || -L /usr/local/bin/beeny ]]; then cli_existed=1; cp -a /usr/local/bin/beeny "$backup/cli"; fi
 swapped=0
+stage='stopping application services'
 rollback() {
   result=$?
   trap - ERR INT TERM
-  echo "Update failed; restoring application. Backup: $backup" >&2
+  echo "Update failed during $stage (exit $result); restoring application. Backup: $backup" >&2
   systemctl stop beeny-panel beeny-customer-worker beeny-privileged 2>/dev/null || true
   if [[ "$swapped" == 1 ]]; then rm -f "$DEST/venv"; mv "$backup/previous-venv" "$DEST/venv"; fi
   for rel in "${FILES[@]}" "${RETIRED[@]}"; do
@@ -162,12 +172,14 @@ trap rollback ERR INT TERM
 for rel in "${RETIRED[@]}"; do rm -f -- "$DEST/$rel"; done
 systemctl stop beeny-customer-worker 2>/dev/null || true
 systemctl stop beeny-panel
+stage='database snapshot'
 python3 - "$DEST/instance/beeny.db" "$backup/beeny.db" <<'PY'
 import sqlite3,sys
 with sqlite3.connect(sys.argv[1]) as source, sqlite3.connect(sys.argv[2]) as target:
     assert source.execute('PRAGMA quick_check').fetchone()[0]=='ok', 'Database integrity check failed'
     source.backup(target)
 PY
+stage='installing application source'
 for rel in "${FILES[@]}"; do
   install -d -m 755 "$DEST/$(dirname "$rel")"
   install -m 644 "$ROOT_DIR/$rel" "$DEST/$rel"
@@ -176,6 +188,7 @@ chmod 700 "$DEST/scripts/create_vpn_user.sh" "$DEST/scripts/update_panel.sh"
 mv "$DEST/venv" "$backup/previous-venv"
 swapped=1
 ln -s "$next_venv" "$DEST/venv"
+stage='configuring service permissions'
 bash "$DEST/scripts/harden_services.sh"
 bash "$DEST/scripts/install_cli.sh"
 install -m 644 "$DEST/beeny-panel.service" /etc/systemd/system/beeny-panel.service
@@ -183,7 +196,9 @@ install -m 644 "$DEST/beeny-customer-worker.service" /etc/systemd/system/beeny-c
 install -m 644 "$DEST/beeny-network-policy.service" /etc/systemd/system/beeny-network-policy.service
 systemctl daemon-reload
 systemctl enable beeny-network-policy.service
+stage='database migrations'
 systemd-run --quiet --wait --pipe --property=User=beeny --property=EnvironmentFile=/etc/beeny-panel/panel.env "$DEST/venv/bin/python" "$DEST/scripts/migrate_sales.py"
+stage='panel startup and health check'
 systemctl enable --now beeny-panel
 verify_deployed
 systemctl enable --now beeny-customer-worker
