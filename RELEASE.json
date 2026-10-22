@@ -1,29 +1,19 @@
 {
-  "version": "3.7.12",
-  "base_version": "3.7.11",
+  "version": "3.7.13",
+  "base_version": "3.7.12",
   "release_date": "2026-10-22",
-  "bridge_version": "3.7.12",
+  "bridge_version": "3.7.13",
   "channel": "test",
   "features": [
-    "Neutral teal/blue login controls, SVG theme buttons, restrained logo-only sheen, padded field icons, shared local English type, opt-in browser password-manager save and remember control.",
-    "Load shell styles before first paint; preload the local refraction map; remove scroll-wide animation freezing.",
-    "Flat inner user/support detail surfaces, persistent outer liquid glass, stronger refraction and subtle colored edges; keep glass blur at 6px.",
-    "Consistent neutral Delete/Reset light icons, identical header-control geometry, opener hidden while mobile menu is open and slightly stronger menu icons.",
-    "Compact profile usage, horizontal Devices/Wallet shortcuts, icon-only header shortcuts with accessible labels, full-width private-link regeneration and no black submit bar.",
-    "Theme-aware settings/OpenVPN buttons and callouts with wrapped mobile layout; bright avatar-derived complements; overflow-safe large usage/device metrics and small first-use labels.",
-    "Simple customer/partner backdrops with 5% tint, a faint tint in the white admin background, and restored blue Telegram card.",
-    "Prime-style action states and real-byte download progress adapted from the supplied React examples into the existing native app; no synthetic progress or dependency runtime.",
-    "Wallet styling aligned with partner dashboard; Add funds and mobile shortcuts reuse header controls.",
-    "Renewal-page AJAX wallet payment with small balance label, server-side plan/custom pricing and discount validation, atomic conditional debit, duplicate-submit protection and refreshed account/balance display without reload.",
-    "Roll back uncommitted approval failures, while reporting committed payments with pending node confirmation as successful.",
-    "Smaller red notification count without border/shadow; restore nearly opaque theme-aware notification popup for readable text."
+    "Replace outdated English login-copy health assertion with actual same-endpoint POST form validation: username, password input and nonempty hidden CSRF token; require HTTP 200 without redirects.",
+    "Keep database integrity/schema verification, startup polling, service checks and automatic rollback.",
+    "Preserve all 3.7.12 UI, notification readability and wallet renewal changes."
   ],
   "validation": {
-    "python_cases": 31,
-    "rendered_pages": "44 EN/FA Flask SSR pages plus login, wallet, customer-background and profile structural checks.",
-    "frontend": "Node VM action-state/download tests (real byte progress, HTTP failure), and mocked-WebGL theme/lifecycle tests.",
-    "finance": "Wallet debit/invoice, duplicate submission, insufficient funds, bad CSRF, rollback before commit, and post-commit node-sync failure; existing commerce and representative catalog tests.",
-    "source": "Python/Jinja/JS/CSS/Bash parsing, 43 local script integrity pins, installer preflight, ZIP CRC and per-file hashes."
+    "targeted_python_tests": 22,
+    "health": "Exact predicate extracted from the updater tested against real latest Flask login and negative cases (copy-only page, incomplete form, disabled controls, wrong target/method, absent CSRF and wrong password type).",
+    "rollback": "Real updater control flow restored previous application, Python environment and service files on simulated database/health failures; fake systemd and UID switch used in isolated temporary installation.",
+    "source": "Python syntax, Bash parsing, manifest and ZIP CRC verification."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -41,10 +31,7 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Actual mobile/desktop browser appearance and live VPS deployment were not verified in this environment.",
-    "Browser password-manager saving depends on browser support and user consent; no passwords are stored in localStorage.",
-    "Wallet payment pays the full plan amount; split wallet/bank payments are not implemented.",
-    "Download completion means the response was received and handed to the browser save flow, not confirmation of a file on disk.",
-    "No VPN core, session guard or network policy changes."
+    "Actual VPS upgrade and real service startup remain unverified here.",
+    "No UI or VPN/network policy changes in this patch."
   ]
 }

@@ -19,7 +19,7 @@ def api(method):
         if request.method!='GET':return jsonify(error='Invalid method'),405
         status=subprocess.run(['systemctl','is-active','--quiet','openvpn-server@server'],timeout=5).returncode==0
         path=Path('/var/log/openvpn-status.log');age=time.time()-path.stat().st_mtime if path.exists() else None
-        return jsonify(events=__import__('terminal_traffic').read_events(),success=True,status='online' if status else 'offline',vpn_active=status,status_age=age,log=path.read_text() if status and age is not None and age<90 else '',metrics=metrics(),agent_version='3.7.12',capabilities=['vpn-runtime-v1','network-policy-v4','network-policy-v3','network-policy-v2','network-policy-v1','monitoring-v1','host-traffic','set-user-state','sessions','disconnect-session','speed-policy'])
+        return jsonify(events=__import__('terminal_traffic').read_events(),success=True,status='online' if status else 'offline',vpn_active=status,status_age=age,log=path.read_text() if status and age is not None and age<90 else '',metrics=metrics(),agent_version='3.7.13',capabilities=['vpn-runtime-v1','network-policy-v4','network-policy-v3','network-policy-v2','network-policy-v1','monitoring-v1','host-traffic','set-user-state','sessions','disconnect-session','speed-policy'])
     if method=='speed-status':
         if request.method!='GET':return jsonify(error='Invalid method'),405
         import bandwidth

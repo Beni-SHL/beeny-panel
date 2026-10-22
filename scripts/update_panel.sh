@@ -57,6 +57,34 @@ verify_deployed() {
   systemctl is-active --quiet beeny-panel || return 1
   "$DEST/venv/bin/python" - "$DEST" <<'PY'
 import json, pathlib, sqlite3, sys, time, urllib.request
+from html.parser import HTMLParser
+from urllib.parse import urljoin
+
+class LoginFormParser(HTMLParser):
+    def __init__(self):
+        super().__init__(); self.forms=[]; self.current=None
+    def handle_starttag(self, tag, attrs):
+        attrs=dict(attrs)
+        if tag=="form":
+            self.current=dict(method=attrs.get("method","get").lower(), action=attrs.get("action",""), inputs={})
+            self.forms.append(self.current)
+        elif tag=="input" and self.current is not None and attrs.get("name"):
+            self.current["inputs"][attrs["name"]]=attrs
+    def handle_endtag(self, tag):
+        if tag=="form": self.current=None
+
+def login_form_healthy(html, url):
+    parser=LoginFormParser(); parser.feed(html)
+    for form in parser.forms:
+        fields=form["inputs"]
+        if form["method"]!="post" or urljoin(url,form["action"])!=url: continue
+        if not {"username","password","csrf"}.issubset(fields): continue
+        if fields["password"].get("type","").lower()!="password": continue
+        if fields["csrf"].get("type","").lower()!="hidden" or not fields["csrf"].get("value"): continue
+        if any("disabled" in fields[n] for n in ("username","password","csrf")): continue
+        return True
+    return False
+
 root=pathlib.Path(sys.argv[1]); cfg=json.loads((root/'config.json').read_text())
 env=dict(line.split('=',1) for line in pathlib.Path('/etc/beeny-panel/panel.env').read_text().splitlines() if '=' in line)
 url=f"http://127.0.0.1:{env['BEENY_PORT']}{cfg['panel_path'].rstrip('/')}/login"
@@ -64,7 +92,8 @@ for attempt in range(10):
     try:
         with urllib.request.urlopen(url,timeout=2) as response:
             html=response.read().decode()
-        assert 'Remember me on this device' in html, 'Login health check failed'
+        assert response.status==200 and response.geturl()==url, 'Login health check: unexpected HTTP status or redirect'
+        assert login_form_healthy(html,url), 'Login health check: valid same-endpoint POST form, username, password or CSRF token missing'
         break
     except Exception:
         if attempt==9: raise
