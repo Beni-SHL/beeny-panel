@@ -10,7 +10,7 @@ export function mountGlassFold(root){
  if(!gl){root.classList.add('background-fallback');return;}
  const reduced=matchMedia('(prefers-reduced-motion: reduce)'),mobile=matchMedia('(max-width:768px)');
  const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255);
- const palettes={dark:['#1e3cc8','#06081e','#96d7ff'],light:['#d8dde5','#ffffff','#e4f3ff']};
+ const palettes={dark:['#1e3cc8','#06081e','#96d7ff'],light:['#dadce7','#fffdfd','#e2f3f4']};
  let program,buffer,u,frame=0,elapsed=0,last=null,frameAt=0,stopped=false,lost=false,suspended=false;
  function compile(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);
   if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){gl.deleteShader(s);throw Error('Glass Fold shader failed');}return s;}

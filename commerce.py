@@ -1,8 +1,8 @@
 """Integer-Toman wallets, immutable invoices and configurable sales discounts."""
-import json,re,secrets,math
+import json,re,secrets,math,logging
 from datetime import datetime,timedelta
 from types import SimpleNamespace
-from flask import request,abort,render_template,redirect,flash
+from flask import request,abort,render_template,redirect,flash,jsonify
 from flask_login import current_user,login_required
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
@@ -179,25 +179,53 @@ def register(app,db,User,features,experience,panel_path):
                     db.session.rollback();(features.storage/filename).unlink(missing_ok=True);raise
                 flash('رسید شارژ ثبت شد. پس از تأیید واریز، مبلغ به کیف پول شما اضافه می‌شود.','success')
                 return redirect(base+'/c/'+token+'/wallet')
-            if user.status!='active':abort(403,'حساب محدود شده است؛ برای تمدید با مدیر تماس بگیرید.')
-            cfg=features.settings();plan=next((dict(p) for p in cfg['plans'] if p['id']==request.form.get('plan_id')),None)
-            if not plan:abort(400)
-            from app import commissions
-            try:plan=commissions.customer_plan(user,plan)
-            except ValueError as error:abort(400,str(error))
-            reference=request.form.get('reference','')
-            if not re.fullmatch(r'[A-Za-z0-9_-]{32,64}',reference):abort(400)
-            if Entry.query.filter_by(reference=reference).first():return redirect(base+'/c/'+token+'/wallet')
-            if features.RenewalRequest.query.filter_by(user_id=user.id,status='pending').first():abort(409,'ابتدا درخواست در انتظار بررسی را پیگیری کنید.')
-            try:plan=discount(plan,request.form.get('coupon',''))
-            except ValueError as e:db.session.rollback();abort(400,str(e))
-            changed=db.session.execute(update(Wallet).where(Wallet.user_id==user.id,Wallet.balance>=plan['price']).values(balance=Wallet.balance-plan['price'])).rowcount
-            if changed!=1:db.session.rollback();abort(409,'موجودی کیف پول کافی نیست.')
-            row=features.RenewalRequest(user_id=user.id,username=user.username,plan=json.dumps(plan,ensure_ascii=False),receipt='',source='wallet',email_state='skipped',telegram_state='skipped',status='pending')
-            db.session.add(row);db.session.flush()
-            db.session.add(Entry(user_id=user.id,amount=-plan['price'],reason=f'خرید سرویس، درخواست #{row.id}',reference=reference))
-            failures=experience.approve_renewal(row)
-            flash('خرید و تمدید انجام شد؛ تأیید بعضی نودها در حال پیگیری است.' if failures else 'خرید و تمدید با موفقیت انجام شد.','success')
-            return redirect(base+'/c/'+token+'/wallet')
+            def wallet_answer(message):
+                if request.headers.get('X-Beeny-Wallet')=='1':
+                    return jsonify(success=True,message=message,redirect=base+'/c/'+token+'#renew',wallet_balance=db.session.get(Wallet,user.id).balance,reference=secrets.token_urlsafe(32),account=features.account_data(user),max_devices=user.max_devices,current_devices=user.current_devices or 0)
+                return redirect(base+'/c/'+token+'/wallet')
+            try:
+                if user.status!='active':abort(403,'حساب محدود شده است؛ برای تمدید با مدیر تماس بگیرید.')
+                cfg=features.settings()
+                from app import representative_catalog
+                plan=representative_catalog.customer_quote(user,days=request.form.get('custom_days'),quota=request.form.get('custom_quota'),devices=request.form.get('custom_devices')) if request.form.get('plan_id')=='custom' else next((dict(p) for p in cfg['plans'] if p['id']==request.form.get('plan_id')),None)
+                if not plan:abort(400)
+                from app import commissions
+                try:plan=commissions.customer_plan(user,plan)
+                except ValueError as error:abort(400,str(error))
+                reference=request.form.get('reference','')
+                if not re.fullmatch(r'[A-Za-z0-9_-]{32,64}',reference):abort(400)
+                if Entry.query.filter_by(reference=reference,user_id=user.id).first():return wallet_answer('این پرداخت قبلاً ثبت شده است.')
+                if features.RenewalRequest.query.filter_by(user_id=user.id,status='pending').first():abort(409,'ابتدا درخواست در انتظار بررسی را پیگیری کنید.')
+                if request.form.get('coupon') and not cfg['coupons_enabled']:abort(400,'Discount codes are disabled.')
+                try:plan=discount(plan,request.form.get('coupon',''))
+                except ValueError as e:db.session.rollback();abort(400,str(e))
+                changed=db.session.execute(update(Wallet).where(Wallet.user_id==user.id,Wallet.balance>=plan['price']).values(balance=Wallet.balance-plan['price'])).rowcount
+                if changed!=1:db.session.rollback();abort(409,'موجودی کیف پول کافی نیست.')
+                row=features.RenewalRequest(user_id=user.id,username=user.username,plan=json.dumps(plan,ensure_ascii=False),receipt='',source='wallet',email_state='skipped',telegram_state='skipped',status='pending')
+                db.session.add(row);db.session.flush()
+                db.session.add(Entry(user_id=user.id,amount=-plan['price'],reason=f'خرید سرویس، درخواست #{row.id}',reference=reference))
+                try:
+                    failures=experience.approve_renewal(row)
+                except Exception:
+                    db.session.rollback()
+                    # Approval commits the wallet, invoice and entitlement together.
+                    # A later node-sync error must not report that committed payment as failed.
+                    paid=Entry.query.filter_by(reference=reference,user_id=user.id).first()
+                    if not paid or db.session.get(features.RenewalRequest,row.id).status!='completed':raise
+                    logging.exception('Wallet renewal committed; node confirmation is pending for account %s',user.id)
+                    failures=True
+                flash('خرید و تمدید انجام شد؛ تأیید بعضی نودها در حال پیگیری است.' if failures else 'خرید و تمدید با موفقیت انجام شد.','success')
+                return wallet_answer('خرید و تمدید انجام شد؛ تأیید بعضی نودها در حال پیگیری است.' if failures else 'خرید و تمدید با موفقیت انجام شد.')
+            except HTTPException as error:
+                db.session.rollback()
+                if request.headers.get('X-Beeny-Wallet')=='1':return jsonify(success=False,message=error.description),error.code
+                raise
+            except ValueError as error:
+                db.session.rollback()
+                if request.headers.get('X-Beeny-Wallet')=='1':return jsonify(success=False,message=str(error)),400
+                abort(400,str(error))
+            except Exception:
+                db.session.rollback()
+                raise
         return render_template('wallet.html',customer=True,user=user,token=token,wallet=wallet,entries=Entry.query.filter_by(user_id=user.id).order_by(Entry.id.desc()).limit(100).all(),plans=__import__('app').commissions.customer_settings(user,features.settings())['plans'],reference=secrets.token_urlsafe(32),topup_reference=secrets.token_hex(16),customer_settings=features.settings(),topups=features.RenewalRequest.query.filter_by(user_id=user.id,source='wallet_topup').order_by(features.RenewalRequest.id.desc()).limit(10).all(),has_pending=bool(features.RenewalRequest.query.filter_by(user_id=user.id,status='pending').first()),panel_path=panel_path)
     return SimpleNamespace(Wallet=Wallet,Entry=Entry,Invoice=Invoice,Coupon=Coupon,record_invoice=record_invoice,discount=discount)

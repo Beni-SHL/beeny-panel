@@ -76,3 +76,164 @@ html[dir=rtl] #admin-page .settings-hub>section{direction:rtl}
 :root body #admin-page .users-page[data-view=original] :is(.compact-state,.compact-online){display:none!important}
 :root body #admin-page .users-page .user-row.open .user-details{max-height:none!important;overflow:visible}
 @media(max-width:700px){:root body #admin-page .users-page[data-view=compact] .user-header{grid-template-columns:30px minmax(0,1fr) 30px!important;gap:10px!important;padding:12px!important}:root body #admin-page .users-page[data-view=compact] :is(.compact-state,.compact-online){display:none!important}:root body #admin-page .users-page[data-view=original] .user-header{gap:10px;padding:14px 12px}:root body #admin-page .users-page .pill{white-space:normal;overflow-wrap:anywhere}}
+
+/* 3.7.12 shared controls, flat inner surfaces and first-paint layout. */
+:root body{--beeny-accent:#248eaa;--beeny-accent-soft:#248eaa12;--beeny-control-ink:#244653;--beeny-inner-fill:#ffffff33;--beeny-inner-line:#4964701f;--ac-blue:#248eaa;--cc-accent:#248eaa;--accent:#248eaa}
+:root body:not(.light):has(.sidebar),:root[data-theme=dark] body{--beeny-accent:#8ddbdc;--beeny-accent-soft:#8ddbdc14;--beeny-control-ink:#d5eeee;--beeny-inner-fill:#ffffff05;--beeny-inner-line:#ffffff18;--ac-blue:#8ddbdc;--cc-accent:#8ddbdc;--accent:#8ddbdc}
+:root body #admin-page :is(.cc-page,.ac-page){--cc-accent:var(--beeny-accent);--ac-blue:var(--beeny-accent)}
+:root body .cc-page :is(.cc-eyebrow,.cc-icon,.cc-hero-mark,.cc-step-number),:root body .ac-eyebrow{color:var(--beeny-accent)!important}
+:root body #admin-page :is(.cc-button,.ac-btn,.admin-button){min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:8px;max-width:100%;border:1px solid var(--beeny-inner-line)!important;border-radius:12px!important;padding:10px 14px!important;background:var(--beeny-accent-soft)!important;color:var(--beeny-control-ink)!important;box-shadow:none!important;font-size:12px;line-height:1.5;text-decoration:none;white-space:normal}
+:root body #admin-page :is(.cc-button,.ac-btn,.admin-button):hover{background:color-mix(in srgb,var(--beeny-accent) 15%,transparent)!important}
+:root body #admin-page :is(.cc-button.primary,.ac-btn-primary,.admin-button.primary){background:#248eaa!important;color:#fff!important;border-color:#248eaa!important}
+:root body:not(.light) #admin-page :is(.cc-button.primary,.ac-btn-primary,.admin-button.primary){background:#8ddbdc!important;color:#123b43!important;border-color:#8ddbdc!important}
+:root body #admin-page :is(.cc-button,.ac-btn,.admin-button) svg{width:18px;height:18px;flex:none}
+:root body #admin-page :is(.cc-feedback,.cc-note,.cc-callout){color:var(--beeny-tool-ink)!important;overflow-wrap:anywhere;line-height:1.8;font-size:12px}
+:root body #admin-page .cc-callout{background:var(--beeny-accent-soft)!important;border-color:var(--beeny-inner-line)!important;padding:15px;border-radius:14px;align-items:flex-start}
+:root body #admin-page .cc-actions{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+:root body #admin-page .cc-actions>*{min-width:0}
+:root body.light #admin-page .users-page :is(.glass-btn.danger,.glass-btn.warning),:root body.light #admin-page .users-page :is(.glass-btn.danger,.glass-btn.warning):is(:hover,:focus-visible){color:#535f66!important;background:#ffffff80!important;border-color:#7c929533!important}
+:root body.light #admin-page .users-page :is(.glass-btn.danger,.glass-btn.warning) i{color:#535f66!important}
+:root body .glass-navbar :is(.notification-bell,#themeToggle,#admin-language-switch){box-sizing:border-box!important;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;flex:0 0 42px!important;padding:0!important}
+:root body .glass-navbar #themeToggle i{color:inherit!important}
+:root body:has(#mobileMenu.open) #hamburgerBtn{visibility:hidden;pointer-events:none}
+:root body .mobile-menu a :is(i,svg){opacity:1;stroke-width:1.85}
+:root body.light .mobile-menu a i{color:#42515c!important}
+:root body:not(.light) .mobile-menu a i{color:#dedee2!important}
+/* Only the outer card receives blur/refraction; detail rows stay quiet. */
+:root body #admin-page :is(.user-row,.user-card,.ac-panel,.cc-surface,.support-workspace,.support-layout,.ticket-detail,.message-bubble,.admin-glass,.glass-card) :is(.detail-card,.ac-panel,.ac-stat,.cc-surface,.admin-glass,.glass-card,.glass-box,.glass,.ticket-message,.message-bubble,.inbox-row,.cc-callout,.cc-step){background:var(--beeny-inner-fill)!important;border-color:var(--beeny-inner-line)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:root body #admin-page :is(.user-details,.details-grid,.support-layout,.ticket-messages,.ac-meta) :is(.detail-card,.glass,.admin-glass,.message-bubble){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+/* Profile actions use a consistent row and square icon shortcuts. */
+:root body #admin-page .profile-quick-actions{display:flex;flex-wrap:nowrap;gap:8px;margin:0 auto 16px;max-width:1260px}
+:root body #admin-page .profile-quick-actions .ac-btn{flex:1;min-width:0;max-width:180px;padding:10px!important}
+:root body #admin-page .ac-heading .ac-icon-only{width:42px;min-width:42px;height:42px;padding:0!important;flex:none}
+:root body #admin-page .ac-user-profile .ac-usage{padding:18px!important}
+:root body #admin-page .ac-usage .ac-panel-desc{display:none}
+:root body #admin-page .ac-usage .ac-meta{gap:0 14px;margin-top:8px}
+:root body #admin-page .ac-usage .ac-meta>div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0}
+:root body #admin-page .ac-usage .ac-meta :is(span,strong){font-size:11px;margin:0;min-width:0;overflow-wrap:anywhere}
+:root body #admin-page .ac-usage .ac-meter-row{font-size:11px;gap:8px;flex-wrap:wrap}
+:root body #admin-page .private-link-form{margin-top:12px}
+:root body #admin-page :is(.private-link-form,.credential-form)>button[type=submit]{width:100%}
+:root body #admin-page .ac-submitbar{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:6px 0!important;position:static}
+/* Shared auth controls and neutral-blue login; sheen belongs to the logo only. */
+:root body[data-auth-customer]{--text:#e9f1f5;--muted:#a9b8c3;--card:#111c24b8;--stroke:#b1d7e82e;--field:#ffffff08;--small:#bacbd0;--cardshine:#ffffff20;--outline:#66c6da}
+:root[data-theme=light] body[data-auth-customer]{--text:#213943;--muted:#60747e;--card:#ffffffb8;--stroke:#53809333;--field:#ffffff8c;--small:#60747e;--cardshine:#ffffffa8}
+:root body[data-auth-customer] .login-card{background:var(--card)!important;box-shadow:0 12px 45px #08182018,inset 0 1px 0 var(--cardshine);animation:none;backdrop-filter:blur(6px) saturate(140%);-webkit-backdrop-filter:blur(6px) saturate(140%)}
+:root body[data-auth-customer] .login-card::after{content:none!important;animation:none!important}
+:root body[data-auth-customer] .login-card::before{background:linear-gradient(130deg,#c0eaf080,transparent 40%,#bad8e348,transparent)}
+:root body[data-auth-customer] .primary{background:#248eaa!important;border-color:#7dc7d6!important;box-shadow:0 5px 16px #1a748329!important;color:white!important}
+:root body[data-auth-customer] .auth-controls{display:flex;align-items:center;gap:8px}
+:root body[data-auth-customer] :is(.theme,.auth-language){display:inline-flex;align-items:center;justify-content:center;gap:4px;border:1px solid var(--stroke);background:var(--field);border-radius:14px;padding:3px;min-height:44px;color:var(--text);box-sizing:border-box}
+:root body[data-auth-customer] .theme button{width:36px;height:36px;min-width:36px;border-radius:10px;margin:0;padding:0;display:grid;place-items:center;font-size:16px}
+:root body[data-auth-customer] .theme button.active{background:#248eaa!important;box-shadow:none!important;color:#fff!important}
+:root body[data-auth-customer] :is(.theme button,.auth-language) svg{width:19px;height:19px;flex:none;stroke:currentColor}
+:root body[data-auth-customer] .auth-language{width:44px;position:relative;text-decoration:none}
+:root body[data-auth-customer] .language-badge{position:absolute;bottom:3px;inset-inline-end:3px;font-size:8px}
+:root body[data-auth-customer] .brand{display:inline-flex;align-items:center;gap:7px;font-size:17px;letter-spacing:-.3px}
+:root body[data-auth-customer] .brand img{width:29px;height:29px;object-fit:contain}
+:root body[data-auth-customer] .brand b{font-weight:600}
+:root body[data-auth-customer] .brand span{font-weight:400}
+:root body[data-auth-customer] .intro h1{font-size:26px;font-weight:600;letter-spacing:-.7px}
+:root body[data-auth-customer] .intro h1 span{font-weight:400}
+:root body[data-auth-customer] .logo-wrap{position:relative;overflow:hidden;animation:none;filter:drop-shadow(0 6px 14px #188ca51c);border-radius:20px}
+:root body[data-auth-customer] .logo-wrap::after{content:'';position:absolute;inset:-50%;background:linear-gradient(110deg,transparent 42%,#ffffff99 50%,transparent 58%);transform:translateX(-110%);animation:beeny-logo-sheen 9s ease-in-out 2s infinite;pointer-events:none}
+@keyframes beeny-logo-sheen{0%,72%{transform:translateX(-110%)}88%,100%{transform:translateX(110%)}}
+:root body[data-auth-customer] .field{padding-inline:12px;gap:8px}
+:root body[data-auth-customer] .field>svg{margin:0;width:19px;height:19px;flex:none}
+:root body[data-auth-customer] .field input{padding-inline:0}
+:root body[data-auth-customer] .save-signin{display:inline-flex;align-items:center;gap:5px;background:none;border:0;padding:4px 0;color:var(--text);font-size:11px;width:auto;height:auto}
+:root body[data-auth-customer] .save-signin svg{width:15px;height:15px}
+:root body[data-auth-customer] .signin-feedback{font-size:10px;line-height:1.7;color:var(--muted);margin:0 0 10px}
+:root body[data-auth-customer] .status{color:var(--text);background:#248eaa13;border-radius:10px;padding:8px}
+/* Customer/partner pages retain the simple original backdrop with a 5% wash. */
+:root body #react-bg-root.beeny-background-plain{background:linear-gradient(135deg,#e8d8ff0d,#b7e8e50d),#f8fafb!important}
+:root[data-theme=dark] body #react-bg-root.beeny-background-plain{background:linear-gradient(135deg,#8bbdcc0d,#a3dcc80d),#12191d!important}
+:root body #react-bg-root.beeny-background-plain canvas{display:none!important}
+:root body .telegram-card.glass{background:linear-gradient(135deg,#1379b9,#219bd0)!important;border-color:#75c8ec66!important;color:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 8px 22px #167ca51c!important}
+:root body .telegram-card :is(p,h2,small,.eyebrow,.telegram-state,.muted){color:#f0faff!important}
+:root body .telegram-card .primary-button{color:#176589!important;background:#fff!important;border-color:#fff!important}
+/* Large usage and device counts shrink/wrap inside their cards. */
+:root body .metric-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+:root body .metric-grid .metric{min-width:0;overflow:hidden;padding:20px}
+:root body .metric :is(strong,.metric-foot){max-width:100%;min-width:0;overflow-wrap:anywhere}
+:root body .metric>strong{font-size:clamp(20px,2.6vw,34px);line-height:1.3;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 7px}
+:root body .metric>strong [data-counter]{min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+:root body .metric>strong small{font-size:11px;line-height:1.5;white-space:normal}
+:root body .metric-foot{font-size:10px;line-height:1.6;display:block}
+:root body .balance-legend :is(span,b,bdi){min-width:0;overflow-wrap:anywhere;white-space:normal}
+:root body .balance-legend b{font-size:clamp(11px,1.5vw,15px)}
+:root body #admin-page .ac-stat{min-width:0}
+:root body #admin-page .ac-stat strong{font-size:clamp(17px,2vw,22px);overflow-wrap:anywhere;line-height:1.4}
+:root body .metric-icon.violet{color:#258a9a;background:#258a9a14}
+@media(max-width:760px){:root body #admin-page .cc-actions>.cc-button{flex:1 1 calc(50% - 8px);font-size:11px;padding:10px!important}:root body #admin-page .cc-grid{grid-template-columns:minmax(0,1fr)}:root body #admin-page .cc-facts{grid-template-columns:minmax(0,1fr)}:root body #admin-page .cc-facts dd{margin:0 0 12px;overflow-wrap:anywhere}:root body .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}:root body .metric-grid .metric{padding:16px 12px}:root body .metric>strong{font-size:24px}:root body #admin-page .ac-usage .ac-meta{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:540px){:root body .glass-navbar :is(.notification-bell,#themeToggle,#admin-language-switch){width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;flex-basis:38px!important}:root body[data-auth-customer] .shell{padding:16px 14px}:root body[data-auth-customer] .topbar{gap:10px}:root body[data-auth-customer] .brand{font-size:14px;gap:4px}:root body[data-auth-customer] .auth-controls{gap:6px}:root body[data-auth-customer] .theme button{width:32px;height:32px;min-width:32px}:root body[data-auth-customer] .auth-language{width:40px;min-height:40px}:root body[data-auth-customer] .login-card{padding:26px 20px}}
+@media(prefers-reduced-motion:reduce){:root body[data-auth-customer] .logo-wrap::after{animation:none;display:none}}
+/* Header rhythm shared by Add funds and the mobile account shortcuts. */
+:root body :is(.customer-shell-header .shell-controls,.workspace-top .top-actions){display:flex;align-items:center;gap:8px}
+:root body :is(.customer-shell-header .shell-controls button,.customer-shell-header .shell-controls .language-picker button){display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;min-width:40px;min-height:40px;margin:0;padding:0;border-radius:13px!important;border:1px solid var(--beeny-glass-line)!important;background:var(--beeny-glass-fill)!important;box-shadow:var(--beeny-glass-shadow)!important;color:var(--beeny-tool-ink)!important;position:relative}
+:root body :is(.customer-shell-header .shell-controls button) svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8}
+:root body :is(.customer-shell-header .shell-controls form){margin:0}
+:root body .customer-shell-header .language-badge{position:absolute;bottom:3px;inset-inline-end:3px;font-size:8px}
+:root body .wallet-quick>a,:root body .mobile-shortcuts>a{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 13px!important;border:1px solid var(--beeny-glass-line)!important;border-radius:13px!important;background:var(--beeny-glass-fill)!important;color:var(--beeny-tool-ink)!important;box-shadow:var(--beeny-glass-shadow)!important;text-decoration:none;font-size:11px;min-height:40px;white-space:nowrap}
+:root body .mobile-shortcuts{border:0!important;box-shadow:none!important;background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:4px 0!important;gap:7px;overflow-x:auto;flex-wrap:nowrap}
+:root body .mobile-shortcuts>a{flex:1 0 auto}
+:root body .wallet-workspace{--ca-ink:var(--beeny-tool-ink);--ca-muted:#70818b;--ca-accent:var(--beeny-accent);max-width:1180px;margin-inline:auto;display:grid;gap:22px;color:var(--beeny-tool-ink)}
+:root[data-theme=dark] body .wallet-workspace{--ca-muted:#a8bac1}
+:root body .wallet-workspace .wallet-hero{display:grid;gap:10px;padding:26px;border:1px solid var(--beeny-glass-line);border-radius:24px;background:linear-gradient(120deg,#248eaa15,#85d5bc0e)!important;color:var(--beeny-tool-ink)!important;box-shadow:none}
+:root body .wallet-workspace .wallet-hero>svg{width:32px;height:32px;fill:none;stroke:var(--beeny-accent);stroke-width:1.7}
+:root body .wallet-workspace .wallet-hero strong{font-size:clamp(25px,4vw,38px);font-weight:650;overflow-wrap:anywhere;line-height:1.4}
+:root body .wallet-workspace .wallet-hero :is(p,small){color:var(--ca-muted)!important;font-size:12px;line-height:1.8;margin:0}
+:root body .wallet-workspace .wallet-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start}
+:root body .wallet-workspace .wallet-grid>.admin-glass{padding:24px;border-radius:22px;min-width:0}
+:root body .wallet-workspace :is(.wallet-stepper,.wallet-plan-summary,.wallet-amount-summary,.wallet-payment,.amount-presets){background:var(--beeny-inner-fill)!important;color:var(--beeny-tool-ink)!important;border-color:var(--beeny-inner-line)!important;box-shadow:none;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:root body .wallet-workspace :is(input:not([type=checkbox]),select,textarea){width:100%;min-width:0;background:var(--beeny-inner-fill)!important;color:var(--beeny-tool-ink)!important;border:1px solid var(--beeny-inner-line)!important;border-radius:12px;padding:11px;font:inherit;font-size:12px}
+:root body .wallet-workspace label{display:grid;gap:8px;font-size:12px;line-height:1.7;margin-block:12px}
+:root body .wallet-workspace :is(h2,h3){font-size:18px;color:var(--beeny-tool-ink)}
+:root body .wallet-workspace :is(p,small){line-height:1.8}
+:root body .wallet-workspace .admin-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--beeny-inner-line);border-radius:12px;padding:11px 15px;font:inherit;font-size:12px;line-height:1.5;background:var(--beeny-accent-soft);color:var(--beeny-control-ink)}
+:root body .wallet-workspace .admin-button.primary{background:#248eaa!important;color:#fff!important;border-color:#248eaa!important;box-shadow:none!important}
+:root body .wallet-workspace :is(.wallet-warning,.admin-hint){color:var(--ca-muted)!important;background:var(--beeny-accent-soft)!important;border-radius:12px;padding:10px 12px;font-size:11px}
+/* Prime-style state transition; static label retains width during async states. */
+:root body .beeny-action-button{position:relative;isolation:isolate;overflow:hidden;transition:background .2s,transform .18s;min-height:40px}
+:root body .beeny-action-button .button-idle,:root body .beeny-action-button .button-state{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0}
+:root body .beeny-action-button :is(.button-idle,.button-state)>svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+:root body .beeny-action-button .button-state{position:absolute;inset:0;padding:8px 10px;visibility:hidden;z-index:2;font-size:12px;white-space:nowrap;background:inherit}
+:root body .beeny-action-button[data-action-state]:not([data-action-state=idle])>.button-idle{visibility:hidden}
+:root body .beeny-action-button[data-action-state]:not([data-action-state=idle])>.button-state{visibility:visible;animation:beeny-button-in .2s ease-out}
+:root body .beeny-action-button[data-action-state=loading] .button-state>svg{animation:beeny-loading-spin .8s linear infinite}
+:root body .beeny-action-button[data-action-state=loading]::before{content:'';position:absolute;inset:0;inset-inline-end:auto;width:var(--action-progress,0%);background:#6ae2c64d;z-index:3;pointer-events:none;transition:width .18s}
+:root body .beeny-action-button[data-action-state=success]{background:#21876e!important;border-color:#21876e!important;color:#fff!important}
+:root body .beeny-action-button[data-action-state=error]{background:#a84e5c!important;border-color:#a84e5c!important;color:#fff!important}
+:root body .beeny-action-button:active{transform:scale(.98)}
+@keyframes beeny-button-in{from{opacity:0;transform:translateY(8px);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+.renew-wallet-payment{display:grid;gap:8px;padding:18px;margin:18px 0;border:1px solid var(--beeny-glass-line);border-radius:16px;background:var(--beeny-accent-soft);color:var(--beeny-tool-ink)}
+.renew-wallet-payment button{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:0;border-radius:12px;min-height:44px;padding:11px 16px;background:#248eaa;color:#fff;font:inherit;font-size:13px}
+.renew-wallet-payment small{font-size:11px;color:var(--muted);line-height:1.7}
+.renew-wallet-payment button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:700px){:root body .wallet-workspace .wallet-grid{grid-template-columns:minmax(0,1fr);gap:16px}:root body .wallet-workspace .wallet-grid>.admin-glass{padding:18px}:root body .wallet-workspace .wallet-hero{padding:22px}:root body .wallet-workspace .field-grid{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){:root body .beeny-action-button,:root body .beeny-action-button *{animation:none!important;transition:none!important}}
+:root body{--beeny-material-filter:blur(6px) url(#beeny-liquid) saturate(155%);--beeny-material-fallback:blur(6px) saturate(155%)}
+:root body:not(.light):has(.sidebar),:root[data-theme=dark] body:not(.light){--beeny-material-filter:blur(6px) url(#beeny-liquid) saturate(155%);--beeny-material-fallback:blur(6px) saturate(155%)}
+:root body{--beeny-glass-shadow:inset 0 1px 0 #ffffff80,inset 1px 0 0 #7cdded38,inset -1px -1px 0 #a3dacb2b,0 3px 13px #0b233209}
+:root body:not(.light):has(.sidebar),:root[data-theme=dark] body{--beeny-glass-shadow:inset 0 1px 0 #ffffff24,inset 1px 0 0 #7cdded30,inset -1px -1px 0 #b0dcce24,0 3px 13px #00000012}
+:root body #admin-page :is(.cc-icon,.section-icon,.cc-step-number,.eyebrow,.overline){color:var(--beeny-accent)!important;background-color:var(--beeny-accent-soft)!important}
+:root body .metric-foot.expiry-first-use{font-size:9px!important;line-height:1.65;overflow-wrap:anywhere}
+:root body #admin-page :is(.support-layout,.support-workspace) :is(.thread-avatar,.inbox-icon){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--beeny-accent-soft)!important;color:var(--beeny-accent)!important;box-shadow:none!important}
+:root body .notification-center .notification-badge{border:0!important;outline:0!important;box-shadow:none!important;min-width:15px;min-height:15px;height:15px;padding:0 3px;font:700 8px/15px BeenyInter,BeenyYekan,sans-serif;border-radius:999px;top:-2px;right:-2px;background:#e7586d;color:white;animation:none!important}
+:root body :is(.ticket-detail,.user-row,.user-card,.ac-panel,.glass,.admin-glass,.cc-surface) :is(.detail-card,.message-bubble,.glass-box,.ac-stat){background:var(--beeny-inner-fill)!important;border-color:var(--beeny-inner-line)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:root body .message-bubble.is-mine{background:var(--beeny-accent-soft)!important}
+:root body .welcome-account-actions .wallet-quick em{display:inline-flex;align-items:center;justify-content:center;font-style:normal;padding:8px 11px;border:1px solid var(--beeny-glass-line);border-radius:12px;background:var(--beeny-glass-fill);box-shadow:var(--beeny-glass-shadow);color:var(--beeny-tool-ink);font-size:10px;white-space:nowrap}
+:root body .wallet-workspace .amount-presets button{background:var(--beeny-accent-soft)!important;color:var(--beeny-control-ink)!important;border:1px solid var(--beeny-inner-line)!important;border-radius:10px;padding:8px 10px}
+:root body .wallet-workspace .wallet-transaction{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid var(--beeny-inner-line);background:transparent!important;border-radius:0;box-shadow:none}
+:root body .wallet-workspace .wallet-transaction time{font-size:10px;color:var(--ca-muted)}
+:root body #admin-page .ac-stat:nth-child(3)>strong{font-size:clamp(12px,1.4vw,17px);line-height:1.6}
+:root body #admin-page .ac-field label[for=expiry_start]{font-size:11px}
+:root body #admin-page #expiry_start{font-size:12px}
+/* Notification inbox must remain opaque enough to read over every backdrop. */
+:root body .notification-center .notification-popover{background:rgba(250,252,253,.98)!important;color:#263e49!important;border:1px solid #cbd8de!important;box-shadow:0 14px 38px #102e4024!important;backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important}
+:root body:not(.light):has(.sidebar) .notification-center .notification-popover,:root[data-theme=dark] body .notification-center .notification-popover{background:rgba(24,34,40,.98)!important;color:#eaf1f5!important;border-color:#ffffff26!important;box-shadow:0 14px 38px #0004!important}
+:root body .notification-popover :is(h3,p,b,strong,.notification-title){color:inherit!important}
+:root body .notification-popover :is(small,time){color:#66818f!important}
+:root body:not(.light):has(.sidebar) .notification-popover :is(small,time),:root[data-theme=dark] body .notification-popover :is(small,time){color:#adbec8!important}
+:root body .notification-popover .notification-actions button{background:#248eaa12!important;color:#286279!important;border:1px solid #248eaa26!important;border-radius:10px}
+:root body:not(.light):has(.sidebar) .notification-popover .notification-actions button,:root[data-theme=dark] body .notification-popover .notification-actions button{color:#b4e7ea!important;background:#8ddbdc12!important;border-color:#8ddbdc26!important}

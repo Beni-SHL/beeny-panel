@@ -8,11 +8,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>BEENY PANEL</title>
 
-    <link href="{{ url_for('static',filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+    
 
-    <link href="{{ url_for('static',filename='vendor/fontawesome/css/all.min.css') }}" rel="stylesheet">
+    
 
-<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
 
     <style>
         /* ── React Lightfall Background ── */
@@ -232,15 +232,15 @@
         body.light .close-menu { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); color: #444; }
     </style>
     <link rel="icon" href="{{ url_for('static', filename='brand/mark.png',v=panel_version) }}" type="image/png">
-    <link href="{{ url_for('static', filename='css/brand.css') }}" rel="stylesheet"><link href="{{ url_for('static', filename='css/customer-admin.css') }}" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static',filename='css/performance.css') }}"><script src="{{ url_for('static',filename='js/performance.js') }}" defer></script><link rel="stylesheet" href="{{ url_for('static',filename='css/typography.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/release-370.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/release-372.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/admin-language.css') }}"><style>#admin-language-overlay[hidden]{display:none!important}</style><link rel="stylesheet" href="{{ url_for('static',filename='css/glass-system.css',v=panel_version) }}"></head>
+    
+<script src="{{ url_for('static',filename='js/performance.js') }}" defer></script><style>#admin-language-overlay[hidden]{display:none!important}</style><link href="{{ url_for('static',filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet"><link href="{{ url_for('static',filename='vendor/fontawesome/css/all.min.css') }}" rel="stylesheet"><link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet"><link href="{{ url_for('static', filename='css/brand.css') }}" rel="stylesheet"><link href="{{ url_for('static', filename='css/customer-admin.css') }}" rel="stylesheet"><link rel="stylesheet" href="{{ url_for('static',filename='css/performance.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/typography.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/release-370.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/release-372.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/admin-language.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/admin-enhancements.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/control-center.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/workspace.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/account.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/glass-system.css',v=panel_version) }}"><script defer src="{{ url_for('static',filename='js/action-buttons.js',v=panel_version) }}"></script><link rel="preload" as="image" href="{{ url_for('static',filename='brand/liquid-refraction.webp',v=panel_version) }}"></head>
 <body>{% include 'partials/liquid_filter.html' %}<div id="admin-language-overlay" hidden role="status" aria-live="polite"><div class="language-loader-orb">{{ icon('globe') }}</div><strong data-language-loader-text>{{ 'در حال آماده‌سازی پنل…' if admin_language=='fa' else 'Preparing your workspace…' }}</strong><span class="language-loader-dots"><i></i><i></i><i></i></span></div><script>window.adminDictionary={{ admin_dictionary|tojson }};window.adminT=function(s){return document.documentElement.lang==='fa'?(window.adminDictionary[s]||s):s};</script><script defer src="{{ url_for('static',filename='js/admin-language.js') }}"></script>{% include 'partials/page_loader.html' %}
 <script>try{if(localStorage.getItem("beeny-theme")==="light")document.body.classList.add("light")}catch(e){}</script>
 
 <!-- جایگزین شد: این دیو برای رندر شدن بک‌گراند توسط جاوااسکریپت (Vite) استفاده می‌شود -->
 {% include 'partials/background.html' %}
 
-<button class="hamburger" id="hamburgerBtn">
+<button class="hamburger" id="hamburgerBtn" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
     <i class="fa fa-bars"></i>
 </button>
 
@@ -297,7 +297,7 @@
 
     <div id="admin-page">{% block content %}{% endblock %}</div>
 </div>
-<link rel="stylesheet" href="{{ url_for('static',filename='css/admin-enhancements.css',v=panel_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/control-center.css',v=panel_version) }}">
+
 
 <script>
     // ==================== UI & Theme Controls ====================
@@ -327,13 +327,13 @@
     const closeMenuBtn = document.getElementById('closeMenuBtn');
 
     function openMenu() {
-        mobileMenu.classList.add('open');
+        mobileMenu.classList.add('open');hamburgerBtn.setAttribute('aria-expanded','true');
         menuOverlay.classList.add('show');
         document.body.style.overflow = 'hidden';
     }
 
     function closeMenu() {
-        mobileMenu.classList.remove('open');
+        mobileMenu.classList.remove('open');hamburgerBtn.setAttribute('aria-expanded','false');hamburgerBtn.focus();
         menuOverlay.classList.remove('show');
         document.body.style.overflow = '';
     }
@@ -351,5 +351,5 @@
 
 
 
-<script src="{{ url_for('static',filename='js/flags.js') }}"></script><script src="{{ url_for('static',filename='js/experience.js') }}" defer></script><script src="{{ url_for('static',filename='js/quality.js') }}" defer></script><script src="{{ url_for('static',filename='js/refinement.js') }}" defer></script><script src="{{ url_for('static',filename='js/studio.js') }}" defer></script><script src="{{ url_for('static',filename='js/portal-content.js') }}" defer></script><script src="{{ url_for('static',filename='js/polish.js') }}" defer></script><script src="{{ url_for('static',filename='js/release-344.js') }}" defer></script><script src="{{ url_for('static',filename='js/commissions.js') }}" defer></script><script defer src="{{ url_for('static',filename='js/admin-forms.js',v=panel_version) }}"></script><script defer src="{{ url_for('static',filename='js/control-center.js') }}"></script><link rel="stylesheet" href="{{ url_for('static',filename='css/workspace.css',v=panel_version) }}"><script defer src="{{ url_for('static',filename='js/workspace.js',v=panel_version) }}"></script><script defer src="{{ url_for('static',filename='js/liquid-glass.js',v=panel_version) }}"></script></body>
+<script src="{{ url_for('static',filename='js/flags.js') }}"></script><script src="{{ url_for('static',filename='js/experience.js') }}" defer></script><script src="{{ url_for('static',filename='js/quality.js') }}" defer></script><script src="{{ url_for('static',filename='js/refinement.js') }}" defer></script><script src="{{ url_for('static',filename='js/studio.js') }}" defer></script><script src="{{ url_for('static',filename='js/portal-content.js') }}" defer></script><script src="{{ url_for('static',filename='js/polish.js') }}" defer></script><script src="{{ url_for('static',filename='js/release-344.js') }}" defer></script><script src="{{ url_for('static',filename='js/commissions.js') }}" defer></script><script defer src="{{ url_for('static',filename='js/admin-forms.js',v=panel_version) }}"></script><script defer src="{{ url_for('static',filename='js/control-center.js') }}"></script><script defer src="{{ url_for('static',filename='js/workspace.js',v=panel_version) }}"></script><script defer src="{{ url_for('static',filename='js/liquid-glass.js',v=panel_version) }}"></script></body>
 </html>

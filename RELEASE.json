@@ -1,22 +1,29 @@
 {
-  "version": "3.7.11",
-  "base_version": "3.7.10",
+  "version": "3.7.12",
+  "base_version": "3.7.11",
   "release_date": "2026-10-22",
-  "bridge_version": "3.7.11",
+  "bridge_version": "3.7.12",
   "channel": "test",
   "features": [
-    "Use the user-supplied GradFlow Glass Fold vertex and fragment shaders verbatim in a dependency-free native WebGL host.",
-    "Share the renderer across admin, customer, representative and all login shells; replace prior Lightfall/CSS ambient/auth ribbon backgrounds.",
-    "Keep supplied dark colors #1e3cc8 / #06081e / #96d7ff, speed .5, scale 1 and noise .12. Light palette uses #d8dde5 / #ffffff / #e4f3ff to match the white reference (both supplied code blocks contained identical dark defaults).",
-    "Handle class/data-theme changes, reduced motion, hidden tabs, context restoration and bfcache without duplicate canvases; cap mobile pixel budget.",
-    "Restore separate rounded original user cards and a single compact list surface; remove generic glass overrides from rows and repair mobile grid, pills and expanded detail height."
+    "Neutral teal/blue login controls, SVG theme buttons, restrained logo-only sheen, padded field icons, shared local English type, opt-in browser password-manager save and remember control.",
+    "Load shell styles before first paint; preload the local refraction map; remove scroll-wide animation freezing.",
+    "Flat inner user/support detail surfaces, persistent outer liquid glass, stronger refraction and subtle colored edges; keep glass blur at 6px.",
+    "Consistent neutral Delete/Reset light icons, identical header-control geometry, opener hidden while mobile menu is open and slightly stronger menu icons.",
+    "Compact profile usage, horizontal Devices/Wallet shortcuts, icon-only header shortcuts with accessible labels, full-width private-link regeneration and no black submit bar.",
+    "Theme-aware settings/OpenVPN buttons and callouts with wrapped mobile layout; bright avatar-derived complements; overflow-safe large usage/device metrics and small first-use labels.",
+    "Simple customer/partner backdrops with 5% tint, a faint tint in the white admin background, and restored blue Telegram card.",
+    "Prime-style action states and real-byte download progress adapted from the supplied React examples into the existing native app; no synthetic progress or dependency runtime.",
+    "Wallet styling aligned with partner dashboard; Add funds and mobile shortcuts reuse header controls.",
+    "Renewal-page AJAX wallet payment with small balance label, server-side plan/custom pricing and discount validation, atomic conditional debit, duplicate-submit protection and refreshed account/balance display without reload.",
+    "Roll back uncommitted approval failures, while reporting committed payments with pending node confirmation as successful.",
+    "Smaller red notification count without border/shadow; restore nearly opaque theme-aware notification popup for readable text."
   ],
   "validation": {
-    "targeted_python_tests": 8,
-    "rendered_pages": "44 EN/FA Flask SSR pages plus shared-background shell assertions.",
-    "native_host": "Node VM mocked-WebGL lifecycle checks: palettes, admin/auth theme switching, duplicate prevention, reduced motion, hidden tabs, context recovery, bfcache and mobile pixel budget.",
-    "shader_integrity": "Vertex and fragment text compared exactly against uploaded source.",
-    "source": "Python/Jinja/CSS/JS/Bash syntax, installer preflight, archive manifest and CRC checks."
+    "python_cases": 31,
+    "rendered_pages": "44 EN/FA Flask SSR pages plus login, wallet, customer-background and profile structural checks.",
+    "frontend": "Node VM action-state/download tests (real byte progress, HTTP failure), and mocked-WebGL theme/lifecycle tests.",
+    "finance": "Wallet debit/invoice, duplicate submission, insufficient funds, bad CSRF, rollback before commit, and post-commit node-sync failure; existing commerce and representative catalog tests.",
+    "source": "Python/Jinja/JS/CSS/Bash parsing, 43 local script integrity pins, installer preflight, ZIP CRC and per-file hashes."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -34,8 +41,10 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Real-browser rendering, GPU shader compilation and live VPS installation are not verified here.",
-    "WebGL-unavailable clients use a plain theme-colored fallback.",
-    "No VPN core, network policy or account data logic changes."
+    "Actual mobile/desktop browser appearance and live VPS deployment were not verified in this environment.",
+    "Browser password-manager saving depends on browser support and user consent; no passwords are stored in localStorage.",
+    "Wallet payment pays the full plan amount; split wallet/bank payments are not implemented.",
+    "Download completion means the response was received and handed to the browser save flow, not confirmation of a file on disk.",
+    "No VPN core, session guard or network policy changes."
   ]
 }

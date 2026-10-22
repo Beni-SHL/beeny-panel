@@ -535,7 +535,7 @@ def register(app, db, User, AccountLink, TrafficDailyUser, Node, UserNode, resol
         renewals = RenewalRequest.query.filter_by(user_id=user.id).order_by(RenewalRequest.id.desc()).limit(5).all()
         return render_template('customer_portal.html', user=user, token=token, panel_path=panel_path,
                 portal_base=base+'/c/'+token, nodes=[n for n in nodes if n], data=account_data(user),
-                profile=profile, customer_settings=cfg, renewals=renewals, receipt_grant=ReceiptGrant.query.filter_by(user_id=user.id,active=True).first(),wallet_balance=wallet.balance if wallet else 0,
+                profile=profile, customer_settings=cfg, renewals=renewals, receipt_grant=ReceiptGrant.query.filter_by(user_id=user.id,active=True).first(),wallet_balance=wallet.balance if wallet else 0,wallet_reference=secrets.token_urlsafe(32),
                 payment_ready=len(cfg['card_number']) == 16 and bool(cfg['card_holder'] and cfg['bank_name'])
                               and bool(cfg['admin_email'] or admin_recipients(cfg)),
                 has_pending=any(r.status == 'pending' for r in renewals))

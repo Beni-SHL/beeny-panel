@@ -2,7 +2,7 @@
 body :is(.admin-glass,.glass-card,.glass-box,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat,.glass){backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important}
 body :is(.admin-glass,.glass-card,.gc,.ac-panel,.glass) :is(.admin-glass,.glass-card,.gc,.ac-panel,.glass){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 body .speed-status-card{animation:none!important}
-.beeny-scrolling *, .beeny-scrolling *::before, .beeny-scrolling *::after{animation-play-state:paused!important}
+
 .beeny-scrolling .beeny-page-loader::after{animation-play-state:running!important}
 .beeny-page-loader{display:grid;opacity:0;pointer-events:none;transition:opacity .16s ease,visibility .16s;position:fixed;inset:0;z-index:2147483000;place-content:center;justify-items:center;gap:18px;background:#f2f5fb;color:#34415a;visibility:hidden!important;font:500 14px Vazirmatn,system-ui,sans-serif}
 .beeny-page-loader::after{content:'';width:28px;height:28px;border:3px solid #acbad733;border-top-color:#7694d1;border-radius:50%;animation:beeny-loading-spin .8s linear infinite}

@@ -11,8 +11,8 @@ const root={dataset:{},classList:{add(){},remove(){}},getBoundingClientRect:()=>
 const window={addEventListener:(n,f)=>events[n]=f,removeEventListener(){},__beenyBackgroundPaused:false};
 const ctx={document,window,performance:{now:()=>100},devicePixelRatio:2,Float32Array,URL,Math,Error,matchMedia:q=>q.includes('reduced')?reduced:{matches:true},requestAnimationFrame:f=>{queue.set(++serial,f);return serial},cancelAnimationFrame:i=>queue.delete(i),ResizeObserver:class{constructor(f){observers.push(f)}observe(){}disconnect(){}},MutationObserver:class{constructor(f){observers.push(f)}observe(){}disconnect(){}}};
 vm.createContext(ctx);vm.runInContext(code+'\nthis.mount=mountGlassFold',ctx);ctx.mount(root);assert.equal(draws,1);assert.deepEqual(palettes.at(-1),[6/255,8/255,30/255]);ctx.mount(root);assert.equal(draws,1);
-light=true;observers[1]();assert.deepEqual(palettes.at(-1),[1,1,1]);assert.equal(queue.size,1);
-sidebar=false;light=false;html.dataset.theme='dark';observers[1]();assert.deepEqual(palettes.at(-1),[6/255,8/255,30/255]);html.dataset.theme='light';observers[1]();assert.deepEqual(palettes.at(-1),[1,1,1]);
+light=true;observers[1]();assert.deepEqual(palettes.at(-1),[1,253/255,253/255]);assert.equal(queue.size,1);
+sidebar=false;light=false;html.dataset.theme='dark';observers[1]();assert.deepEqual(palettes.at(-1),[6/255,8/255,30/255]);html.dataset.theme='light';observers[1]();assert.deepEqual(palettes.at(-1),[1,253/255,253/255]);
 reduced.matches=true;events.visibilitychange();assert.equal(queue.size,0);const n=draws;document.hidden=true;events.visibilitychange();assert.equal(draws,n);document.hidden=false;events.visibilitychange();assert.equal(draws,n+1);
 canvasEvents.webglcontextlost({preventDefault(){}});observers[0]();assert.equal(queue.size,0);canvasEvents.webglcontextrestored();assert.equal(draws,n+2);
 events.pagehide({persisted:true});const saved=draws;events.pageshow();assert.equal(draws,saved+1);

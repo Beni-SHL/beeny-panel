@@ -4,10 +4,11 @@ if(window.beenyAdminForms)return;window.beenyAdminForms=true;
 const staticRoot=new URL('.',document.currentScript.src);
 // Fixed paths and Subresource Integrity pins generated from this source release.
 const approvedScripts={
+  "action-buttons.js": "sha256-swMewjoAjMT1QsyeB4CfxNCVOJBj8ZAzuowmYPwFsZM=",
   "admin-language.js": "sha256-6XHit1oey0VV1uP3CKAvupvr8PwupS9i9ycRC5CFrsc=",
   "admin-security.js": "sha256-9G14/BJSrUrzUN6Uv7I95+UdpxrH3g9dPygvgdmYWBo=",
-  "auth-bloom.js": "sha256-0ts/0RKWo7h1lFp72nQcenZNomaG0PUKnTnB1gzAek0=",
-  "avatar-theme.js": "sha256-I4BgBFFNVz3vCUt73Phb16V0QCrqjsdOzSWB5Irg1Hc=",
+  "auth-bloom.js": "sha256-VvzsQGciRltj89giT2j9pYKRblbEvqpLmncigUVVm0M=",
+  "avatar-theme.js": "sha256-zljO+qWG6t63w/VARpL4QOEqckzqa9GgHzm8ufowzI4=",
   "backup-settings.js": "sha256-7VGfBXodxpcJKwv3YHaAFwLc5BHCAzBVtF3bp+uBues=",
   "bank-carousel.js": "sha256-S3bzFgSQ5hi8ZZREqjr85Y8okXI4/bTnBmxc6hWB43M=",
   "commissions.js": "sha256-l76aq16x4YNKAtmsJWrm2DaaMKnWmHrTcCrW4P75ysI=",
@@ -18,7 +19,7 @@ const approvedScripts={
   "dns-services.js": "sha256-/dAQ9pVQ+4klEVFfUjEV+936qxinblKdbFhM6vNfiQY=",
   "experience.js": "sha256-jALQJoydJ92hvwvJLHoaq/yyjgI2L2sqJ7cXcPbne0s=",
   "flags.js": "sha256-FdKRh+NAC61vlvUzexYDderQaT3o0Qy3ZZvtMOjn2ZM=",
-  "general-settings.js": "sha256-31SSEDcR02Ctq+VR4uorSAYIJanw4kGs8VagEMWaEso=",
+  "general-settings.js": "sha256-0orPwHGhoKtiK8b4tzYLMgDM6bHLAAO8XuplXVQUOfI=",
   "https-settings.js": "sha256-877bsGQzPnGZ+6dlXErrTHvYbG93uOHoVwWphyyNhbs=",
   "liquid-glass.js": "sha256-DY6r7JbYRJddGHCyyZ5JdHR2rcPqVBo7RKinsnUQaGE=",
   "maintenance.js": "sha256-tn++9ASrbLDL3H8WP/myOYo/it6JLv1be7ECUUIH0VM=",
@@ -29,14 +30,14 @@ const approvedScripts={
   "performance.js": "sha256-y9sZylprsrlyBgu1Zucp+LqX2kdw52swSRt2J6b/1SY=",
   "polish.js": "sha256-he3KMKrK8p6Sf2Q25d+UBJahVrZ9wznZ5/C2gsoR6AQ=",
   "portal-content.js": "sha256-E7kjZ3R29D1OqPvx80ZnU9LwSIoaRnAIWSbMUtYIv6M=",
-  "portal.js": "sha256-czjN3rlGNtKXUKTKs7FAmNBa4kkPr7QIQ5OA4kGkc/M=",
+  "portal.js": "sha256-ZgJMY2tj1klrPQaA2CUjqk0pu35Pdp7KRI/kpb1p+c4=",
   "pricing.js": "sha256-r7Zke2mow49nB6bmBf/A+qQNqt8Dbt7PEfQCt1PVBRA=",
   "quality.js": "sha256-dWbTZJJKkEHnLc1knyhb6SjAM4Gd055qC63FCZKYszQ=",
   "refinement.js": "sha256-ElMmRymghNMPAobC5NcbTStFgO+SEwL6Ztlv+uu4Ghc=",
   "release-344.js": "sha256-Ty1UuI95Nc398CjbTMW3782k0cxvqgYbHcdwL/UkTLI=",
   "representative-credit.js": "sha256-VYbl4UKfNeSd2MUgEZaLoXhGSP/9tlmme04iCEiHwv8=",
   "reseller-controls.js": "sha256-mQaw/FYwQhXzGL9xNoL3odBMZU7317P2Uhz3x3FQs7U=",
-  "settings-forms.js": "sha256-fWDeD4thXQ2dXxOirPaGzvo7g2yP2BUt22rd2NId8Tk=",
+  "settings-forms.js": "sha256-71N1qOsNcB75JFY68rWW81y/iGQyUfmJcGTbCKgmrnA=",
   "share-access.js": "sha256-yJo7TGDzJ8a5o8dQGO3bkrJY3rafKcVcIeJZy8S2Yeg=",
   "studio.js": "sha256-JbYvBwbva9xOFuAuNtJxfY9B96NVNGmpNk6DKzLjHXc=",
   "system-settings.js": "sha256-Nb6NZ9Bqe3Sw6aR4LmZ300s1mtjt4WnHy7EE1PFypGw=",
@@ -95,7 +96,7 @@ document.addEventListener('submit',async event=>{
  // FormData must be built before disabling controls; include the clicked action.
  const data=new FormData(form);if(event.submitter?.name)data.append(event.submitter.name,event.submitter.value);
  form.dataset.adminBusy='1';form.setAttribute('aria-busy','true');
- const buttons=[...form.querySelectorAll('button[type=submit],button:not([type]),input[type=submit]')];const states=buttons.map(b=>b.disabled);buttons.forEach(b=>b.disabled=true);status(form,'Saving…');
+ const buttons=[...form.querySelectorAll('button[type=submit],button:not([type]),input[type=submit]')];const states=buttons.map(b=>b.disabled);buttons.forEach(b=>b.disabled=true);status(form,'Saving…');window.BeenyActionButton?.set(event.submitter,'loading');
  try{
   const response=await fetch(url,{method:'POST',body:data,credentials:'same-origin',headers:{'X-Beeny-Form':'1','X-CSRF-Token':document.querySelector('meta[name=csrf-token]')?.content||''}});
   const finalURL=new URL(response.url||url.href);
@@ -104,13 +105,13 @@ document.addEventListener('submit',async event=>{
   const type=response.headers.get('Content-Type')||'';
   if(type.includes('application/json')){
    const result=await response.json();if(!response.ok||result.success===false||result.error)throw Error(result.message||result.error||'Save failed.');
-   if(result.redirect){const next=new URL(result.redirect,location.href);if(next.origin!==location.origin)throw Error('Unexpected redirect.');const page=await fetch(next,{credentials:'same-origin'});if(!page.ok)throw Error('Saved, but the updated page could not be loaded.');await mount(new DOMParser().parseFromString(await page.text(),'text/html'),next);}else status(form,result.message||'Saved.');return;
+   window.BeenyActionButton?.set(event.submitter,'success');if(result.redirect){const next=new URL(result.redirect,location.href);if(next.origin!==location.origin)throw Error('Unexpected redirect.');const page=await fetch(next,{credentials:'same-origin'});if(!page.ok)throw Error('Saved, but the updated page could not be loaded.');await mount(new DOMParser().parseFromString(await page.text(),'text/html'),next);}else status(form,result.message||'Saved.');return;
   }
   const doc=new DOMParser().parseFromString(await response.text(),'text/html');
   if(!response.ok){const description=doc.querySelector('[data-error-description],.admin-notice.error,.alert-danger,p');throw Error(description?.textContent.trim()||'Save failed.');}
   // Return the server-rendered validation messages, new rows and one-time security codes.
-  await mount(doc,finalURL);
- }catch(error){status(form,error.message||'Save failed.',true);}
+  window.BeenyActionButton?.set(event.submitter,'success');await mount(doc,finalURL);
+ }catch(error){window.BeenyActionButton?.set(event.submitter,'error');status(form,error.message||'Save failed.',true);}
  finally{delete form.dataset.adminBusy;form.removeAttribute('aria-busy');buttons.forEach((b,i)=>b.disabled=states[i]);}
 });
 })();
