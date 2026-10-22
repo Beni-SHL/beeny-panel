@@ -31,7 +31,7 @@ export function mountGlassFold(root){
   gl.viewport(0,0,width,height);
   if(last!==null)elapsed+=Math.min((now-last)/1000,.1)*.5;
   last=now;
-  const colors=palettes[light()?'light':'dark'];
+  const selectedMode=light()?'light':'dark',colors=window.BeenyTheme?.palette(document.body.dataset?.beenyThemeScope||'admin',selectedMode)||palettes[selectedMode];
   colors.forEach((c,i)=>gl.uniform3fv(u['color'+(i+1)],rgb(c)));
   gl.uniform1f(u.time,elapsed);gl.uniform1f(u.scale,1);gl.uniform1f(u.noise,.12);gl.uniform2f(u.resolution,width,height);gl.drawArrays(gl.TRIANGLES,0,6);
  }
@@ -45,14 +45,14 @@ export function mountGlassFold(root){
   if(!document.hidden){draw(performance.now());if(animated())frame=requestAnimationFrame(tick);}
  }
  function cleanup(){stopped=true;cancelAnimationFrame(frame);resize.disconnect();theme.disconnect();
-  document.removeEventListener('visibilitychange',refresh);reduced.removeEventListener('change',refresh);
+  document.removeEventListener('visibilitychange',refresh);document.removeEventListener('beeny:theme-updated',refresh);reduced.removeEventListener('change',refresh);
   window.removeEventListener('pageshow',resume);gl.deleteBuffer(buffer);gl.deleteProgram(program);}
  function resume(){suspended=false;refresh();}
  try{setup();root.append(canvas);}catch(_){root.classList.add('background-fallback');return;}
  const resize=new ResizeObserver(refresh),theme=new MutationObserver(refresh);
  resize.observe(root);theme.observe(document.body,{attributes:true,attributeFilter:['class']});
  theme.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
- document.addEventListener('visibilitychange',refresh);reduced.addEventListener('change',refresh);
+ document.addEventListener('visibilitychange',refresh);document.addEventListener('beeny:theme-updated',refresh);reduced.addEventListener('change',refresh);
  canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();lost=true;cancelAnimationFrame(frame);root.classList.add('background-fallback');});
  canvas.addEventListener('webglcontextrestored',()=>{try{setup();lost=false;root.classList.remove('background-fallback');refresh();}catch(_){root.classList.add('background-fallback');}});
  window.addEventListener('pagehide',event=>{suspended=true;cancelAnimationFrame(frame);last=null;if(!event.persisted)cleanup();});

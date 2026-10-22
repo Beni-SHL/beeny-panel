@@ -1,1 +1,1 @@
-{% include 'partials/background.html' %}
+{% with background_customer=customer|default(false) %}{% include 'partials/background.html' %}{% endwith %}

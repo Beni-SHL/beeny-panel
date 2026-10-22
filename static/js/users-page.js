@@ -1,4 +1,5 @@
 (function(){
+document.addEventListener('beeny:accounts-refresh',()=>{if(container.isConnected)loadUsers();});
 const panelPath = JSON.parse(document.getElementById("users-page-data").textContent).panelPath;
 let PAGE_SIZE = 15;
 let serverTotal = 0;
@@ -172,6 +173,7 @@ function renderUsers(users) {
               <div class="progress-track"><div class="progress-fill ${isUnlimited ? 'unlimited' : (user.traffic_percent > 80 ? 'warn' : '')}" style="width: ${isUnlimited ? 100 : Math.min(user.traffic_percent, 100)}%"></div></div>
             </div>
             <div class="action-row">
+              ${document.querySelector('.users-page')?.dataset.canManage==='true'?`<button type="button" role="switch" class="account-status-switch" data-account-status="${user.id}" aria-checked="${user.status==='active'}" aria-label="${window.adminT('Account status')}"><span class="status-track" aria-hidden="true"><i></i></span><span>${window.adminT(user.status)}</span></button>`:''}
               <a href="${panelPath}/users/view/${user.id}" class="glass-btn" title="Profile" aria-label="Profile"><i class="fa fa-id-card"></i></a>
               <a href="${panelPath}/users/edit/${user.id}" class="glass-btn" title="Edit" aria-label="Edit"><i class="fa fa-pen"></i></a>
 

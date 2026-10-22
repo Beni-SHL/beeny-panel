@@ -1,0 +1,11 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+const element=()=>({dataset:{},attrs:{},listeners:{},setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k];},addEventListener(k,fn){this.listeners[k]=fn;}});
+const generate=element(),copy=element(),toggle=element(),status={textContent:''},field={value:'initial',type:'password',dispatchEvent(){},focus(){},select(){this.selected=true;}};
+const controls=element();controls.dataset.passwordControls='portal_password';controls.closest=()=>({querySelector:()=>toggle});controls.querySelector=s=>({'[data-password-status]':status,'[data-password-generate]':generate,'[data-password-copy]':copy}[s]);
+const states=[];let resolveCopy,rejectCopy;
+const context={document:{querySelectorAll:()=>[controls],getElementById:()=>field,addEventListener(){}},window:{crypto:{getRandomValues:bytes=>bytes.fill(13)},BeenyActionButton:{set:(button,state)=>states.push([button,state])}},Uint8Array,Event:class{},navigator:{clipboard:{writeText:text=>{assert.equal(text,field.value);return new Promise((resolve,reject)=>{resolveCopy=resolve;rejectCopy=reject;});}}}};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../static/js/password-controls.js'),'utf8'),context);
+(async()=>{generate.listeners.click();assert.equal(field.value.length,20);assert.equal(states.at(-1)[1],'success');assert.equal(toggle.attrs['aria-pressed'],'true');
+let pending=copy.listeners.click();assert.equal(copy.disabled,true);assert.equal(states.at(-1)[1],'loading');resolveCopy();await pending;assert.equal(states.at(-1)[1],'success');assert.equal(copy.disabled,false);
+pending=copy.listeners.click();rejectCopy(Error('permission denied'));await pending;assert.equal(states.at(-1)[1],'error');assert.equal(field.selected,true);assert.equal(copy.disabled,false);
+console.log('PASS: secure generation confirms only generated values; clipboard pending/success/error states and manual fallback never show false success.');})().catch(e=>{console.error(e);process.exitCode=1;});

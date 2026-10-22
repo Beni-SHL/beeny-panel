@@ -1,7 +1,12 @@
 """Explicit template translations: never translate usernames or stored customer text."""
 from flask import request,jsonify,session
 from flask_login import current_user,login_required
-PAIRS='''Message language|زبان پیام
+PAIRS='''Theme studio|استودیوی تم
+Background, glass and interface colors|بک‌گراند، شیشه و رنگ‌های رابط
+Generate password|تولید رمز
+Copy password|کپی رمز
+Show password|نمایش رمز
+Message language|زبان پیام
 New passwords are held temporarily in this tab for up to 10 minutes. Choose Persian or English, then copy the ready-to-send message.|رمز تازه حداکثر ۱۰ دقیقه در همین تب نگه‌داری می‌شود. فارسی یا انگلیسی را انتخاب کنید و پیام آماده را کپی کنید.
 Update panel|آپدیت پنل
 Connectivity|اتصال‌ها

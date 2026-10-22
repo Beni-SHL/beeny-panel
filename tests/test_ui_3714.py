@@ -38,7 +38,7 @@ class UnifiedUI(unittest.TestCase):
                 self.assertEqual([a['data-dock-section'] for a in doc.select('.account-dock>a')],['overview','renew','configs','tickets'])
                 self.assertTrue(doc.select_one('script[src*="notification-feed.js"]'))
                 self.assertFalse(doc.select('.shell-nav,.mobile-shortcuts'))
-                self.assertTrue(doc.select_one('#react-bg-root.beeny-background-plain'))
+                self.assertTrue(doc.select_one('#react-bg-root.beeny-background-customer'))
 
     def test_profile_collapsible_sections_password_eye_and_settings_shortcut(self):
         self.admin();doc=self.doc('/panel/users/view/'+str(self.user.id))
@@ -52,7 +52,7 @@ class UnifiedUI(unittest.TestCase):
         self.assertTrue(doc.select_one('.share-toolbar [data-share-clear][aria-label] svg'))
         self.assertNotIn('Account actions',doc.get_text())
         add=self.doc('/panel/users/add')
-        self.assertTrue(add.select_one('.password-tools [data-password-toggle]'))
+        self.assertTrue(add.select_one('.profile-password-field [data-profile-password-toggle]'))
 
     def test_notification_read_state_clear_scope_and_csrf(self):
         csrf=self.csrf()

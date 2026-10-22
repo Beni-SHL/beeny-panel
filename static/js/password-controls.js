@@ -10,9 +10,10 @@
     if(!toggle || controls.dataset.passwordBound)return;controls.dataset.passwordBound='1';
     controls.querySelector('[data-password-generate]').addEventListener('click', () => {
       if (!window.crypto || !window.crypto.getRandomValues) {
-        status.textContent = 'Secure generation unavailable; enter a password manually.';
+        status.textContent = 'Secure generation unavailable; enter a password manually.';window.BeenyActionButton?.set(controls.querySelector('[data-password-generate]'),'error');
         return;
       }
+      window.BeenyActionButton?.set(controls.querySelector('[data-password-generate]'),'loading');
       const bytes = window.crypto.getRandomValues(new Uint8Array(20));
       field.value = Array.from(bytes, byte => alphabet[byte & 63]).join('');
       field.type = 'text';
@@ -20,6 +21,7 @@
       toggle.setAttribute('aria-pressed', 'true');
       field.dispatchEvent(new Event('input', {bubbles: true}));
       status.textContent = 'Generated. Copy and share privately before saving.';
+      window.BeenyActionButton?.set(controls.querySelector('[data-password-generate]'),'success');
     });
     toggle.addEventListener('click', () => {
       field.type = field.type === 'password' ? 'text' : 'password';
@@ -28,14 +30,15 @@
     });
     controls.querySelector('[data-password-copy]').addEventListener('click', async () => {
       if (!field.value) { status.textContent = 'Enter or generate a password first.'; return; }
+      const button=controls.querySelector('[data-password-copy]');button.disabled=true;window.BeenyActionButton?.set(button,'loading');
       try {
         await navigator.clipboard.writeText(field.value);
-        status.textContent = 'Password copied.';
+        status.textContent = 'Password copied.';window.BeenyActionButton?.set(button,'success');
       } catch (_) {
         field.type = 'text'; toggle.setAttribute('aria-label', 'Hide');toggle.title=toggle.getAttribute('aria-label'); toggle.setAttribute('aria-pressed', 'true');
         field.focus(); field.select();
-        status.textContent = 'Select and copy the password manually.';
-      }
+        status.textContent = 'Select and copy the password manually.';window.BeenyActionButton?.set(button,'error');
+      }finally{button.disabled=false;}
     });
   });
 })();

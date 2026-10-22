@@ -24,11 +24,11 @@
       </div>
     </section>
     {% if mode == 'add' %}
-    <section class="ac-panel">
+    <section class="ac-panel customer-credential-panel">
       <h2>{{ admin_t('Customer page login') }}</h2><p class="ac-panel-desc">{{ admin_t('Optional credentials for the private customer page. OpenVPN connects using the account certificate.') }}</p>
       <div class="ac-grid">
         <div class="ac-field"><label for="portal_username">{{ admin_t('Customer login username') }}</label><input id="portal_username" name="portal_username" minlength="3" maxlength="100" autocomplete="off" value="{{ request.form.get('portal_username', '') }}" placeholder="Leave blank to use the VPN username"></div>
-        <div class="ac-field"><label for="portal_password">{{ admin_t('Customer password') }}</label><input id="portal_password" type="password" name="portal_password" minlength="12" maxlength="256" autocomplete="new-password" placeholder="Leave blank to configure later">{% include 'partials/password_controls.html' %}</div>
+        <div class="ac-field"><label for="portal_password">{{ admin_t('Customer password') }}</label><div class="profile-password-field"><input id="portal_password" type="password" name="portal_password" minlength="12" maxlength="256" autocomplete="new-password" placeholder="Leave blank to configure later"><button type="button" class="password-eye" data-profile-password-toggle aria-label="{{ admin_t('Show password') }}" aria-pressed="false">{% from 'partials/ui_icons.html' import icon %}{{ icon('eye') }}</button></div>{% with profile_password_inline=true %}{% include 'partials/password_controls.html' %}{% endwith %}</div>
       </div>
     </section>
     {% endif %}

@@ -1,2 +1,2 @@
-<div id="react-bg-root" class="beeny-glass-fold{% if background_plain|default(false) %} beeny-background-plain{% endif %}" aria-hidden="true"></div>
+<div id="react-bg-root" class="beeny-glass-fold{% if background_customer|default(false) %} beeny-background-customer{% endif %}{% if background_plain|default(false) %} beeny-background-plain{% endif %}" aria-hidden="true"></div>
 <script type="module" src="{{ url_for('static',filename='js/background-loader.js',v=panel_version) }}"></script>

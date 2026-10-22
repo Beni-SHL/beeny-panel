@@ -1,0 +1,140 @@
+:root body{--theme-icons:#6951c9;--theme-titles:#393052;--theme-button:#6854cf;--theme-button-ink:#fff}
+:root body:not(.light):has(.sidebar),:root[data-theme=dark] body{--theme-icons:#b8a8ff;--theme-titles:#e7e4ff;--theme-button:#b4a5ff;--theme-button-ink:#211b45}
+/* 1. Room around the second traffic/data block. */
+:root body #admin-page .cc-traffic>.traffic-page{padding:clamp(16px,2.4vw,28px)!important;box-sizing:border-box;margin-top:22px}
+:root body #admin-page .traffic-page .traffic-grid{gap:20px;margin-block:20px}
+:root body #admin-page .traffic-page .ac-panel{padding:20px!important}
+/* 2. Search/add/filter toolbar: stable desktop grid and restrained lower aurora. */
+:root body #admin-page .users-page>.glass-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding:24px!important;overflow:visible}
+:root body #admin-page .users-page .section-title,:root body #admin-page .users-page .stat-strip{grid-column:1/-1;margin:0}
+:root body #admin-page .users-search-row{grid-column:1/-1;min-width:0}
+:root body #admin-page .users-search-actions{display:flex;align-items:center;gap:12px;min-width:0}
+:root body #admin-page .users-global-search{position:relative;flex:1;min-width:0;isolation:isolate}
+:root body #admin-page .users-global-search::after{content:'';position:absolute;z-index:-1;pointer-events:none;inset:70% 12% -7px;background:linear-gradient(95deg,#7d6cff66,#38c8ed5c,#f1a76040);filter:blur(16px);border-radius:50%;opacity:.4}
+:root body #admin-page .users-global-search #userSearch{height:48px!important;width:100%;padding:0 16px 0 43px!important;border:1px solid #ffffff26!important;border-radius:15px;background:#141922!important;color:#f1f6fc!important;box-shadow:inset 0 1px 0 #ffffff09!important}
+html[dir=rtl] body #admin-page .users-global-search #userSearch{padding:0 43px 0 16px!important}
+:root body #admin-page .users-global-search>i{left:16px!important;color:#a7b5c9!important;z-index:1}
+html[dir=rtl] body #admin-page .users-global-search>i{left:auto!important;right:16px}
+:root body #admin-page .users-global-search #userSearch::placeholder{color:#9aa6b9}
+:root body #admin-page .users-page .view-switch{grid-column:2;grid-row:4;margin:0;align-self:center;flex-wrap:nowrap}
+:root body #admin-page .users-page .filter-bar{grid-column:1;grid-row:4;display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0;padding:0;margin:0}
+:root body #admin-page .users-page .filter-select{height:42px;max-width:100%;min-width:125px;flex:1}
+:root body #admin-page .users-page .filter-count{flex-basis:100%;margin:0;font-size:10px;color:var(--beeny-muted)}
+/* 3/4/8. Inside eye, full-width password, padded dropdown arrows in both directions. */
+:root body #admin-page :is(.customer-credential-panel,.credential-form) .ac-field{min-width:0}
+:root body #admin-page .customer-credential-panel .ac-grid,:root body #admin-page .credential-form{grid-template-columns:minmax(0,1fr)!important;gap:18px!important}
+:root body #admin-page :is(.customer-credential-panel,.credential-form) input{height:48px!important;min-height:48px!important;box-sizing:border-box;width:100%}
+:root body #admin-page .profile-password-field{position:relative;width:100%;min-width:0;height:48px}
+:root body #admin-page .profile-password-field input{padding-inline:14px 50px!important;margin:0!important}
+:root body #admin-page .password-eye{position:absolute!important;inset-inline-end:7px!important;top:6px!important;width:36px!important;height:36px!important;padding:8px!important;border:0;background:transparent!important;color:var(--beeny-tool-ink)!important;display:grid!important;place-items:center;border-radius:10px}
+:root body #admin-page .password-eye svg{width:19px;height:19px}
+:root body #admin-page .password-tools{display:flex!important;align-items:center;gap:10px!important;flex-wrap:wrap;margin-top:12px!important;width:100%}
+:root body #admin-page .password-tools :is(button,.ac-btn){min-height:40px;min-width:40px;margin:0!important}
+:root body #admin-page .password-tools small{flex-basis:100%;margin:0;font-size:10px}
+:root body :is(select,.filter-select){appearance:none!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23617184' stroke-width='1.8'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-size:16px!important;background-position:right 14px center!important;padding-inline:14px 42px!important}
+:root body:not(.light):has(.sidebar) select,:root[data-theme=dark] body select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d5dfef' stroke-width='1.8'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important}
+:root[dir=rtl] body select{background-position:left 14px center!important}
+:root body.light .users-page select{background-color:#f5f7fc!important;color:#263348!important;border-color:#c8d2e0!important}
+:root body.light .users-page select option{background:#fff!important;color:#263348!important}
+/* 5. Stronger primary actions; secondary controls stay quiet. */
+:root body #admin-page :is(.ac-btn-primary,.cc-button.primary,.admin-button.primary,.glass-btn.primary){background:var(--theme-button-light,#6455d9)!important;color:var(--theme-button-ink-light,#fff)!important;border-color:transparent!important;box-shadow:0 4px 12px #5d50c21a!important}
+:root body:not(.light) #admin-page :is(.ac-btn-primary,.cc-button.primary,.admin-button.primary,.glass-btn.primary){background:var(--theme-button-dark,#b4a5ff)!important;color:var(--theme-button-ink-dark,#211b45)!important}
+/* 6/7/9/10/11. Clear statuses, long preview action and compact animated count. */
+:root body #admin-page .ac-status:not(.off),:root body #admin-page .compact-state.enabled{background:#27c87520!important;color:#19995b!important;border:1px solid #27c8754a!important;box-shadow:0 0 10px #27c87528!important}
+:root body:not(.light) #admin-page .ac-status:not(.off),:root body:not(.light) #admin-page .compact-state.enabled{color:#85ecb6!important}
+:root body #admin-page .compact-state{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:25px;padding:3px 9px;border-radius:999px;font-size:10px;white-space:nowrap;box-sizing:border-box}
+:root body #admin-page .compact-state::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+:root body #admin-page .private-page-preview{display:flex;width:100%;box-sizing:border-box;min-height:44px;margin-block:12px}
+:root body .notification-center .notification-badge{position:absolute;top:-4px;left:auto;right:auto;inset-inline-start:auto;inset-inline-end:-4px;min-width:17px;width:auto;height:17px;min-height:17px;padding:0 4px!important;border:0!important;border-radius:999px;box-sizing:border-box;background:#ed5975!important;color:#fff!important;font-size:9px;line-height:17px;text-align:center;animation:notification-count-breathe 3.4s ease-in-out infinite!important;pointer-events:none}
+:root body .notification-center .notification-badge[hidden]{display:none!important}
+@keyframes notification-count-breathe{0%,65%,100%{opacity:1}78%{opacity:.58}86%{opacity:1}}
+:root body :is([role=switch],.status-toggle,.switch-button,[data-status-toggle]){display:inline-flex!important;align-items:center!important;justify-content:center!important;position:relative;min-width:44px;min-height:26px;padding:0!important;flex:none}
+:root body :is([role=switch],.status-toggle,.switch-button,[data-status-toggle])>.button-idle>svg,:root body :is([role=switch],.status-toggle,.switch-button,[data-status-toggle])>.button-state{display:none!important}
+/* 13. Exact expanding pill behavior, mobile only; desktop uses its existing navigation. */
+:root body .account-dock.expanding-tabs{display:none!important}
+:root body:has(.account-dock){padding-bottom:0}
+@media(max-width:760px){:root body .account-dock.expanding-tabs{display:flex!important;align-items:center;justify-content:center;gap:8px;grid-template-columns:none;inset-inline-start:auto;inset-inline-end:auto;left:50%;right:auto;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:max-content;max-width:calc(100vw - 24px);padding:6px;border-radius:999px;background:#ffffff65;border:1px solid #00000009;box-shadow:inset 0 1px 0 #fffffffa;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}:root body .account-dock.expanding-tabs a{flex-direction:row;justify-content:flex-start;min-height:40px;height:40px;min-width:40px;width:40px;gap:0;padding:0 10px;background:#f8f8fa;box-shadow:0 3px 9px #20202417,inset 0 2px 0 #ffffffeb;color:#161618;border-radius:999px;box-sizing:border-box;overflow:hidden;transition:width .32s cubic-bezier(.2,.8,.2,1),background .2s,box-shadow .2s;flex:none;max-width:160px}:root body .account-dock.expanding-tabs a[aria-current=page]{width:var(--dock-active-width,115px);gap:8px;background:#fcfcfd;box-shadow:0 7px 18px #20202424,0 1px 2px #20202414,inset 0 2px 0 #fffffffa}:root body .account-dock.expanding-tabs svg{width:19px;height:19px;min-width:19px;stroke-width:1.65;opacity:.78}:root body .account-dock.expanding-tabs [aria-current=page] svg{opacity:1}:root body .account-dock.expanding-tabs .dock-label{opacity:0;max-width:0;overflow:hidden;white-space:nowrap;font-size:12px;font-weight:600;transition:opacity .25s,max-width .32s}:root body .account-dock.expanding-tabs [aria-current=page] .dock-label{opacity:1;max-width:110px}:root[data-theme=dark] body .account-dock.expanding-tabs{background:#ffffff07;border-color:#ffffff0e;box-shadow:inset 0 1px 0 #ffffff29}:root[data-theme=dark] body .account-dock.expanding-tabs a{background:#202023;color:#f3f3f4;box-shadow:0 3px 9px #0004,inset 0 2px 0 #ffffff26}:root[data-theme=dark] body .account-dock.expanding-tabs [aria-current=page]{background:#29292c;box-shadow:0 7px 18px #0005,inset 0 2px 0 #ffffff2e}:root body:has(.account-dock){padding-bottom:calc(94px + env(safe-area-inset-bottom))}}
+/* 14. Native CSS translation of the supplied RainbowButton, including lower glow. */
+:root body .welcome-account-actions .portal-renew-cta.rainbow-button,:root body .rainbow-button,:root body #admin-page .users-page .users-add-button{--rainbow-ink:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;position:relative;isolation:isolate;min-height:44px;padding:10px 25px!important;border:1.28px solid transparent!important;border-radius:12px!important;color:var(--rainbow-ink)!important;background:linear-gradient(#121213,#121213) padding-box,linear-gradient(#121213 50%,#12121399 80%,#12121300) border-box,linear-gradient(90deg,#ffb765,#ed6da5,#737ef5,#48d7b6,#94c8fc) border-box!important;background-size:200%!important;box-shadow:none!important;overflow:visible;animation:rainbow-flow 5s linear infinite}
+:root body .welcome-account-actions .portal-renew-cta.rainbow-button::before,:root body .rainbow-button::before,:root body #admin-page .users-page .users-add-button::before{content:'';position:absolute;bottom:-20%;left:50%;width:60%;height:20%;transform:translateX(-50%);z-index:-1;background:linear-gradient(90deg,#ffb765,#94c8fc,#737ef5,#48d7b6,#ed6da5);background-size:200%;filter:blur(12.8px);opacity:.65;pointer-events:none;animation:rainbow-flow 5s linear infinite}
+:root[data-theme=dark] body .welcome-account-actions .portal-renew-cta.rainbow-button,:root[data-theme=dark] body .rainbow-button,:root body:not(.light):has(.sidebar) #admin-page .users-page .users-add-button{--rainbow-ink:#17171c;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(#fff 50%,#fff9 80%,#0000) border-box,linear-gradient(90deg,#ffb765,#ed6da5,#737ef5,#48d7b6,#94c8fc) border-box!important}
+:root body .welcome-account-actions .portal-renew-cta.rainbow-button::after,:root body .rainbow-button::after{content:none!important}
+@keyframes rainbow-flow{to{background-position:200% 0}}
+/* 15/16. Wallet payment is a separate compact row below card-to-card. */
+:root body .renew-wallet-payment{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 18px;align-items:center;margin-top:22px;padding:18px;border-radius:16px}
+:root body .renew-wallet-payment>div{display:grid;gap:3px;min-width:0}
+:root body .renew-wallet-payment small{font-size:11px;color:var(--beeny-muted);overflow-wrap:anywhere}
+:root body .renew-wallet-payment>[data-wallet-result]{grid-column:1/-1;margin:0;font-size:12px}
+:root body .renew-wallet-payment button{min-height:42px;width:auto;padding-inline:22px}
+:root body .coupon-field{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px}
+:root body .coupon-field label{display:grid;gap:6px;margin:0;min-width:0}
+:root body .coupon-field input,:root body .coupon-field [data-coupon-check]{height:44px!important;min-height:44px!important;max-height:44px!important;box-sizing:border-box;margin:0!important}
+:root body .coupon-field [data-coupon-check]{padding:9px 15px!important;align-self:end;white-space:nowrap}
+:root body .coupon-field output{grid-column:1/-1;font-size:11px}
+/* 18. Small gift shake + confetti; no animation for reduced-motion users. */
+:root body .plan-gift{position:relative;overflow:visible;display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 8px;background:#e9b8641a;color:var(--beeny-tool-ink)}
+:root body .plan-gift>svg{transform-origin:50% 85%;animation:gift-unbox 9s ease-in-out infinite}
+:root body .plan-gift::after{content:'';position:absolute;top:0;inset-inline-start:12px;width:3px;height:5px;opacity:0;background:#f5b24d;box-shadow:9px -4px #f275a3,-8px -7px #75a2fa,16px 3px #68d6af,-15px 4px #b49cf5;border-radius:1px;pointer-events:none;animation:gift-confetti 9s ease-out infinite}
+@keyframes gift-unbox{0%,65%,83%,100%{transform:rotate(0)}68%,74%{transform:rotate(-13deg)}71%,77%{transform:rotate(12deg)}80%{transform:translateY(-3px) scale(1.12)}}
+@keyframes gift-confetti{0%,77%,93%,100%{opacity:0;transform:translateY(1px) scale(.5)}80%{opacity:1;transform:translateY(-13px) scale(1)}91%{opacity:0;transform:translateY(5px) scale(1.15) rotate(25deg)}}
+@media(max-width:760px){:root body #admin-page .users-page>.glass-toolbar{grid-template-columns:minmax(0,1fr);padding:16px!important;gap:15px}:root body #admin-page .users-page .view-switch,:root body #admin-page .users-page .filter-bar{grid-column:1;grid-row:auto}:root body #admin-page .users-page .filter-bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}:root body #admin-page .users-page .filter-select{width:100%;min-width:0}:root body #admin-page .users-page .filter-count{display:none}:root body #admin-page .users-search-actions{gap:9px}:root body #admin-page .users-page .users-add-button{padding-inline:15px!important}}
+@media(prefers-reduced-motion:reduce){:root body .notification-center .notification-badge,:root body .welcome-account-actions .portal-renew-cta.rainbow-button,:root body .rainbow-button,:root body .welcome-account-actions .portal-renew-cta.rainbow-button::before,:root body .rainbow-button::before,:root body #admin-page .users-page .users-add-button,:root body #admin-page .users-page .users-add-button::before,:root body .plan-gift>svg,:root body .plan-gift::after{animation:none!important}:root body .plan-gift::after{display:none}:root body .account-dock.expanding-tabs :is(a,.dock-label){transition:none!important}}
+/* 17. Saved presentation settings, independent of fixed legacy accent tokens. */
+:root body #admin-page :is(.cc-icon,.section-icon,.stat-icon,.ac-eyebrow,.cc-eyebrow,.metric-icon){color:var(--theme-icons)!important}
+:root body :is(.shell-controls,.top-actions) :is(svg,.ui-icon){color:var(--theme-icons)}
+:root body #admin-page :is(h1,h2,h3),:root body .workspace :is(h1,h2,h3){color:var(--theme-titles)!important}
+:root body #admin-page :is(.ac-btn-primary,.cc-button.primary,.admin-button.primary){background:var(--theme-button)!important;color:var(--theme-button-ink)!important}
+:root body .theme-studio-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:start}
+:root body .theme-editor-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+:root body .theme-editor-controls label{display:grid;gap:7px;font-size:12px}
+:root body .theme-editor-controls select{width:100%;min-width:0;height:42px;border:1px solid var(--beeny-inner-line);border-radius:12px;background-color:var(--beeny-inner-fill);color:var(--beeny-tool-ink)}
+:root body .theme-preset-row{display:flex;gap:8px;flex-wrap:wrap;margin-block:16px}
+:root body .theme-preset-row button{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--beeny-inner-line);background:var(--beeny-inner-fill);color:var(--beeny-tool-ink);border-radius:999px;font-size:11px}
+:root body .theme-preset-row button::before{content:'';width:12px;height:12px;border-radius:50%;background:var(--preset)}
+:root body .theme-studio fieldset{display:grid;gap:15px;border:1px solid var(--beeny-inner-line);border-radius:16px;padding:16px;margin:0;min-width:0}
+:root body .theme-studio legend{font-size:13px;font-weight:600;padding-inline:7px;color:var(--theme-titles)}
+:root body .theme-color-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+:root body .theme-studio input[type=color]{width:100%;height:42px;min-height:42px;border:1px solid var(--beeny-inner-line);padding:4px;border-radius:10px;background:transparent;cursor:pointer}
+:root body .theme-range{display:flex;align-items:center;gap:14px;direction:ltr}
+:root body .theme-studio input[type=range]{width:100%;min-height:28px;height:28px;padding:0;accent-color:var(--theme-icons)}
+:root body .theme-range output{width:48px;flex:none;font-size:11px;font-variant-numeric:tabular-nums;text-align:end;color:var(--beeny-tool-ink)}
+:root body .theme-studio .theme-check{display:flex;align-items:center;gap:8px;line-height:1.8}
+:root body .theme-studio .theme-check input{width:16px;height:16px;min-height:0;flex:none}
+:root body .theme-preview-frame{position:sticky;top:18px;display:grid;gap:14px;min-width:0}
+:root body .theme-preview-frame>small{font-size:11px;line-height:1.9;color:var(--beeny-muted)}
+:root body .theme-preview-backdrop{border-radius:26px;padding:35px 22px;min-height:460px;display:grid;place-items:center;position:relative;isolation:isolate;overflow:hidden;background:#f6f6f9}
+:root body .theme-preview-backdrop::before{content:'';position:absolute;inset:-30%;z-index:-1;background:repeating-linear-gradient(132deg,var(--preview-c1),var(--preview-c2) 23%,var(--preview-c3) 43%,var(--preview-c1) 68%);opacity:var(--preview-intensity,.8);transform:rotate(-8deg);filter:blur(18px)}
+:root body .theme-preview-backdrop[data-mode=dark]{background:#07080c}
+:root body .theme-preview-glass{max-width:340px;width:100%;box-sizing:border-box;padding:28px;border:1px solid #ffffff50;border-radius:24px;background:var(--preview-fill);backdrop-filter:blur(var(--preview-blur)) saturate(var(--preview-saturation));-webkit-backdrop-filter:blur(var(--preview-blur)) saturate(var(--preview-saturation));box-shadow:inset 0 1px 0 #ffffff50,0 12px 35px #13162215;color:#303642}
+:root body .theme-preview-backdrop[data-mode=dark] .theme-preview-glass{color:#e8edf7}
+:root body .theme-preview-glass h2{color:var(--preview-title)!important;font-size:25px;line-height:1.5;margin:16px 0 8px}
+:root body .theme-preview-glass p{font-size:12px;line-height:1.9;color:inherit}
+:root body .theme-preview-label{font-size:9px;letter-spacing:.1em}
+:root body .theme-preview-icon{margin-top:20px;color:var(--preview-icon)}
+:root body .theme-preview-icon svg{width:30px;height:30px}
+:root body .theme-preview-mini{display:flex;gap:12px;margin:25px 0;font-size:13px}
+:root body .theme-preview-mini span{display:flex;align-items:center;gap:7px}
+:root body .theme-preview-mini svg{width:17px;height:17px;color:var(--preview-icon)}
+:root body .theme-preview-glass button{width:100%;display:flex;justify-content:center;align-items:center;gap:8px;min-height:44px;border:0;border-radius:12px;background:var(--preview-button);color:var(--preview-button-ink);font-size:12px}
+:root body .theme-preview-glass button svg{width:18px;height:18px}
+@media(max-width:900px){:root body .theme-studio-layout{grid-template-columns:minmax(0,1fr)}:root body .theme-preview-frame{position:static;grid-row:1}:root body .theme-preview-backdrop{min-height:320px;padding:22px}}
+/* Source Stripe canvas: one background layer, with graceful CSS fallback. */
+:root body #react-bg-root.beeny-background-customer{background:#fff!important;isolation:isolate}
+:root[data-theme=dark] body #react-bg-root.beeny-background-customer{background:#07080c!important}
+:root body #react-bg-root.beeny-background-customer::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--stripe-color-1,#7878bc),var(--stripe-color-2,#a496d5),var(--stripe-color-3,#aeaeae));opacity:var(--background-opacity,.8)}
+:root body #react-bg-root.beeny-background-customer canvas{position:relative;opacity:var(--background-opacity,.8)!important}
+:root body #react-bg-root.beeny-glass-fold:not(.beeny-background-customer) canvas{opacity:var(--theme-bg-opacity,.8)!important}
+
+:root body #admin-page [data-password-copy] .button-state>span{display:none}
+:root body #admin-page .theme-studio .cc-form input[type=range]{min-height:28px!important;height:28px;padding:0!important;border:0!important;border-radius:0;background:transparent!important;box-shadow:none;accent-color:var(--theme-icons)}
+:root body #admin-page .theme-studio .cc-form input[type=color]{min-height:42px!important;height:42px;padding:4px!important}
+/* 11. Dedicated account switch: never receives the generic Save glyph. */
+:root body #admin-page .users-page .account-status-switch{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;min-width:88px;padding:7px 10px!important;border:1px solid var(--beeny-inner-line)!important;border-radius:12px;background:var(--beeny-inner-fill)!important;color:var(--beeny-tool-ink)!important;font-size:11px;box-sizing:border-box}
+:root body #admin-page .account-status-switch .status-track{width:32px;height:19px;display:block;position:relative;border-radius:999px;background:#8e9aac40;direction:ltr;flex:none;box-shadow:inset 0 1px 2px #0001}
+:root body #admin-page .account-status-switch .status-track i{position:absolute;left:3px;top:3px;width:13px;height:13px;display:block;border-radius:50%;background:#fff;transition:transform .2s}
+:root body #admin-page .account-status-switch[aria-checked=true] .status-track{background:#27c875;box-shadow:0 0 8px #27c87532}
+:root body #admin-page .account-status-switch[aria-checked=true] .status-track i{transform:translateX(13px)}
+:root body #admin-page .account-status-switch[aria-busy=true] .status-track i{border:2px solid #ffffff66;border-top-color:#65758d;background:transparent;box-sizing:border-box;animation:beeny-loading-spin .8s linear infinite}
+@media(prefers-reduced-motion:reduce){:root body #admin-page .account-status-switch .status-track i{transition:none;animation:none!important}}
+:root body #react-bg-root.beeny-background-customer[data-stripe-mounted=true]:not(.background-fallback)::before{opacity:0}
+:root body[data-auth-customer] .login-card{background:var(--beeny-glass-fill)!important;backdrop-filter:var(--beeny-material-filter)!important;-webkit-backdrop-filter:var(--beeny-material-fallback)!important;border-color:var(--beeny-glass-line)!important}

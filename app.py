@@ -1803,6 +1803,8 @@ from security import register as register_security
 security = register_security(app,db,Admin,customer_features,PANEL_PATH)
 from admin_sessions import register as register_panel_sessions
 panel_sessions = register_panel_sessions(app, db, Admin, customer_features, PANEL_PATH)
+from theme_settings import register as register_theme_settings
+appearance = register_theme_settings(app,db,customer_features,PANEL_PATH)
 
 from portal_content import register as register_portal_content
 portal_content = register_portal_content(app, db, User, customer_features, PANEL_PATH)

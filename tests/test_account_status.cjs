@@ -1,0 +1,12 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+async function run(blocked=false){const events=[],posts=[];let handler;
+ const attrs={'aria-checked':'true'},button={dataset:{accountStatus:'17'},disabled:false,lastElementChild:{textContent:'active'},closest:()=>({dataset:{canManage:'true'}}),getAttribute:k=>attrs[k],setAttribute:(k,v)=>attrs[k]=v};
+ const fields={status:'active',max_devices:'3',traffic_limit:'123',nodes:['1','2'],protocol:'openvpn'},form={fields,getAttribute:()=>'/panel/users/edit/17'};
+ class FormData{constructor(form){this.data=structuredClone(form.fields);}set(k,v){this.data[k]=v;}}
+ class DOMParser{parseFromString(text){return {querySelector:selector=>text==='EDIT'&&selector.startsWith('form')?form:selector==='.ac-status'&&text==='SAVED'?{textContent:'disabled'}:selector==='.ac-alert'&&text==='BLOCKED'?{textContent:'Activation unavailable'}:null};}}
+ const document={documentElement:{lang:'en'},addEventListener:(name,fn)=>handler=fn,getElementById:id=>id==='users-page-data'?{textContent:'{"panelPath":"/panel"}'}:{append(){}},querySelector:()=>({content:'csrf-token'}),dispatchEvent:event=>events.push(event),createElement:()=>({setAttribute(){},remove(){}})};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../static/js/account-status.js'),'utf8'),{window:{adminT:v=>v},document,DOMParser,FormData,URL,Number,Error,Event:class{constructor(n){this.type=n;}},location:{href:'https://panel.test/panel/users'},setTimeout(){},fetch:async(url,options)=>{if(options.method==='POST'){posts.push(options.body.data);return {ok:!blocked,text:async()=>blocked?'BLOCKED':'SAVED'};}return {ok:true,redirected:false,text:async()=>'EDIT'};}});
+ await handler({target:{closest:()=>button},stopPropagation(){}});
+ assert.equal(posts.length,1);assert.equal(posts[0].status,'disabled');assert.equal(posts[0].csrf,'csrf-token');assert.equal(posts[0].max_devices,fields.max_devices);assert.deepEqual(posts[0].nodes,fields.nodes);assert.equal(posts[0].traffic_limit,fields.traffic_limit);assert.equal(attrs['aria-checked'],blocked?'true':'false');assert.equal(button.disabled,false);assert.equal(attrs['aria-busy'],'false');assert.equal(events.length,blocked?0:1);
+}
+(async()=>{await run();await run(true);console.log('PASS: account switch uses canonical edit form, preserves limits/nodes and CSRF, verifies server state, and does not flip on rejected updates.');})().catch(e=>{console.error(e);process.exitCode=1;});

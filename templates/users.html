@@ -578,7 +578,7 @@
 }
 </style>
 
-<div class="users-page" data-view="original">
+<div class="users-page" data-view="original" data-can-manage="{{ 'true' if admin_role() in ['owner','seller'] else 'false' }}">
 
     <div class="glass-toolbar">
         <div class="section-title"><i class="fa fa-users" style="color: #60a5fa;"></i> {{ admin_t('Users') }}</div>
@@ -590,13 +590,13 @@
             <div class="stat-chip"><i class="fa fa-triangle-exclamation si-warn"></i><div class="stat-chip-text"><strong id="statWarn">0</strong><span>{{ admin_t('Near Limit') }}</span></div></div>
         </div>
 
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-            <div style="flex: 1; min-width: 180px; display: flex; gap: 6px;">
-                <div class="users-global-search" style="position: relative; flex: 1;">
+        <div class="users-search-row">
+            <div class="users-search-actions">
+                <div class="users-global-search">
                     <i class="fa fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3);"></i>
                     <input type="text" id="userSearch" class="glass-input" placeholder="{{ admin_t('Search all accounts…') }}" aria-label="{{ admin_t('Search all accounts…') }}" style="padding-left: 36px;">
                 </div>
-                <a href="{{ panel_path }}/users/add" class="glass-btn primary" style="width: auto; padding: 10px 16px;"><i class="fa fa-plus"></i> {{ admin_t('Add') }}</a>
+                <a href="{{ panel_path }}/users/add" class="glass-btn primary rainbow-button users-add-button"><i class="fa fa-plus"></i> {{ admin_t('Add') }}</a>
             </div>
         </div>
 
@@ -633,7 +633,7 @@
 <div class="toast-stack" id="toastStack"></div>
 
 <script type="application/json" id="users-page-data">{{ {"panelPath": panel_path}|tojson }}</script>
-<script defer src="{{ url_for('static',filename='js/users-page.js',v=panel_version) }}"></script>
+<script defer src="{{ url_for('static',filename='js/users-page.js',v=panel_version) }}"></script><script defer src="{{ url_for('static',filename='js/account-status.js',v=panel_version) }}"></script>
 
 <link rel="stylesheet" href="{{ url_for('static',filename='css/design-fixes.css') }}">
 {% endblock %}

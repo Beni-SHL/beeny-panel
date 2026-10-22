@@ -4,7 +4,8 @@ if(window.beenyAdminForms)return;window.beenyAdminForms=true;
 const staticRoot=new URL('.',document.currentScript.src);
 // Fixed paths and Subresource Integrity pins generated from this source release.
 const approvedScripts={
-  "action-buttons.js": "sha256-4pUxLuytbt7SjCvt18c2+mDD4ffFy6CfwKUPoNg+rIs=",
+  "account-status.js": "sha256-Bw1/B7seJHuEf+1fJCXzLkfiMc1v8W7M/rEMyE0v3f0=",
+  "action-buttons.js": "sha256-aAqyd688X/QObQxz+xs40vUAqjwKJOQk39m/GY/FJwo=",
   "admin-language.js": "sha256-6XHit1oey0VV1uP3CKAvupvr8PwupS9i9ycRC5CFrsc=",
   "admin-security.js": "sha256-9G14/BJSrUrzUN6Uv7I95+UdpxrH3g9dPygvgdmYWBo=",
   "auth-bloom.js": "sha256-9zfMVXX9FIOByBUg0WsPUlwrqtLIXKsiOKKfOlwSSh4=",
@@ -27,7 +28,7 @@ const approvedScripts={
   "network-settings.js": "sha256-YitmThuFKE088JF+qg46fGsXj4P/r0Sn1+r2c+gWUcc=",
   "notification-feed.js": "sha256-ctrEPpgKUQrLKm0+Qb5GV87T09R8faRKdqf9VLDBL4g=",
   "panel-update.js": "sha256-Sf8AvTKMV8X76pXsqYVPwG+YWz2cV3OU59B2BQKTY+I=",
-  "password-controls.js": "sha256-pyFYTIAIB//u9Hb4quQ3F+5o3WZb4mOoMErj4gzlr5I=",
+  "password-controls.js": "sha256-mEOvKKsQDAVAJmmx1+U5krSFSpHxQSLLU9f/GppBHI8=",
   "performance.js": "sha256-y9sZylprsrlyBgu1Zucp+LqX2kdw52swSRt2J6b/1SY=",
   "polish.js": "sha256-he3KMKrK8p6Sf2Q25d+UBJahVrZ9wznZ5/C2gsoR6AQ=",
   "portal-content.js": "sha256-E7kjZ3R29D1OqPvx80ZnU9LwSIoaRnAIWSbMUtYIv6M=",
@@ -42,9 +43,11 @@ const approvedScripts={
   "share-access.js": "sha256-yJo7TGDzJ8a5o8dQGO3bkrJY3rafKcVcIeJZy8S2Yeg=",
   "studio.js": "sha256-JbYvBwbva9xOFuAuNtJxfY9B96NVNGmpNk6DKzLjHXc=",
   "system-settings.js": "sha256-Nb6NZ9Bqe3Sw6aR4LmZ300s1mtjt4WnHy7EE1PFypGw=",
+  "theme-runtime.js": "sha256-nVsxCp/NTKCAO/Kmo8RJ3i12hKhlyMtRHbmttg6+YRc=",
+  "theme-studio.js": "sha256-0QuZq6Ys+7nmosA14Puw8/irNHEPLaU8zqckzNtYxVo=",
   "transports.js": "sha256-wG7sVmDVO35jc8jCxrPmOc2SpeqY6jCrJLve1T8XOE8=",
   "tunnels.js": "sha256-I1DfjkF5qzv3HrG9uq56+E9a/EErIbkcvEnEh10JkA4=",
-  "users-page.js": "sha256-cvLKCsh1iuI5pnVCALbGDKmHcRda6KEw02OaCYVQcVQ=",
+  "users-page.js": "sha256-jn/xvmm37oQFh3gSyxhZ2Tw9cZf4rflvkamLOBTlTEk=",
   "video-upload.js": "sha256-473GepeDKz4gchDhnSfpPdWnEKRYl1fDPys2RFuDdmM=",
   "vpn-settings.js": "sha256-ZbWZ7Z7MvQNKalFiid9gKYGIbxDmtPjBJMy63YagDdE=",
   "workspace.js": "sha256-3KiKNaqeQcjAhkmFZj/7O4Yw+9EVC+h5zJjfDNdvRcY="
@@ -64,6 +67,7 @@ function sanitize(root){
 const t=s=>window.adminT?.(s)||s;
 function status(form,message,error=false){let out=form.querySelector('[data-admin-form-status]');if(!out){out=document.createElement('p');out.dataset.adminFormStatus='';out.setAttribute('role','status');out.setAttribute('aria-live','polite');form.append(out);}out.textContent=t(message);out.classList.toggle('form-error',error);return out;}
 async function mount(doc,url){
+ document.dispatchEvent(new CustomEvent('admin:before-navigate'));
  const incoming=doc.getElementById('admin-page'),current=document.getElementById('admin-page');
  if(!incoming||!current)throw Error('Your session may have expired. Refresh before retrying.');
  const scripts=[...incoming.querySelectorAll('script')];scripts.forEach(s=>s.remove());sanitize(incoming);
