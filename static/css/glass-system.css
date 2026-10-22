@@ -1,11 +1,11 @@
 /* Single material authority. Loaded last in every shared shell. */
-:root body{--beeny-glass-fill:rgba(255,255,255,.48);--beeny-glass-line:rgba(255,255,255,.78);--beeny-tool-ink:#353341;--glass-reflex-dark:1;--glass-reflex-light:1;--beeny-material-filter:blur(6px) url(#beeny-liquid) saturate(125%);--beeny-material-fallback:blur(6px) saturate(125%);--lg-surface:var(--beeny-glass-fill);--lg-edge:var(--beeny-glass-line);--lg-shadow:var(--beeny-glass-shadow);--glass-bg:var(--beeny-glass-fill);--glass-line:var(--beeny-glass-line)}
-:root body:not(.light):has(.sidebar),:root[data-theme=dark] body:not(.light){--beeny-glass-fill:rgba(20,20,20,.56);--beeny-glass-line:rgba(255,255,255,.15);--beeny-tool-ink:#ececec;--glass-reflex-dark:2;--glass-reflex-light:.3;--beeny-material-filter:blur(6px) url(#beeny-liquid) saturate(125%);--beeny-material-fallback:blur(6px) saturate(125%);--bg:#121212;--surface:#242424;--soft:#ffffff0b;--ink:#ececec;--text:#ececec;--muted:#aaa;--border:#ffffff26;--line:#ffffff26;color:#ececec;background-color:#121212}
+:root body{--beeny-glass-fill:rgba(255,255,255,.32);--beeny-glass-line:rgba(255,255,255,.78);--beeny-tool-ink:#263d45;--glass-reflex-dark:1;--glass-reflex-light:1;--beeny-material-filter:blur(6px) var(--beeny-refraction,) saturate(155%);--beeny-material-fallback:blur(6px) saturate(125%);--lg-surface:var(--beeny-glass-fill);--lg-edge:var(--beeny-glass-line);--lg-shadow:var(--beeny-glass-shadow);--glass-bg:var(--beeny-glass-fill);--glass-line:var(--beeny-glass-line)}
+:root body:not(.light):has(.sidebar),:root[data-theme=dark] body:not(.light){--beeny-glass-fill:rgba(16,18,20,.34);--beeny-glass-line:rgba(255,255,255,.15);--beeny-tool-ink:#ececec;--glass-reflex-dark:2;--glass-reflex-light:.3;--beeny-material-filter:blur(6px) var(--beeny-refraction,) saturate(155%);--beeny-material-fallback:blur(6px) saturate(125%);--bg:#121212;--surface:#242424;--soft:#ffffff0b;--ink:#ececec;--text:#ececec;--muted:#aaa;--border:#ffffff26;--line:#ffffff26;color:#ececec;background-color:#121212}
 /* Explicit root/body scope beats the old compound selectors on every page. */
-:root body:is(.light,:not(.light)) :is(.sidebar,.mobile-menu,.glass-navbar,.portal-nav,.shell-nav,.mobile-shortcuts,.customer-admin .admin-tabs,.glass,.admin-glass,.glass-card,.glass-box,.cc-surface,.cc-hero,.workspace-top,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat,.glass-toolbar,.ac-submitbar,.ac-page,.stat-card,.stat-chip,.user-card,.profile-card,.offcanvas,.modal-content,.feedback-dialog,.announcement-dialog,.configs-menu,.notification-popover),
+:root body :is(.sidebar,.mobile-menu,.glass-navbar,.portal-nav,.shell-nav,.mobile-shortcuts,.admin-tabs,.glass,.admin-glass,.glass-card,.glass-box,.cc-surface,.cc-hero,.workspace-top,.gc,.settings-card,.setting-card,.hero-card,.node-card,.detail-card,.action-card,.table-card,.ac-panel,.resource-card,.chart-card,.monitor-card,.status-card,.general-hero,.system-hero,.backup-hero,.hero-panel,.tr-hero,.glass-panel,.hero-stat,.tr-card,.tr-stat,.ac-stat,.glass-toolbar,.ac-submitbar,.ac-page,.stat-card,.stat-chip,.user-card,.profile-card,.offcanvas,.modal-content,.feedback-dialog,.announcement-dialog,.configs-menu,.notification-popover),
 :root body #admin-page :is(.glass,.admin-glass,.glass-card,.cc-surface,.cc-hero,.gc,.ac-page,.ac-panel,.ac-stat,.stat-card,.stat-chip,.user-card,.node-card,.glass-toolbar,.hero-card,.hero-stat,.general-hero,.system-hero,.backup-hero,.hero-panel,.glass-panel,.tr-card,.tr-stat,.tr-hero,.action-card,.detail-card,.table-card,.chart-card,.monitor-card,.resource-card,.status-card){background:var(--beeny-glass-fill)!important;border:1px solid var(--beeny-glass-line)!important;box-shadow:var(--beeny-glass-shadow)!important;backdrop-filter:var(--beeny-material-fallback)!important;backdrop-filter:var(--beeny-material-filter)!important;-webkit-backdrop-filter:var(--beeny-material-fallback)!important}
 /* Nested cards share edges/reflections without repeatedly filtering the same pixels. */
-:root body:is(.light,:not(.light)) :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-page,.ac-panel,.user-card) :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-panel,.detail-card),
+:root body :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-page,.ac-panel,.user-card) :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-panel,.detail-card),
 :root body #admin-page :is(.glass,.admin-glass,.cc-surface,.ac-page,.ac-panel,.user-card) :is(.glass,.admin-glass,.glass-card,.cc-surface,.ac-panel,.detail-card){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 :root body:not(.light):has(.sidebar) :is(.sidebar,.mobile-menu,.glass-navbar){color:#e9e9e9!important}
 :root body:not(.light):has(.sidebar) :is(.sidebar nav a,.mobile-menu a,.brand-lockup small,.nav-label,.nav-title,.nav-title b,.sidebar nav i){color:#c8c8c8!important}
@@ -146,8 +146,8 @@ html[dir=rtl] #admin-page .settings-hub>section{direction:rtl}
 :root body[data-auth-customer] .signin-feedback{font-size:10px;line-height:1.7;color:var(--muted);margin:0 0 10px}
 :root body[data-auth-customer] .status{color:var(--text);background:#248eaa13;border-radius:10px;padding:8px}
 /* Customer/partner pages retain the simple original backdrop with a 5% wash. */
-:root body #react-bg-root.beeny-background-plain{background:linear-gradient(135deg,#e8d8ff0d,#b7e8e50d),#f8fafb!important}
-:root[data-theme=dark] body #react-bg-root.beeny-background-plain{background:linear-gradient(135deg,#8bbdcc0d,#a3dcc80d),#12191d!important}
+:root body #react-bg-root.beeny-background-plain{background:radial-gradient(ellipse at 15% 20%,#b7e8e50a,transparent 65%),#fff!important}
+:root[data-theme=dark] body #react-bg-root.beeny-background-plain{background:radial-gradient(ellipse at 20% 15%,#ffffff0a,transparent 65%),#080808!important}
 :root body #react-bg-root.beeny-background-plain canvas{display:none!important}
 :root body .telegram-card.glass{background:linear-gradient(135deg,#1379b9,#219bd0)!important;border-color:#75c8ec66!important;color:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 8px 22px #167ca51c!important}
 :root body .telegram-card :is(p,h2,small,.eyebrow,.telegram-state,.muted){color:#f0faff!important}
@@ -219,7 +219,7 @@ html[dir=rtl] #admin-page .settings-hub>section{direction:rtl}
 :root body #admin-page :is(.cc-icon,.section-icon,.cc-step-number,.eyebrow,.overline){color:var(--beeny-accent)!important;background-color:var(--beeny-accent-soft)!important}
 :root body .metric-foot.expiry-first-use{font-size:9px!important;line-height:1.65;overflow-wrap:anywhere}
 :root body #admin-page :is(.support-layout,.support-workspace) :is(.thread-avatar,.inbox-icon){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--beeny-accent-soft)!important;color:var(--beeny-accent)!important;box-shadow:none!important}
-:root body .notification-center .notification-badge{border:0!important;outline:0!important;box-shadow:none!important;min-width:15px;min-height:15px;height:15px;padding:0 3px;font:700 8px/15px BeenyInter,BeenyYekan,sans-serif;border-radius:999px;top:-2px;right:-2px;background:#e7586d;color:white;animation:none!important}
+:root body .notification-center .notification-badge{border:0!important;outline:0!important;box-shadow:none!important;min-width:15px;min-height:15px;height:15px;padding:0 3px;font:700 8px/15px BeenyInter,BeenyPeyda,sans-serif;border-radius:999px;top:-2px;right:-2px;background:#e7586d;color:white;animation:none!important}
 :root body :is(.ticket-detail,.user-row,.user-card,.ac-panel,.glass,.admin-glass,.cc-surface) :is(.detail-card,.message-bubble,.glass-box,.ac-stat){background:var(--beeny-inner-fill)!important;border-color:var(--beeny-inner-line)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 :root body .message-bubble.is-mine{background:var(--beeny-accent-soft)!important}
 :root body .welcome-account-actions .wallet-quick em{display:inline-flex;align-items:center;justify-content:center;font-style:normal;padding:8px 11px;border:1px solid var(--beeny-glass-line);border-radius:12px;background:var(--beeny-glass-fill);box-shadow:var(--beeny-glass-shadow);color:var(--beeny-tool-ink);font-size:10px;white-space:nowrap}
@@ -237,3 +237,139 @@ html[dir=rtl] #admin-page .settings-hub>section{direction:rtl}
 :root body:not(.light):has(.sidebar) .notification-popover :is(small,time),:root[data-theme=dark] body .notification-popover :is(small,time){color:#adbec8!important}
 :root body .notification-popover .notification-actions button{background:#248eaa12!important;color:#286279!important;border:1px solid #248eaa26!important;border-radius:10px}
 :root body:not(.light):has(.sidebar) .notification-popover .notification-actions button,:root[data-theme=dark] body .notification-popover .notification-actions button{color:#b4e7ea!important;background:#8ddbdc12!important;border-color:#8ddbdc26!important}
+
+/* 3.7.14: shared controls and material, without viewport-triggered appearance. */
+:root body{--beeny-muted:#65767d;--beeny-focus:#269eaa;--c-light:#fff;--c-dark:#131a20;--beeny-glass-shadow:inset 0 1px 0 #ffffffa6,inset 1px 0 0 #ffffff55,inset -1px -1px 0 #ffffff38,0 8px 28px #1729320c}
+:root body:not(.light):has(.sidebar),:root[data-theme=dark] body{--beeny-muted:#a6b5bb;--beeny-glass-shadow:inset 0 1px 0 #ffffff45,inset 1px 0 0 #ffffff28,inset -1px -1px 0 #ffffff16,0 8px 28px #0002}
+:root body :is(.glass,.admin-glass,.cc-surface,.glass-card,.ac-panel,.sidebar,.glass-navbar,.workspace-top){content-visibility:visible;transition-property:background-color,border-color,box-shadow,color;isolation:auto}
+/* Do not blur a giant ancestor: each outer profile/support card samples the real background. */
+:root body #admin-page .ac-user-profile{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:0!important}
+:root body #admin-page .ac-user-profile>.ac-profile-grid>div>.ac-panel,:root body #admin-page .ac-user-profile>.ac-profile-grid>aside>.ac-panel,:root body #admin-page .support-workspace .ticket-inbox,:root body #admin-page .support-workspace .ticket-detail{background:var(--beeny-glass-fill)!important;border:1px solid var(--beeny-glass-line)!important;box-shadow:var(--beeny-glass-shadow)!important;backdrop-filter:var(--beeny-material-filter)!important;-webkit-backdrop-filter:var(--beeny-material-fallback)!important;border-radius:22px;padding:20px}
+:root body #admin-page .support-workspace .ticket-inbox .inbox-row{background:var(--beeny-inner-fill)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+:root body[data-auth-customer] :is(.auth-theme,.auth-language){width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;padding:0!important;border-radius:13px!important;display:inline-flex!important;align-items:center;justify-content:center;position:relative;background:var(--beeny-glass-fill)!important;color:var(--beeny-tool-ink)!important;border:1px solid var(--beeny-glass-line)!important;box-shadow:var(--beeny-glass-shadow)!important}
+:root body[data-auth-customer] .auth-theme span{display:flex;align-items:center;justify-content:center}
+:root body[data-auth-customer] .auth-theme svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7}
+:root[data-theme=light] .auth-theme .theme-sun,:root[data-theme=dark] .auth-theme .theme-moon{display:none!important}
+:root body[data-auth-customer] .field{display:flex;align-items:center;gap:12px;padding:0 14px;min-height:52px}
+:root body[data-auth-customer] .field>svg{box-sizing:content-box;width:19px;height:19px;padding:4px;flex:none}
+:root body[data-auth-customer] .field input{width:100%;min-width:0;height:52px;margin:0}
+:root body[data-auth-customer] .field .peek{position:static;display:grid;place-items:center;flex:none;width:32px;height:36px;padding:6px;transform:none}
+:root body[data-auth-customer] .field .peek svg{width:18px;height:18px}
+:root body[data-auth-customer] .login-card{color:var(--text)}
+/* One header on personal, wallet, support and representative pages. */
+:root body .customer-shell-header.workspace-top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:76px;height:auto;padding:14px 18px;border-radius:22px;margin:16px 0 22px;box-sizing:border-box;position:relative;z-index:40}
+:root body .customer-shell-header .shell-brand{display:flex;align-items:center;gap:9px;min-width:0;color:var(--beeny-tool-ink);text-decoration:none;font-size:15px}
+:root body .customer-shell-header .shell-brand img{width:31px;height:31px;object-fit:contain;flex:none}
+:root body .customer-shell-header .shell-brand span{min-width:0;overflow-wrap:anywhere}
+:root body .customer-shell-header .shell-brand small{display:block;font-size:10px;font-weight:400;color:var(--beeny-muted);margin-top:3px}
+:root body .customer-shell-header :is(.top-actions,.shell-controls){display:flex;flex-wrap:nowrap;gap:7px;align-items:center;flex:none}
+:root body .customer-shell-header :is(.shell-theme,.language-picker button,.notification-bell,.account-menu>summary){box-sizing:border-box;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;display:grid!important;place-items:center;padding:0!important;border:1px solid var(--beeny-glass-line)!important;border-radius:13px!important;background:var(--beeny-glass-fill)!important;box-shadow:var(--beeny-glass-shadow)!important;color:var(--beeny-tool-ink)!important;cursor:pointer;list-style:none}
+:root body .customer-shell-header .account-menu>summary::-webkit-details-marker{display:none}
+:root body .customer-shell-header :is(button,summary)>svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7}
+:root body .customer-shell-header .account-menu{position:relative}
+:root body .account-menu>nav{position:absolute;inset-inline-end:0;top:calc(100% + 10px);z-index:60;width:230px;max-height:min(65svh,480px);overflow:auto;padding:8px;display:grid;gap:3px;border-radius:18px;background:#f8fafb;border:1px solid #d9e2e6;box-shadow:0 14px 34px #152e4026}
+:root[data-theme=dark] body .account-menu>nav{background:#202426;border-color:#ffffff24}
+:root body .account-menu>nav :is(a,button){width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;font:inherit;font-size:12px;border:0;border-radius:10px;background:transparent;color:var(--beeny-tool-ink);text-decoration:none;box-sizing:border-box;text-align:start}
+:root body .account-menu>nav :is(a,button):hover{background:var(--beeny-accent-soft)}
+:root body .account-menu>nav svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none}
+:root body .account-dock{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;position:fixed;inset-inline-start:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:65;width:min(390px,calc(100vw - 28px));box-sizing:border-box;padding:8px;border:1px solid #ffffff90;border-radius:30px;background:rgba(248,242,231,.91);box-shadow:inset 0 1px 0 #fffc,0 9px 30px #1d323322;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+:root body .account-dock a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:49px;min-width:0;padding:5px 3px;border-radius:22px;color:#3c4c50;text-decoration:none;font-size:10px;font-weight:500;line-height:1.4;transition:background .2s,color .2s}
+:root body .account-dock svg{width:21px;height:21px;stroke-width:1.65;fill:none;stroke:currentColor}
+:root body .account-dock a:is(:hover,[aria-current=page]){background:#ffffffad;color:#166c78}
+:root[data-theme=dark] body .account-dock{background:rgba(32,35,36,.94);border-color:#ffffff26;box-shadow:inset 0 1px 0 #ffffff20,0 9px 30px #0004}
+:root[data-theme=dark] body .account-dock a{color:#c9d7dc}
+:root[data-theme=dark] body .account-dock a:is(:hover,[aria-current=page]){background:#ffffff10;color:#9ee8df}
+:root body:has(.account-dock){padding-bottom:calc(102px + env(safe-area-inset-bottom))}
+:root body .account-dock a:focus-visible,:root body .account-menu>summary:focus-visible{outline:2px solid var(--beeny-focus);outline-offset:2px}
+:root body .telegram-card.glass,:root[data-theme=dark] body .telegram-card.glass{background:linear-gradient(135deg,#1379b9,#219bd0)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:root body.light .telegram-card.glass :is(h2,p,.eyebrow,small,.muted),:root body .telegram-card.glass :is(h2,p,.eyebrow,small,.muted){color:#f0faff!important}
+/* Compact profile, with the eye inside the password field. */
+:root body #admin-page .ac-profile-grid>aside{min-width:0}
+:root body #admin-page .profile-section{display:block;margin-bottom:16px}
+:root body #admin-page .profile-section>summary{display:flex;align-items:center;gap:9px;list-style:none;cursor:pointer;font-size:14px;font-weight:600;min-height:28px;color:var(--beeny-tool-ink)}
+:root body #admin-page .profile-section>summary::-webkit-details-marker{display:none}
+:root body #admin-page .profile-section>summary svg{width:18px;height:18px;flex:none;color:var(--beeny-accent)}
+:root body #admin-page .profile-section>summary svg:last-child{margin-inline-start:auto;transition:transform .2s}
+:root body #admin-page .profile-section[open]>summary svg:last-child{transform:rotate(45deg)}
+:root body #admin-page .profile-section:not([open])>.profile-section-body{display:none}
+:root body #admin-page .profile-section-body{padding-top:16px;min-width:0}
+:root body #admin-page .credential-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:14px}
+:root body #admin-page .credential-form>.ac-field{min-width:0;display:grid;gap:7px}
+:root body #admin-page .credential-form>.ac-field>label{margin:0;min-height:20px}
+:root body #admin-page .credential-form :is(input,.profile-password-field){box-sizing:border-box;width:100%;min-width:0;height:46px;min-height:46px;margin:0}
+:root body #admin-page .credential-form>button{grid-column:1/-1}
+:root body #admin-page .profile-password-field{position:relative}
+:root body #admin-page .profile-password-field input{padding-inline-end:44px!important}
+:root body #admin-page .password-eye{position:absolute;inset-inline-end:5px;top:5px;display:grid;place-items:center;width:36px;height:36px;padding:8px;border:0;border-radius:10px;color:var(--beeny-control-ink);background:transparent;cursor:pointer}
+:root body #admin-page .password-eye svg{width:18px;height:18px}
+:root body #admin-page .password-tools{margin-top:0!important;gap:6px;align-items:center}
+:root body #admin-page .password-tools [data-password-status]{flex-basis:100%;font-size:10px;line-height:1.5}
+:root body #admin-page .share-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block:12px}
+:root body #admin-page .share-toolbar .share-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+:root body #admin-page .share-toolbar [data-share-clear]{width:40px;height:40px;padding:0!important}
+/* Large numbers wrap rather than forcing their grid column wider. */
+:root body .metric-grid .metric strong{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;max-width:100%;min-width:0;font-size:clamp(19px,2.5vw,29px);line-height:1.4;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+:root body .metric-grid .metric strong :is(span,small){min-width:0;max-width:100%;overflow-wrap:anywhere;white-space:normal}
+:root body .metric-grid .metric strong small{font-size:11px}
+:root body .metric-foot{white-space:normal;overflow-wrap:anywhere}
+:root body :is(.metric-icon,.cc-icon,.section-icon,.ac-eyebrow){color:var(--beeny-accent)!important}
+:root body .metric-icon{background:var(--beeny-accent-soft)!important}
+:root body button:active:not(:disabled),:root body a.ac-btn:active{filter:brightness(.96)}
+:root body :is(button,a.ac-btn,a.primary-button,a.secondary-button){-webkit-tap-highlight-color:transparent;transition:background-color .18s,color .18s,border-color .18s,box-shadow .18s}
+:root body :is(button,a.ac-btn):focus-visible{outline:2px solid var(--beeny-focus);outline-offset:3px}
+@media(max-width:600px){:root body .customer-shell-header.workspace-top{padding:11px;gap:8px;min-height:66px;border-radius:18px}:root body .customer-shell-header .shell-brand{font-size:12px;gap:6px}:root body .customer-shell-header .shell-brand small{display:none}:root body .customer-shell-header .shell-brand img{width:25px;height:25px}:root body .customer-shell-header :is(.top-actions,.shell-controls){gap:5px}:root body .customer-shell-header :is(.shell-theme,.language-picker button,.notification-bell,.account-menu>summary){width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;border-radius:11px!important}:root body #admin-page .credential-form{grid-template-columns:minmax(0,1fr)}:root body .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){:root body :is(button,a,.profile-section>summary svg){transition:none!important}}
+
+/* Supplied live-feed geometry: app tile, metadata, body and new-arrival spring. */
+:root body .notification-center .notification-popover{width:min(380px,calc(100vw - 24px));max-width:calc(100vw - 24px);padding:8px;border-radius:28px!important;overflow:hidden;background:rgba(250,252,253,.97)!important;color:#263e49!important;box-sizing:border-box;isolation:isolate;z-index:100}
+:root body .notification-center .notification-popover[hidden]{display:none!important}
+:root body .notification-feed-heading{display:flex;align-items:center;gap:8px;padding:9px 10px 5px;background:transparent!important;border:0!important;box-shadow:none!important}
+:root body .notification-feed-heading h3{font-size:14px;line-height:1.6;margin:0;flex:1}
+:root body .notification-feed-mark{display:flex;color:var(--beeny-accent)}
+:root body .notification-feed-mark svg{width:18px;height:18px;fill:none;stroke:currentColor}
+:root body .notification-unread{border-radius:99px;font-size:10px;padding:2px 7px;background:var(--beeny-accent-soft);color:var(--beeny-accent)}
+:root body .notification-close{display:grid;place-items:center;width:28px;height:28px;padding:5px;border:0;border-radius:50%;color:inherit;background:transparent;cursor:pointer}
+:root body .notification-close svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7}
+:root body .notification-center .notification-actions{display:flex;justify-content:flex-end;gap:6px;padding:5px 10px 10px;border:0;margin:0}
+:root body .notification-center .notification-actions button{display:inline-flex;align-items:center;justify-content:center;gap:5px;width:auto;min-height:30px;margin:0;padding:5px 10px;font-size:10px;line-height:1.4;cursor:pointer;box-shadow:none!important}
+:root body .notification-actions button svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.7;fill:none}
+:root body .notification-center .notification-items{display:grid;gap:8px;max-height:min(440px,calc(100svh - 210px));overflow-y:auto;overscroll-behavior:contain;padding:2px 4px 18px;mask-image:linear-gradient(#000 calc(100% - 16px),transparent);scrollbar-width:thin}
+:root body .notification-center .notification-items .notification-card{position:relative;display:flex;gap:11px;min-width:0;margin:0;border:1px solid #57738020;border-radius:16px;background:#fff;padding:12px;box-shadow:0 2px 5px #17293205;text-align:start;color:inherit;overflow-wrap:anywhere}
+:root body .notification-app-tile{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;flex:none;background:var(--beeny-accent-soft);color:var(--beeny-accent);position:relative}
+:root body .notification-app-tile svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+:root body .notification-card-content{min-width:0;flex:1}
+:root body .notification-meta{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;font-size:10px;line-height:1.5;color:var(--beeny-muted)}
+:root body .notification-meta time{font-size:9px;direction:ltr}
+:root body .notification-title{display:block;font-size:12px;line-height:1.7;margin-top:3px;color:inherit}
+:root body .notification-center .notification-card .notification-body{font-size:12px;line-height:1.8;white-space:pre-line;margin:5px 0 0;color:var(--beeny-muted)!important}
+:root body .notification-card[data-read=false]::after{content:'';position:absolute;inset-inline-end:10px;top:10px;width:5px;height:5px;border-radius:50%;background:var(--beeny-accent)}
+:root body .notification-empty{display:grid;place-items:center;text-align:center;gap:8px;padding:34px 15px;color:var(--beeny-muted);font-size:12px}
+:root body .notification-empty-mark{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--beeny-accent-soft);color:var(--beeny-accent)}
+:root body .notification-empty-mark svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.7;fill:none}
+:root body .notification-empty p{margin:0;font-size:11px}
+:root body .notification-feedback{font-size:11px;margin:0;padding:0 10px;color:var(--beeny-muted)!important}
+:root body .notification-feedback:not(:empty){padding:8px 10px}
+:root body:not(.light):has(.sidebar) .notification-center .notification-popover,:root[data-theme=dark] body .notification-center .notification-popover{background:rgba(26,29,31,.98)!important;color:#e8eff2!important}
+:root body:not(.light):has(.sidebar) .notification-items .notification-card,:root[data-theme=dark] body .notification-items .notification-card{background:#262b2e;border-color:#ffffff12}
+.notification-arriving{animation:notification-arrive 460ms cubic-bezier(.2,.9,.25,1.12) both;animation-delay:var(--arrival-delay,0ms)}
+.notification-arriving .notification-app-tile::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1px solid currentColor;animation:notification-ring 900ms ease-out both;pointer-events:none}
+@keyframes notification-arrive{from{opacity:0;transform:translateY(-16px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes notification-ring{from{transform:scale(1);opacity:.6}to{transform:scale(1.75);opacity:0}}
+@media(max-width:600px){:root body .notification-center .notification-popover{position:fixed;inset-inline:12px;top:84px;width:auto}}
+@media(prefers-reduced-motion:reduce){.notification-arriving,.notification-arriving .notification-app-tile::after{animation:none}}
+
+@supports(backdrop-filter:url("#beeny-liquid")){:root.beeny-refraction-ready body{--beeny-refraction:url("#beeny-liquid")}}
+/* Customer backdrop is deliberately restrained; remove legacy purple overlay. */
+:root body:has(.account-dock)::before{content:none!important}
+:root body:has(.account-dock){--bg:#fff;--soft:#248eaa0c;--track:#e7eef0;--grid:#dfe9ed;--muted:#65767d;--accent:#248eaa}
+:root[data-theme=dark] body:has(.account-dock){--bg:#080808;--soft:#ffffff0b;--surface:#232627;--track:#343a3d;--grid:#343a3d;--input:#ffffff08;--ink:#edf1f3;--muted:#a6b5bb;--accent:#8ddbdc}
+:root body :is(.primary-button,.secondary-button,.cc-button,.admin-button,.ac-btn,.primary-btn,.secondary-btn){background:var(--beeny-accent-soft)!important;color:var(--beeny-control-ink)!important;border-color:var(--beeny-inner-line)!important;box-shadow:none!important}
+:root body .telegram-card .primary-button{background:#fff!important;color:#176589!important;border-color:#ffffff99!important}
+:root body #admin-page :is(.cc-icon,.section-icon,.stat-icon,.metric-icon,.ac-eyebrow,.eyebrow,.overline){color:var(--beeny-accent)!important}
+:root body .welcome-account-actions .portal-renew-cta{background:#77dfc5!important;color:#103e34!important;border-color:#a0eedb!important}
+:root body.rep-login .auth-controls{justify-content:center;margin:16px auto}
+:root body.rep-login{background:transparent!important;color:var(--beeny-tool-ink)}
+:root body.rep-login::before{content:none!important}
+:root body.rep-login .rep-login-card{background:var(--beeny-glass-fill)!important;color:var(--beeny-tool-ink)!important;border:1px solid var(--beeny-glass-line)!important;box-shadow:var(--beeny-glass-shadow)!important;backdrop-filter:var(--beeny-material-filter);-webkit-backdrop-filter:var(--beeny-material-fallback)}
+:root body.rep-login .rep-form :is(input,.rep-secret){box-sizing:border-box;min-height:46px;height:46px}
+:root body.rep-login .rep-secret input{padding-inline-end:44px}

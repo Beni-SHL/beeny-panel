@@ -3,7 +3,7 @@
  const timers=new WeakMap(),fa=()=>document.documentElement.lang==='fa';
  const paths={save:'M5 3h12l4 4v14H3V3h2Zm2 0v6h10V3M7 21v-8h10v8',renew:'M3 10a9 9 0 0 1 16-5l2 3M21 3v5h-5M21 14a9 9 0 0 1-16 5l-2-3M3 21v-5h5',download:'M12 3v12m-5-5 5 5 5-5M3 16v5h18v-5',publish:'M12 16V3m-5 5 5-5 5 5M3 15v6h18v-6',check:'m5 12 4 4L19 6',error:'m6 6 12 12M6 18 18 6',loading:'M21 12a9 9 0 1 1-9-9'};
  function icon(kind){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.8');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',paths[kind]||paths.save);svg.append(p);return svg;}
- function prepare(button,kind){if(!button||button.dataset.actionReady)return;button.dataset.actionReady='1';button.classList.add('beeny-action-button');
+ function prepare(button,kind){if(!button||button.dataset.actionReady&&button.querySelector('.button-state'))return;button.dataset.actionReady='1';button.classList.add('beeny-action-button');
   const label=document.createElement('span');label.className='button-idle';while(button.firstChild)label.append(button.firstChild);
   if(!label.querySelector('svg,i'))label.prepend(icon(kind));const out=document.createElement('span');out.className='button-state';out.setAttribute('aria-live','polite');button.append(label,out);button.dataset.actionState='idle';}
  function set(button,state,progress){if(!button)return;prepare(button,'save');clearTimeout(timers.get(button));button.dataset.actionState=state;button.setAttribute('aria-busy',String(state==='loading'));
@@ -53,4 +53,14 @@
  });
  // Normal renewal remains a native form submission; only show its pending state.
  document.addEventListener('submit',event=>{if(event.defaultPrevented)return;const b=event.submitter;if(b&&event.target.id==='renewal-form'&&!b.matches('[data-renew-wallet]'))set(b,'loading');});
+
+ document.addEventListener('submit',event=>{queueMicrotask(()=>{if(event.defaultPrevented)return;const b=event.submitter;if(!b||b.closest('.language-picker,.shell-controls,.top-actions'))return;set(b,'loading');});});
+ if(typeof MutationObserver!=='undefined'){
+  const pending=new WeakSet();
+  new MutationObserver(records=>{for(const record of records){const b=record.target;if(!b.matches?.('button')||b.closest('.language-picker,.shell-controls,.top-actions'))continue;
+   if(b.disabled&&record.oldValue===null&&b.dataset.actionState!=='loading'){pending.add(b);set(b,'loading');}
+   else if(!b.disabled&&pending.has(b)){pending.delete(b);if(b.dataset.actionState==='loading')set(b,'idle');}
+  }}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['disabled'],attributeOldValue:true});
+ }
+ window.addEventListener?.('pageshow',event=>{if(event.persisted)document.querySelectorAll('[data-action-state="loading"]').forEach(b=>set(b,'idle'));});
 })();

@@ -39,56 +39,6 @@
       if(!window.confirm(window.adminT?.(message)||message))event.preventDefault();
     },true);
   }
-  document.querySelectorAll('[data-notifications]').forEach(center => {
-    if(center.dataset.notificationsBound)return;center.dataset.notificationsBound='1';
-    const bell = center.querySelector('.notification-bell'), popup = center.querySelector('.notification-popover');
-    const items = center.querySelector('.notification-items'), badge = center.querySelector('.notification-badge');
-    const fa = center.dataset.locale === 'fa';
-    let upto = 0, loading = false;
-    async function refresh() {
-      if (loading) return;
-      loading = true;
-      try {
-        const response = await fetch(center.dataset.notifications, {headers:{Accept:'application/json'}, cache:'no-store'});
-        if (!response.ok || response.redirected || !response.headers.get('content-type')?.includes('application/json')) return;
-        const data = await response.json();
-        upto = data.latest_id;
-        badge.textContent = data.unread > 99 ? '99+' : String(data.unread);
-        badge.hidden = !data.unread;
-        center.classList.toggle('has-unread', Boolean(data.unread));
-        items.replaceChildren();
-        if (!data.items.length) { const p = document.createElement('p'); p.textContent = fa ? (document.documentElement.lang==='en'?"No notifications yet.":'هنوز اعلانی ندارید.') : 'No notifications yet.'; items.append(p); }
-        data.items.forEach(row => {
-          const article = document.createElement('article'), title = document.createElement('b'), body = document.createElement('p'), stamp = document.createElement('time');
-          title.textContent = row.title; body.textContent = row.body; stamp.textContent = new Date(row.created).toLocaleString(fa ? 'fa-IR' : 'en-GB');
-          article.append(title, body, stamp); items.append(article);
-        });
-      } catch (_) { /* Leave current messages readable while offline. */ }
-      finally { loading = false; }
-    }
-    bell.addEventListener('click', () => {popup.hidden = !popup.hidden; bell.setAttribute('aria-expanded', String(!popup.hidden)); if (!popup.hidden) refresh();});
-    document.addEventListener('click', event => { if (!center.contains(event.target)) {popup.hidden = true; bell.setAttribute('aria-expanded','false');} });
-    center.addEventListener('keydown', event => {if (event.key === 'Escape') {popup.hidden=true; bell.focus(); bell.setAttribute('aria-expanded','false');}});
-    async function acknowledge(action, button) {
-      if (button.disabled) return;
-      button.disabled = true;
-      try {
-        const response = await fetch(center.dataset.notifications+'/'+action, {
-          method:'POST', body:new URLSearchParams({csrf:center.dataset.csrf, upto:String(upto)})
-        });
-        if (response.ok && !response.redirected) {
-          popup.hidden = true;
-          bell.setAttribute('aria-expanded', 'false');
-          bell.focus();
-          await refresh();
-        }
-      } catch (_) { /* Keep the menu open if the action was not confirmed. */ }
-      finally { button.disabled = false; }
-    }
-    center.querySelector('.notification-read').addEventListener('click', event => acknowledge('read', event.currentTarget));
-    center.querySelector('.notification-clear').addEventListener('click', event => acknowledge('clear', event.currentTarget));
-    refresh(); setInterval(() => {if (!document.hidden) refresh();},60000);
-  });
   const addCard = document.getElementById('add-bank-card'), cards = document.getElementById('extra-cards');
   if (addCard && cards) {
     cards.addEventListener('click', event => {if (event.target.matches('[data-remove-card]')) event.target.closest('.extra-card').remove();});

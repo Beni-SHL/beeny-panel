@@ -1,19 +1,25 @@
 {
-  "version": "3.7.13",
-  "base_version": "3.7.12",
+  "version": "3.7.14",
+  "base_version": "3.7.13",
   "release_date": "2026-10-22",
-  "bridge_version": "3.7.13",
+  "bridge_version": "3.7.14",
   "channel": "test",
   "features": [
-    "Replace outdated English login-copy health assertion with actual same-endpoint POST form validation: username, password input and nonempty hidden CSRF token; require HTTP 200 without redirects.",
-    "Keep database integrity/schema verification, startup polling, service checks and automatic rollback.",
-    "Preserve all 3.7.12 UI, notification readability and wallet renewal changes."
+    "Shared single theme/language controls on admin, customer and representative login; local Peyda Persian fonts at verified weights 400/500/600/700/800/900; retain local Inter for English.",
+    "Common customer, wallet, support and representative header; four-section floating account/renew/download/support dock; representative management links retained in account menu.",
+    "Native adaptation of supplied live notification feed for admin and customer, with actual read state, unread count, metadata, new-arrival animation and server-backed read-all/clear; no demo events or simulated progress.",
+    "Remove conflicting material specificity and mobile blur suppression; CSS blur available immediately, inline refraction map with optional enhancement only after successful decode; readable notification surfaces.",
+    "Simple white/black customer and partner backgrounds with restrained 4% wash; bright complementary avatar colors; blue Telegram card and unified teal/mint control palette.",
+    "Collapsible secondary account profile sections, equal-height credential inputs and inside password eye; icon-only draft clear beside sharing and full-settings shortcut beside Edit; remove Account actions block.",
+    "Consistent real pending/success/error button states; native form pending and async disabled-state handling; retain real download byte progress and wallet renewal ledger behavior.",
+    "Constrain high-digit usage/device metrics and shared mobile header/dock layouts."
   ],
   "validation": {
-    "targeted_python_tests": 22,
-    "health": "Exact predicate extracted from the updater tested against real latest Flask login and negative cases (copy-only page, incomplete form, disabled controls, wrong target/method, absent CSRF and wrong password type).",
-    "rollback": "Real updater control flow restored previous application, Python environment and service files on simulated database/health failures; fake systemd and UID switch used in isolated temporary installation.",
-    "source": "Python syntax, Bash parsing, manifest and ZIP CRC verification."
+    "targeted_python_tests": 33,
+    "rendered_pages": "44 admin/customer EN/FA page renders plus 16 representative page renders, DOM contract checks.",
+    "notifications": "Backend read/clear isolation and CSRF; Node runtime checks for safe text, actual pending/success/error transitions, high-water mark and empty state.",
+    "material": "CSS cascade checks at 390 and 1200 px, both themes, for readable notifications, blue Telegram and simple backgrounds; decode gating tested in Node.",
+    "source": "Python/Jinja/CSS/Bash and installer source checks; four Node runtime checks; rebuilt 44 local AJAX program pins; ZIP CRC and SHA256 manifest."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -31,7 +37,7 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Actual VPS upgrade and real service startup remain unverified here.",
-    "No UI or VPN/network policy changes in this patch."
+    "Real browser visual rendering, Safari GPU refraction behavior and actual VPS upgrade have not been verified in this environment.",
+    "GitHub publication is not performed by this archive."
   ]
 }

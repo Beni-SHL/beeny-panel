@@ -1,11 +1,13 @@
 (() => {
   'use strict';
+  document.addEventListener('invalid',event=>{let el=event.target.parentElement;while(el){if(el.tagName==='DETAILS')el.open=true;el=el.parentElement;}},true);
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-';
   document.querySelectorAll('[data-password-controls]').forEach(controls => {
     const field = document.getElementById(controls.dataset.passwordControls);
     if (!field) return;
     const status = controls.querySelector('[data-password-status]');
-    const toggle = controls.querySelector('[data-password-toggle]');
+    const toggle = controls.closest('.ac-field').querySelector('[data-profile-password-toggle]') || controls.querySelector('[data-password-toggle]');
+    if(!toggle || controls.dataset.passwordBound)return;controls.dataset.passwordBound='1';
     controls.querySelector('[data-password-generate]').addEventListener('click', () => {
       if (!window.crypto || !window.crypto.getRandomValues) {
         status.textContent = 'Secure generation unavailable; enter a password manually.';

@@ -471,6 +471,8 @@ def background_updater():
 
 @app.route(f"{PANEL_PATH}/login" if PANEL_PATH != '/' else "/login", methods=["GET", "POST"])
 def login():
+    if request.args.get("lang") in {"fa", "en"}:
+        session["login_language"] = request.args["lang"]
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")

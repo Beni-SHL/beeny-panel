@@ -96,8 +96,9 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
         else:
             unread = query.filter(Notification.read_at.is_(None)).count()
         rows = query.order_by(Notification.id.desc()).limit(30).all()
+        read_marks = set(db.session.scalars(db.select(AdminRead.notification_id).where(AdminRead.admin_id == current_user.id, AdminRead.notification_id.in_([row.id for row in rows])))) if user_id is None else set()
         return jsonify(unread=unread, latest_id=rows[0].id if rows else 0,
-                       items=[dict(id=row.id, title=row.title, body=row.body,
+                       items=[dict(id=row.id, title=row.title, body=row.body, read=(row.id in read_marks if user_id is None else row.read_at is not None),
                                    created=row.created_at.isoformat()+'Z') for row in rows])
 
     @app.get(base+'/c/<token>/notifications')
