@@ -1,38 +1,27 @@
 {
-  "version": "3.7.15",
-  "base_version": "3.7.14",
+  "version": "3.7.16",
+  "base_version": "3.7.15",
   "release_date": "2026-10-23",
-  "bridge_version": "3.7.15",
+  "bridge_version": "3.7.16",
   "channel": "test",
   "features": [
-    "1. Add padding around the inner traffic data container and its panels.",
-    "2. Rebuild the desktop/mobile account toolbar, dark search with restrained lower aurora, source RainbowButton for Add, and readable light filter arrows.",
-    "3. Unify customer credential controls in account creation and profile; keep exactly one padded password eye inside the field.",
-    "4. Add physical/logical dropdown arrow insets for LTR and RTL, in both modes.",
-    "5. More distinct primary button colors with readable automatic contrast; owner-editable palettes.",
-    "6. Make profile Usage and access independently collapsible.",
-    "7. Add a restrained green glow to active badges.",
-    "8. Full-width credential fields; real generator/clipboard pending and confirmed check states; no false clipboard success.",
-    "9. Full-width private customer page Preview action.",
-    "10. Standardized compact notification count with a gentle blink; RTL positioning and reduced-motion fallback.",
-    "11. Dedicated active/disabled account switch with no injected Save icon. Reuse canonical edit form and its activation checks, permissions and node synchronization; verify server state before updating UI.",
-    "12. Bundle the official GradFlow Stripe shader locally, use supplied light/dark triples, keep three-tone brightness relationships for happy avatar-derived colors, and support manual palettes.",
-    "13. Mobile-only centered expanding navigation pill based on the supplied component. Only the current section reveals its label; desktop navigation remains in sidebar/account menu.",
-    "14. Source RainbowButton adaptation for renewal, with light black/dark white fill, moving rainbow border and lower glow.",
-    "15. Compact Use wallet balance row with balance and Pay action below card-to-card; existing ledger, idempotency and validation preserved.",
-    "16. Match coupon Check button height to its input.",
-    "17. Owner-only Theme studio for admin/customer workspaces and independent dark/light settings: background colors/intensity, glass blur/opacity/shade/tint/neutral mode/saturation, icon/title/primary colors, presets, live preview, cancel, reset and persistent save.",
-    "18. Small gift-box shake and confetti animation on plan gifts; disabled under reduced motion."
+    "Customer dock follows the supplied expanding-tab form, integrates its 420/30/.7 spring, measured label width, hover/tap feedback, reduced motion and horizontal overflow scrolling.",
+    "Render shared mobile navigation directly under body on account, renewal, wallet, support and device pages; fix active route/hash detection and keep renewal outside filtered layout containers.",
+    "Owner theme studio customer settings: independent light/dark background intensity and colors, avatar-based auto palette, shared glass blur/tint/opacity/saturation, icon colors.",
+    "Allowlisted navigation destinations may be added, removed and reordered; separate liquid background/button options with persistent public configuration and preview.",
+    "Avatar light ring, rear glow, glow intensity and animation toggles, respecting reduced motion.",
+    "Animated account status switch isolates its knob geometry and keeps it inside a clipped track, including while a real update is pending.",
+    "Native SVG Add plus with explicit high-contrast stroke in light/dark themes; coordinated restrained blue/lilac/rose/mint aurora for search and Add.",
+    "Consistent minimal native SVG sun/moon controls on customer and administrator headers with readable colors; no icon-font dependency.",
+    "Backward-compatible migration retains existing theme colors and intensity while adding the new customer settings."
   ],
   "validation": {
-    "targeted_python_tests": 38,
-    "node_runtime_suites": 8,
-    "source": "Python/Jinja/CSS/Bash and installer checks; 53 local JS programs/modules parse; rebuilt 47 AJAX script pins.",
-    "rendered_pages": "Admin/customer and Theme studio EN/FA server renders with structural assertions.",
-    "css": "Authored cascade verified at 390/1200px in both themes: traffic padding, desktop/mobile toolbar, RTL arrow inset, mobile-only centered dock, rainbow renewal/Add and wallet/coupon rows.",
-    "shader": "Glass Fold and GradFlow Stripe compile and link in native EGL OpenGL ES.",
-    "theme": "Owner/CSRF enforcement, invalid color/range rejection, no mutation on rejected save, durable settings visible to customer pages, both theme modes and workspaces.",
-    "payments": "Existing wallet renewal/idempotency/insufficient balance/commit-failure behavior tests pass."
+    "targeted_python_tests": 43,
+    "node_runtime_suites": 9,
+    "source": "Python/Jinja/CSS/Bash, installer checks, 44 EN/FA server-rendered pages; 47 AJAX script pins rebuilt.",
+    "css": "Authored cascade at 390/1200px in both themes including active switch knob geometry, mobile-only dock, toolbar and payment controls.",
+    "navigation": "Persisted ordering/material flags, body-level dock on account/wallet/devices/support, renewal target, active destinations, measured spring animation, overflow reveal and reduced motion.",
+    "theme": "Owner/CSRF access, validation, persisted settings, legacy migration, independent intensity, avatar tokens and native theme/Add SVG structure."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -50,7 +39,7 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Actual browser/iPhone visual rendering and VPS upgrade remain unverified. Native GLSL compilation and DOM/CSS checks do not replace those checks.",
+    "Real browser/iPhone visual rendering and VPS installation remain unverified. Automated server/DOM/CSS checks do not replace these checks.",
     "GitHub publication is not performed by this archive."
   ]
 }

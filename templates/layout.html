@@ -290,8 +290,8 @@
 <div class="content">
     <div class="glass-navbar">
         <span class="nav-title"><img src="{{ url_for('static', filename='brand/mark.png',v=panel_version) }}" alt=""> <span>BEENY <b>PANEL</b><small class="panel-version">v{{ panel_version }}</small></span></span>
-        <div class="beeny-header-controls">{% with notification_url=customer_base+'/notifications', notification_locale=admin_language %}{% include 'partials/notification_bell.html' %}{% endwith %}<div class="admin-language-control"><button class="glass-btn" type="button" id="admin-language-switch" aria-label="{{ admin_t('Change language') }}" title="{{ admin_t('Change language') }}" data-endpoint="{{ base.rstrip('/') }}/api/admin/language">{{ icon('globe') }}<span class="admin-language-code">{{ 'FA' if admin_language=='fa' else 'EN' }}</span></button></div><button id="themeToggle" class="glass-btn">
-            <i class="fa fa-moon"></i>
+        <div class="beeny-header-controls">{% with notification_url=customer_base+'/notifications', notification_locale=admin_language %}{% include 'partials/notification_bell.html' %}{% endwith %}<div class="admin-language-control"><button class="glass-btn" type="button" id="admin-language-switch" aria-label="{{ admin_t('Change language') }}" title="{{ admin_t('Change language') }}" data-endpoint="{{ base.rstrip('/') }}/api/admin/language">{{ icon('globe') }}<span class="admin-language-code">{{ 'FA' if admin_language=='fa' else 'EN' }}</span></button></div><button id="themeToggle" class="glass-btn" aria-label="{{ admin_t('Change theme') }}">
+            <span class="control-sun">{{ icon('sun') }}</span><span class="control-moon">{{ icon('moon') }}</span>
         </button></div>
     </div>
 
@@ -303,18 +303,12 @@
     // ==================== UI & Theme Controls ====================
     if (localStorage.getItem("beeny-theme") === "light") {
         document.body.classList.add("light");
-        document.querySelector("#themeToggle i").className = "fa fa-sun";
+        document.getElementById("themeToggle").setAttribute("aria-pressed","false");
     }
     document.getElementById("themeToggle").onclick = function() {
         localStorage.setItem("beeny-theme", document.body.classList.contains("light") ? "dark" : "light");
         document.body.classList.toggle("light");
-        const icon = this.querySelector('i');
-
-        if (document.body.classList.contains('light')) {
-            icon.className = 'fa fa-sun';
-        } else {
-            icon.className = 'fa fa-moon';
-        }
+        this.setAttribute('aria-pressed',String(!document.body.classList.contains('light')));
 
         // نکته: اسکریپت ریکت که بیلد گرفتیم (MutationObserver) به صورت خودکار
         // تغییرات کلاس بادی را تشخیص داده و رنگ بک‌گراند را عوض می‌کند.

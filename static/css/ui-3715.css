@@ -138,3 +138,53 @@ html[dir=rtl] body #admin-page .users-global-search>i{left:auto!important;right:
 @media(prefers-reduced-motion:reduce){:root body #admin-page .account-status-switch .status-track i{transition:none;animation:none!important}}
 :root body #react-bg-root.beeny-background-customer[data-stripe-mounted=true]:not(.background-fallback)::before{opacity:0}
 :root body[data-auth-customer] .login-card{background:var(--beeny-glass-fill)!important;backdrop-filter:var(--beeny-material-filter)!important;-webkit-backdrop-filter:var(--beeny-material-fallback)!important;border-color:var(--beeny-glass-line)!important}
+
+/* 3.7.16: shared mobile dock, configurable materials and isolated status track. */
+.theme-nav-row,.theme-nav-add{display:flex;align-items:center;gap:8px;margin-block:8px}.theme-nav-row>span{flex:1}.theme-nav-row button{min-width:36px}.theme-studio [hidden]{display:none!important}
+:root body .avatar-wrap{isolation:isolate;position:relative}
+:root body[data-avatar-ring=true] .avatar-wrap>.avatar{outline:2px solid color-mix(in srgb,var(--theme-icons) 75%,transparent);outline-offset:4px;box-shadow:0 0 18px color-mix(in srgb,var(--theme-icons) calc(var(--avatar-glow-strength,.45)*100%),transparent)}
+:root body[data-avatar-ring=false] .avatar-wrap>.avatar{outline:0;box-shadow:none}
+:root body .avatar-wrap::before{content:'';position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(ellipse,var(--theme-icons),transparent 70%);filter:blur(12px);opacity:var(--avatar-glow-strength,.45);z-index:-1;pointer-events:none}
+:root body[data-avatar-backlight=false] .avatar-wrap::before{display:none}
+:root body[data-avatar-animated=true] .avatar-wrap::before{animation:beeny-avatar-breathe 3.6s ease-in-out infinite}
+@keyframes beeny-avatar-breathe{50%{transform:scale(1.15);opacity:calc(var(--avatar-glow-strength,.45)*.6)}}
+@media(max-width:760px){
+:root body>.account-dock.expanding-tabs{position:fixed!important;z-index:150;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:pan-x;max-width:calc(100vw - 24px);max-height:56px;isolation:isolate}
+:root body>.account-dock.expanding-tabs::-webkit-scrollbar{display:none}
+:root body>.account-dock.expanding-tabs a{max-width:200px;color:var(--theme-icons);text-decoration:none;transition:width .32s cubic-bezier(.2,.8,.2,1),scale .18s;will-change:width}
+:root body>.account-dock.expanding-tabs a:hover{scale:1.045}
+:root body>.account-dock.expanding-tabs a:active{scale:.94}
+:root body>.account-dock.expanding-tabs .dock-label{flex-shrink:0;max-width:0;translate:-7px 0;transition:opacity .25s,translate .32s,max-width .32s}
+:root body>.account-dock.expanding-tabs [aria-current=page] .dock-label{max-width:160px;translate:0 0}
+:root body>.account-dock.expanding-tabs[data-liquid-background=true]{background:var(--beeny-glass-fill)!important;backdrop-filter:var(--beeny-material-filter)!important;-webkit-backdrop-filter:var(--beeny-material-filter)!important}
+:root body>.account-dock.expanding-tabs[data-liquid-background=false]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:#f0f0f3!important}
+:root[data-theme=dark] body>.account-dock.expanding-tabs[data-liquid-background=false]{background:#171719!important}
+:root body>.account-dock.expanding-tabs[data-liquid-buttons=true] a{background:var(--beeny-glass-fill)!important;backdrop-filter:var(--beeny-material-fallback);-webkit-backdrop-filter:var(--beeny-material-fallback);border:1px solid #ffffff29}
+}
+:root body #admin-page .users-page .account-status-switch{flex-wrap:nowrap;max-width:100%;line-height:1.2;overflow:hidden}
+:root body #admin-page .users-page .account-status-switch .status-track{position:relative!important;display:block!important;flex:0 0 32px!important;width:32px!important;min-width:32px!important;max-width:32px!important;height:19px!important;padding:0!important;margin:0!important;overflow:hidden!important;box-sizing:border-box!important;direction:ltr!important}
+:root body #admin-page .users-page .account-status-switch .status-track i{position:absolute!important;inset:auto!important;left:3px!important;top:3px!important;display:block!important;width:13px!important;min-width:13px!important;max-width:13px!important;height:13px!important;min-height:13px!important;padding:0!important;margin:0!important;border:0!important;box-sizing:border-box!important;font-size:0!important;transform:none!important;animation:none!important;transition:left .28s cubic-bezier(.22,1.25,.36,1),background .2s!important;background:#fff!important}
+:root body #admin-page .users-page .account-status-switch[aria-checked=true] .status-track i{left:16px!important}
+:root body #admin-page .users-page .account-status-switch[aria-busy=true] .status-track i::after{content:'';position:absolute;inset:2px;border:2px solid #0002;border-top-color:#28875d;border-radius:50%;animation:beeny-loading-spin .8s linear infinite}
+@media(prefers-reduced-motion:reduce){:root body .avatar-wrap::before{animation:none!important}:root body>.account-dock.expanding-tabs a{transition:none;scale:1}:root body #admin-page .users-page .account-status-switch .status-track i{transition:none!important}}
+
+:root body[data-avatar-ring=true][data-avatar-animated=true] .avatar-wrap>.avatar{animation:beeny-avatar-ring 3.6s ease-in-out infinite}
+@keyframes beeny-avatar-ring{50%{box-shadow:0 0 28px color-mix(in srgb,var(--theme-icons) calc(var(--avatar-glow-strength,.45)*100%),transparent)}}
+@media(prefers-reduced-motion:reduce){:root body .avatar-wrap>.avatar{animation:none!important}}
+
+.theme-nav-preview{display:flex;gap:8px;max-width:100%;overflow:auto;border:1px solid #ffffff30;border-radius:999px;padding:6px;margin-top:20px;background:var(--beeny-glass-fill);backdrop-filter:var(--beeny-material-fallback)}.theme-nav-preview>span{flex:none;display:grid;place-items:center;min-width:40px;height:40px;padding:0 10px;border-radius:999px;background:#ffffff35;color:var(--preview-title);font-size:12px}.theme-nav-preview .selected{padding-inline:16px;background:var(--preview-fill)}
+
+/* Native minimal theme glyphs: no icon-font dependency or clipped yellow fill. */
+:root body :is(#themeToggle,.shell-theme) :is(.control-sun,.control-moon){width:20px;height:20px;display:grid;place-items:center;grid-area:1/1;line-height:0;color:inherit!important}
+:root body :is(#themeToggle,.shell-theme) svg{display:block!important;width:20px!important;height:20px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.65!important;opacity:1!important;filter:none!important}
+:root body #themeToggle{display:grid!important;place-items:center}
+:root body #themeToggle .control-sun,:root body .shell-theme .control-sun{display:none!important}
+:root body.light #themeToggle .control-sun,:root[data-theme=light] body .shell-theme .control-sun{display:grid!important}
+:root body.light #themeToggle .control-moon,:root[data-theme=light] body .shell-theme .control-moon{display:none!important}
+:root body.light #themeToggle,:root[data-theme=light] body .shell-theme{color:#343842!important}
+:root body:not(.light) #themeToggle,:root[data-theme=dark] body .shell-theme{color:#edf0f5!important}
+:root body #admin-page .users-page .users-add-button svg{width:19px!important;height:19px!important;display:block!important;opacity:1!important;visibility:visible!important;fill:none!important;stroke:var(--rainbow-ink)!important;color:var(--rainbow-ink)!important;stroke-width:2.2!important;flex:none;filter:none!important}
+:root body #admin-page .users-page .users-add-button{background:linear-gradient(#121213,#121213) padding-box,linear-gradient(#121213 50%,#12121399 80%,#12121300) border-box,linear-gradient(90deg,#ffb86c,#f580ac,#9b8afb,#65d6c0,#87c9ff) border-box!important}
+:root body:not(.light):has(.sidebar) #admin-page .users-page .users-add-button{background:linear-gradient(#fff,#fff) padding-box,linear-gradient(#fff 50%,#fff9 80%,#0000) border-box,linear-gradient(90deg,#ffb86c,#f580ac,#9b8afb,#65d6c0,#87c9ff) border-box!important}
+:root body #admin-page .users-global-search::after{inset:72% 8% -9px;background:linear-gradient(100deg,#70c7ff,#b6a1ff 38%,#f4a8bb 68%,#70dac1);opacity:.32;filter:blur(18px)}
+:root body #admin-page .users-page .users-add-button::before{background:linear-gradient(95deg,#70c7ff,#b6a1ff,#f4a8bb,#70dac1);opacity:.52;filter:blur(14px)}
