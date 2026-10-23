@@ -65,7 +65,7 @@ def register(app,db,Admin,features,panel_path):
         if request.method in {'GET','HEAD','OPTIONS'}:
             if endpoint in {'backup_page','backup_list','download_backup','renewal_receipt','renewal_detail','reseller_admin','customer_settings','notification_settings','panel_admins','audit_page','update_page','nodes_page','health_page'}:return False
             return True
-        if endpoint in {'logout','revoke_panel_session','logout_all_panel_sessions','admin_notifications_read','admin_notifications_clear','security_page'}:return True
+        if endpoint in {'logout','revoke_panel_session','logout_all_panel_sessions','admin_notifications_read','admin_notifications_clear','admin_notification_delete','security_page'}:return True
         if role=='viewer':return False
         if role=='support':return endpoint in {'ticket_reply','ticket_update','ticket_delete','admin_devices'}
         if role=='finance':return endpoint in {'review_renewal','retry_notification','delete_renewal','financial_adjustment','create_invoice'}

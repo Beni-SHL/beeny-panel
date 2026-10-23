@@ -1,3 +1,5 @@
+/* Customer views are replaced without replacing the dock; initialize each DOM root once. */
+(()=>{'use strict';const roots=new WeakSet();function mount(){const view=document.querySelector('.workspace,.customer-shell');if(view){if(roots.has(view))return;roots.add(view);}else if(document.querySelector('.account-dock'))return;
 (() => {
  document.querySelectorAll('[data-pricing]').forEach(box=>{
   const admin=box.hasAttribute('data-pricing-admin'),form=box.closest('form');
@@ -14,3 +16,5 @@
   box.addEventListener('input',calculate);form.querySelectorAll('[name=plan_id]').forEach(e=>e.addEventListener('change',calculate));calculate();
  });
 })();
+
+}mount();document.addEventListener('customer:content-ready',mount);})();

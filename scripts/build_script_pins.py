@@ -8,6 +8,12 @@ import json
 import re
 from pathlib import Path
 root = Path(__file__).resolve().parents[1]
+customer_names=['portal.js','avatar-theme.js','bank-carousel.js','pricing.js','refinement.js','studio.js','portal-content.js','polish.js','release-344.js','commissions.js','experience.js','flags.js','notification-feed.js','customer-controls.js','action-buttons.js']
+customer_pins={name:'sha256-'+base64.b64encode(hashlib.sha256((root/'static/js'/name).read_bytes()).digest()).decode() for name in customer_names}
+loader=root/'static/js/customer-navigation.js'
+text,count=re.subn(r'const programs=\{.*?\};','const programs='+json.dumps(customer_pins,indent=2)+';',loader.read_text(),count=1,flags=re.S)
+if count!=1:raise SystemExit('Customer program manifest missing.')
+loader.write_text(text)
 names = set()
 for page in (root / 'templates').rglob('*.html'):
     if page.name in {'system2.html', 'users2.html', 'users22.html', 'client.html'}:

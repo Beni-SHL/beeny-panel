@@ -1,27 +1,30 @@
 {
-  "version": "3.7.16",
-  "base_version": "3.7.15",
-  "release_date": "2026-10-23",
-  "bridge_version": "3.7.16",
+  "version": "3.7.17",
+  "base_version": "3.7.16",
+  "release_date": "2026-10-24",
+  "bridge_version": "3.7.17",
   "channel": "test",
   "features": [
-    "Customer dock follows the supplied expanding-tab form, integrates its 420/30/.7 spring, measured label width, hover/tap feedback, reduced motion and horizontal overflow scrolling.",
-    "Render shared mobile navigation directly under body on account, renewal, wallet, support and device pages; fix active route/hash detection and keep renewal outside filtered layout containers.",
-    "Owner theme studio customer settings: independent light/dark background intensity and colors, avatar-based auto palette, shared glass blur/tint/opacity/saturation, icon colors.",
-    "Allowlisted navigation destinations may be added, removed and reordered; separate liquid background/button options with persistent public configuration and preview.",
-    "Avatar light ring, rear glow, glow intensity and animation toggles, respecting reduced motion.",
-    "Animated account status switch isolates its knob geometry and keeps it inside a clipped track, including while a real update is pending.",
-    "Native SVG Add plus with explicit high-contrast stroke in light/dark themes; coordinated restrained blue/lilac/rose/mint aurora for search and Add.",
-    "Consistent minimal native SVG sun/moon controls on customer and administrator headers with readable colors; no icon-font dependency.",
-    "Backward-compatible migration retains existing theme colors and intensity while adding the new customer settings."
+    "Customer welcome/subtitle, online/offline pills, desktop navigation and wallet glyphs use readable semantic theme colors; owner can customize each light/dark palette.",
+    "Customer connection switch clips its knob within the track and submits via authenticated CSRF-protected AJAX. It waits for confirmed state and exposes pending node synchronization without claiming the connection is already enforced.",
+    "Account-menu sign-out stays on one row; avatar picker opens from the plus button, includes own-photo upload and a real save button.",
+    "Support actions share high-contrast pill controls. The Telegram community poster, local three-dimensional logo, floating small badge and channel/group/admin actions move from the account overview to support.",
+    "Client navigation keeps the dock and background canvas mounted, fetches fresh authenticated account views, handles history and selected-tab transitions, uses a strict same-account route allowlist and pins local program bytes; response inline scripts are never evaluated.",
+    "Mobile dock bottom spacing increases; notification counts use small corner badges rather than covering glyphs.",
+    "Known product notification messages are localized at read time in the selected customer/admin language. Single-item dismissal is CSRF-protected and isolated to the account or administrator.",
+    "Theme studio is linked inside General settings. Top toolbar/tab controls share colors, selected state, spacing and wrapping across management pages.",
+    "Avatar glow supports custom color, intensity, speed and static/breathe/RGB/orbit effects, with reduced-motion handling. Existing theme settings migrate without losing customized values.",
+    "Wallet renewal payment uses readable title/balance and a distinct payment button; plan cards are more compact, offer badges share a row, and gifts have stronger contrast near the price.",
+    "Avatar character artwork and VPN/session enforcement core remain unchanged."
   ],
   "validation": {
-    "targeted_python_tests": 43,
-    "node_runtime_suites": 9,
-    "source": "Python/Jinja/CSS/Bash, installer checks, 44 EN/FA server-rendered pages; 47 AJAX script pins rebuilt.",
-    "css": "Authored cascade at 390/1200px in both themes including active switch knob geometry, mobile-only dock, toolbar and payment controls.",
-    "navigation": "Persisted ordering/material flags, body-level dock on account/wallet/devices/support, renewal target, active destinations, measured spring animation, overflow reveal and reduced motion.",
-    "theme": "Owner/CSRF access, validation, persisted settings, legacy migration, independent intensity, avatar tokens and native theme/Add SVG structure."
+    "targeted_python_tests": 49,
+    "node_runtime_suites": 11,
+    "source": "Python/Jinja/CSS/Bash and installer checks, 44 EN/FA server-rendered page checks; 50 JavaScript programs parse; 49 local AJAX program pins.",
+    "css": "Authored cascade at 390/1200px in both modes, including customer/admin switch geometry, avatar-themed wallet payment contrast, mobile dock and toolbar/layout checks.",
+    "navigation": "VM checks verify persistent dock/canvas, same-account route boundaries, authenticated response verification, history ordering, locale reinitialization and preservation of the prior view on failure.",
+    "notifications": "Customer/admin per-item dismissal, ownership and CSRF boundaries; generated message localization and preservation of custom content.",
+    "payments": "Existing wallet renewal, balance, idempotency and post-commit failure handling tests pass."
   },
   "preserved_vpn_files": {
     "connection_guard.py": "f1e7b8c6c4d729420a4af6b2ca9f2b3341714349738e45c7c17f97c4b366cbb0",
@@ -39,7 +42,8 @@
     "speed_policy.py": "258bbce53394d1b02e5aa0eb3e2f0351207f6aa559ced2ce4745f24007c3b360"
   },
   "limitations": [
-    "Real browser/iPhone visual rendering and VPS installation remain unverified. Automated server/DOM/CSS checks do not replace these checks.",
+    "Actual browser/iPhone visual rendering and installation on a VPS remain unverified; server/DOM/CSS and VM checks do not replace those checks.",
+    "Custom notification content and technical node error details are preserved rather than machine-translated.",
     "GitHub publication is not performed by this archive."
   ]
 }

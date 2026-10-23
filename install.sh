@@ -81,7 +81,7 @@ check_source() {
   python3 - "$ROOT_DIR" <<'PY'
 import ast, pathlib, sys
 root=pathlib.Path(sys.argv[1])
-for p in [root/'theme_settings.py',root/'app.py',root/'sales_engine.py',root/'financial_reporting.py',root/'session_limits.py',root/'terminal_traffic.py',root/'node_snapshots.py',root/'sales_reporting.py',root/'representative_catalog.py',root/'representative_actions.py',root/'representative_credit.py',root/'balepay_bridge.py',root/'commissions.py',root/'resellers.py',root/'support.py',root/'commerce.py',root/'cluster.py',root/'renewal.py',root/'traffic_ledger.py',root/'serve.py',root/'admin_sessions.py',root/'pricing.py',root/'experience.py',root/'customer_features.py',root/'customer_worker.py',root/'vpn_sessions.py',root/'migrations.py',root/'scripts/init_admin.py']:
+for p in [root/'notification_locale.py',root/'theme_settings.py',root/'app.py',root/'sales_engine.py',root/'financial_reporting.py',root/'session_limits.py',root/'terminal_traffic.py',root/'node_snapshots.py',root/'sales_reporting.py',root/'representative_catalog.py',root/'representative_actions.py',root/'representative_credit.py',root/'balepay_bridge.py',root/'commissions.py',root/'resellers.py',root/'support.py',root/'commerce.py',root/'cluster.py',root/'renewal.py',root/'traffic_ledger.py',root/'serve.py',root/'admin_sessions.py',root/'pricing.py',root/'experience.py',root/'customer_features.py',root/'customer_worker.py',root/'vpn_sessions.py',root/'migrations.py',root/'scripts/init_admin.py']:
     ast.parse(p.read_text())
 for index in range(1,30):
     assert (root/f'static/avatars/monster-{index:02d}.webp').is_file(), f'Missing avatar {index}'

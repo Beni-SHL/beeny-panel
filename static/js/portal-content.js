@@ -1,5 +1,7 @@
-(()=>{'use strict';const root=document.documentElement,renew=document.getElementById('renew');function renewalTab(){if(!renew)return;const show=location.hash==='#renew';renew.hidden=!show;document.querySelector('main')?.classList.toggle('renewal-tab-active',show);if(show)renew.scrollIntoView({block:'start'});}addEventListener('hashchange',renewalTab);renewalTab();
-const observer='IntersectionObserver' in window?new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.classList.toggle('in-view',entry.isIntersecting))):null;document.querySelectorAll('.balance-card').forEach(box=>observer?observer.observe(box):box.classList.add('in-view'));
+/* Customer views are replaced without replacing the dock; initialize each DOM root once. */
+(()=>{'use strict';const roots=new WeakSet();function mount(){const view=document.querySelector('.workspace,.customer-shell');if(view){if(roots.has(view))return;roots.add(view);}else if(document.querySelector('.account-dock'))return;
+(()=>{'use strict';const root=document.documentElement,renew=document.getElementById('renew');function renewalTab(){if(!renew||!renew.isConnected)return;const show=location.hash==='#renew';renew.hidden=!show;document.querySelector('main')?.classList.toggle('renewal-tab-active',show);if(show)renew.scrollIntoView({block:'start'});}addEventListener('hashchange',renewalTab);renewalTab();
+const observer='IntersectionObserver' in window?new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.classList.toggle('in-view',entry.isIntersecting))):null;document.addEventListener('customer:before-navigate',()=>observer?.disconnect(),{once:true});document.querySelectorAll('.balance-card').forEach(box=>observer?observer.observe(box):box.classList.add('in-view'));
 document.querySelectorAll('[data-dismiss-announcement]').forEach(form=>form.addEventListener('submit',async event=>{event.preventDefault();const row=form.closest('[data-announcement]'),button=form.querySelector('button');button.disabled=true;try{const response=await fetch(form.getAttribute('action')||location.href,{method:'POST',body:new FormData(form),credentials:'same-origin',headers:{Accept:'application/json'}});if(!response.ok||response.redirected)throw Error('Dismiss failed');row.remove();}catch(_){row.querySelector('.announcement-error').textContent=root.lang==='en'?'Could not dismiss. Please retry.':'ثبت نشد؛ دوباره تلاش کنید.';}finally{button.disabled=false;}}));
 const tutorialDialog=document.getElementById('tutorial-dialog');
 if(tutorialDialog&&typeof tutorialDialog.showModal==='function'){
@@ -17,3 +19,5 @@ if(tutorialDialog&&typeof tutorialDialog.showModal==='function'){
  tutorialDialog.addEventListener('close',()=>{player.pause();player.removeAttribute('src');player.removeAttribute('poster');player.load();error.hidden=true;title.textContent='';trigger?.focus({preventScroll:true});trigger=null;});
 }
 })();
+
+}mount();document.addEventListener('customer:content-ready',mount);})();

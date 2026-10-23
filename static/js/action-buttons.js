@@ -17,7 +17,7 @@
   if(b.closest('.language-picker,.top-actions,.shell-controls')||b.matches('.logout-button,.shell-logout'))return;
   const text=b.textContent,kind=b.matches('a[href*="/download"]')?'download':/publish|انتشار/i.test(text)?'publish':/renew|تمدید/.test(text)||b.matches('.portal-renew-cta')?'renew':'save';prepare(b,kind);
  });}
- init();document.addEventListener('admin:content-ready',init);
+ init();document.addEventListener('admin:content-ready',init);document.addEventListener('customer:content-ready',init);
  // Wallet payment uses server validation and its existing atomic ledger operation.
  document.addEventListener('submit',async event=>{const b=event.submitter;if(!b?.matches('[data-renew-wallet]'))return;event.preventDefault();const form=event.target;if(form.dataset.walletBusy)return;
   form.dataset.walletBusy='1';b.disabled=true;set(b,'loading');let out=form.querySelector('[data-wallet-result]');

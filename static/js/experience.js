@@ -1,3 +1,5 @@
+/* Customer views are replaced without replacing the dock; initialize each DOM root once. */
+(()=>{'use strict';const roots=new WeakSet();function mount(){const view=document.querySelector('.workspace,.customer-shell');if(view){if(roots.has(view))return;roots.add(view);}else if(document.querySelector('.account-dock'))return;
 (() => {
   'use strict';
   function init(){
@@ -59,3 +61,5 @@
   }
   init();document.addEventListener('admin:content-ready',init);
 })();
+
+}mount();document.addEventListener('customer:content-ready',mount);})();

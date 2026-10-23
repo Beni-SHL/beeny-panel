@@ -38,6 +38,6 @@ class CustomerNavigation(unittest.TestCase):
  def test_studio_exposes_navigation_and_avatar_controls(self):
   self.admin();doc=BeautifulSoup(self.client.get('/panel/settings/theme').data,'html.parser')
   self.assertEqual(len(doc.select('[data-nav-choice] option')),6)
-  self.assertEqual(len(doc.select('[data-customer-group=avatar]')),4)
+  self.assertEqual(len(doc.select('[data-customer-group=avatar]')),7)
   self.assertEqual(len(doc.select('[data-customer-group=navigation]')),2)
 if __name__=='__main__':unittest.main()

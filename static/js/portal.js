@@ -1,8 +1,10 @@
+/* Customer views are replaced without replacing the dock; initialize each DOM root once. */
+(()=>{'use strict';const roots=new WeakSet();function mount(){const view=document.querySelector('.workspace,.customer-shell');if(view){if(roots.has(view))return;roots.add(view);}else if(document.querySelector('.account-dock'))return;
 (() => {
   'use strict';
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fa = new Intl.NumberFormat(document.documentElement.lang==='en'?'en-US':'fa-IR', {maximumFractionDigits: 3});
-  const theme = document.getElementById('portal-theme');
+  const theme = document.getElementById('portal-theme');if(!theme)return;
   theme.addEventListener('click', () => {
     const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
@@ -80,6 +82,7 @@
     const preview=document.getElementById('receipt-preview');const reader=new FileReader();
     reader.onload=()=>{preview.src=reader.result;preview.hidden=false;};reader.readAsDataURL(chosen);
   });
-  document.getElementById('avatar-file').addEventListener('change',function(){if(!this.files[0])return;if(this.files[0].size>20*1024*1024){this.value='';window.alert((document.documentElement.lang==='en'?"Profile photo must be at most 20 MB.":'حجم عکس پروفایل باید حداکثر ۲۰ مگابایت باشد.'));return;}this.form.requestSubmit();});
   document.getElementById('renewal-form').addEventListener('submit',function(event){const button=event.submitter||this.querySelector('[type=submit]');if(!button||button.matches('[data-renew-wallet]'))return;setTimeout(()=>{button.disabled=true;button.textContent=(document.documentElement.lang==='en'?"Submitting\u2026":'در حال ثبت درخواست…');},0);});
 })();
+
+}mount();document.addEventListener('customer:content-ready',mount);})();

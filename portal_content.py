@@ -264,6 +264,6 @@ def register(app, db, User, features, panel_path):
                 user=None
             pending=Announcement.query.filter(Announcement.active.is_(True),~db.exists().where(
                 (Seen.user_id==(user.id if user else -1))&(Seen.announcement_id==Announcement.id))).order_by(Announcement.id).limit(10).all() if user else []
-        return dict(portal_content=cfg, portal_announcements=pending,
+        return dict(portal_content=cfg, portal_announcements=pending,community_admin=features.settings().get('admin_telegram',''),
                     customer_language=session.get('customer_language','fa'))
     return SimpleNamespace(Announcement=Announcement, Seen=Seen, config=config,store_video=store_video,video_storage=video_storage)

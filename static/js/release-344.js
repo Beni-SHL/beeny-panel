@@ -1,3 +1,5 @@
+/* Customer views are replaced without replacing the dock; initialize each DOM root once. */
+(()=>{'use strict';const roots=new WeakSet();function mount(){const view=document.querySelector('.workspace,.customer-shell');if(view){if(roots.has(view))return;roots.add(view);}else if(document.querySelector('.account-dock'))return;
 (()=>{'use strict';
  document.querySelectorAll('[data-bulk-search]').forEach(search=>{const box=search.closest('.bulk-picker'),rows=[...box.querySelectorAll('.bulk-user')],inputs=rows.map(row=>row.querySelector('input'));
   const update=()=>{const chosen=inputs.filter(i=>i.checked).length;box.querySelector('[data-bulk-count]').textContent=chosen;inputs.forEach(i=>i.disabled=chosen>=100&&!i.checked);};
@@ -8,3 +10,5 @@
  document.querySelectorAll('[data-ticket-message]').forEach(text=>{const count=text.closest('form').querySelector('[data-ticket-count]');const update=()=>{if(count)count.textContent=text.value.length;};text.addEventListener('input',update);update();});
  document.querySelectorAll('[data-ticket-subject]').forEach(button=>button.addEventListener('click',()=>{const input=button.closest('.ticket-compose').querySelector('[name=subject]');input.value=button.dataset.ticketSubject;input.focus();}));
 })();
+
+}mount();document.addEventListener('customer:content-ready',mount);})();

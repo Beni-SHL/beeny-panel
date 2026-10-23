@@ -5,7 +5,7 @@ import secrets
 import time
 from datetime import datetime, timedelta, date
 from types import SimpleNamespace
-from flask import abort, jsonify, request, flash, redirect
+from flask import abort, jsonify, request, flash, redirect, session
 from flask_login import login_required, current_user
 from sqlalchemy import event, inspect, update
 from renewal import activation_error, extend_expiry
@@ -83,6 +83,10 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
                 notify(obj.id, 'اطلاعات حساب تغییر کرد', '\n'.join(details))
                 notify(None, 'Account updated', f'{obj.username}: account settings were changed.')
 
+    def localized(row,language):
+        from notification_locale import translate_notification
+        return translate_notification(row.title,row.body,language)
+
     def feed(user_id):
         query = Notification.query.filter_by(user_id=user_id)
         if user_id is None:
@@ -95,10 +99,11 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
             unread = query.filter(Notification.id.not_in(read_ids)).count()
         else:
             unread = query.filter(Notification.read_at.is_(None)).count()
+        language=(getattr(current_user,'language','en') or 'en') if user_id is None else session.get('customer_language','fa')
         rows = query.order_by(Notification.id.desc()).limit(30).all()
         read_marks = set(db.session.scalars(db.select(AdminRead.notification_id).where(AdminRead.admin_id == current_user.id, AdminRead.notification_id.in_([row.id for row in rows])))) if user_id is None else set()
         return jsonify(unread=unread, latest_id=rows[0].id if rows else 0,
-                       items=[dict(id=row.id, title=row.title, body=row.body, read=(row.id in read_marks if user_id is None else row.read_at is not None),
+                       items=[dict(id=row.id, title=localized(row,language)[0], body=localized(row,language)[1], read=(row.id in read_marks if user_id is None else row.read_at is not None),
                                    created=row.created_at.isoformat()+'Z') for row in rows])
 
     @app.get(base+'/c/<token>/notifications')
@@ -154,6 +159,23 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
                 db.session.add(mark)
             mark.cleared = True
         db.session.commit()
+        return jsonify(ok=True)
+
+    @app.post(base+'/c/<token>/notifications/<int:notification_id>/delete')
+    def customer_notification_delete(token,notification_id):
+        user=features.resolve_account(token);features.verify_csrf()
+        row=Notification.query.filter_by(id=notification_id,user_id=user.id).first_or_404()
+        row.cleared_at=datetime.utcnow();row.read_at=row.read_at or datetime.utcnow();db.session.commit()
+        return jsonify(ok=True)
+
+    @app.post(base+'/notifications/<int:notification_id>/delete')
+    @login_required
+    def admin_notification_delete(notification_id):
+        features.verify_csrf()
+        row=Notification.query.filter_by(id=notification_id,user_id=None).first_or_404()
+        mark=db.session.get(AdminRead,(row.id,current_user.id))
+        if mark is None:mark=AdminRead(notification_id=row.id,admin_id=current_user.id);db.session.add(mark)
+        mark.cleared=True;db.session.commit()
         return jsonify(ok=True)
 
     def sync_access(user):
@@ -220,12 +242,14 @@ def register(app, db, User, Node, UserNode, features, panel_path, is_primary_nod
             abort(400)
         from app import representative_credit
         if desired == '0' and (representative_credit.suspended(user) or user.status != 'active' or activation_error(user.expire_date, user.traffic_limit or 0, user.traffic_usage or 0, quota_mode=getattr(user,'quota_mode','metered'))):
+            if request.accept_mimetypes.best=='application/json':return jsonify(ok=False,error='Account restricted; contact support.'),409
             flash('حساب توسط مدیر یا به‌علت پایان اعتبار محدود شده است؛ برای فعال‌سازی با پشتیبانی تماس بگیرید.', 'error')
             return redirect(base+'/c/'+token+'#profile')
         user.customer_paused = desired == '1'
         user.pause_sync_pending = True
         db.session.commit()
         failures = sync_access(user)
+        if request.accept_mimetypes.best=='application/json':return jsonify(ok=True,paused=user.customer_paused,pending=bool(failures))
         if failures:
             flash('تغییر ذخیره شد؛ تأیید بعضی نودها دریافت نشده و دوباره تلاش می‌شود.', 'warning')
         else:

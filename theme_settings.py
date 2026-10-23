@@ -20,9 +20,10 @@ NAV_ITEMS={
  'configs':('download','دانلود','Downloads'), 'tickets':('support','پشتیبانی','Support'),
  'wallet':('wallet','کیف پول','Wallet'), 'devices':('devices','دستگاه‌ها','Devices')}
 DEFAULT['customer'].update(navigation=dict(items=['overview','renew','configs','tickets'],liquid_background=True,liquid_buttons=False),
- avatar=dict(ring=True,animated=True,backlight=True,strength=45))
+ avatar=dict(ring=True,animated=True,backlight=True,strength=45,color='#7d8dff',effect='breathe',speed=4))
 for mode in ('light','dark'):
  DEFAULT['customer'][mode]['background_intensity']=80
+ DEFAULT['customer'][mode].update(welcome='#247da4' if mode=='light' else '#8ddbe9',subtitle='#626a79' if mode=='light' else '#b2bdcc',online='#19835b' if mode=='light' else '#68e2ad',offline='#68717e' if mode=='light' else '#bdc6d2',nav_icons='#485162' if mode=='light' else '#d7dfeb',nav_active='#6854cf' if mode=='light' else '#c4b7ff')
 
 def clean(data):
     if not isinstance(data,dict) or set(data)!={'admin','customer'}:raise ValueError('Both theme workspaces are required.')
@@ -46,6 +47,8 @@ def clean(data):
             if not isinstance(part['colored'],bool):raise ValueError('Invalid glass color setting.')
             out=result[scope][mode];out['colored']=part['colored'];out['colors']=[color(v) for v in part['colors']]
             for key in ('tint','icons','titles','buttons'):out[key]=color(part[key])
+            if scope=='customer':
+                for key in ('welcome','subtitle','online','offline','nav_icons','nav_active'):out[key]=color(part.get(key,DEFAULT[scope][mode][key]))
             for key,limit in [('blur',20),('opacity',95),('shade',100),('saturation',200)]:out[key]=number(part[key],0,limit)
         if scope=='customer':
             for mode in ('light','dark'):
@@ -57,8 +60,9 @@ def clean(data):
             if any(not isinstance(nav[k],bool) for k in ('liquid_background','liquid_buttons')):raise ValueError('Invalid navigation material.')
             result[scope]['navigation']=copy.deepcopy(nav)
             avatar=obj.get('avatar',DEFAULT[scope]['avatar'])
-            if not isinstance(avatar,dict) or set(avatar)!=set(DEFAULT[scope]['avatar']) or any(not isinstance(avatar[k],bool) for k in ('ring','animated','backlight')):raise ValueError('Invalid avatar settings.')
-            result[scope]['avatar']={**avatar,'strength':number(avatar['strength'],0,100)}
+            if not isinstance(avatar,dict) or set(avatar)-set(DEFAULT[scope]['avatar']) or not {'ring','animated','backlight','strength'}<=set(avatar) or any(not isinstance(avatar[k],bool) for k in ('ring','animated','backlight')):raise ValueError('Invalid avatar settings.')
+            if avatar.get('effect','breathe') not in ('static','breathe','rgb','orbit'):raise ValueError('Invalid avatar effect.')
+            result[scope]['avatar']={**DEFAULT[scope]['avatar'],**avatar,'strength':number(avatar['strength'],0,100),'color':color(avatar.get('color',DEFAULT[scope]['avatar']['color'])),'speed':number(avatar.get('speed',4),1,12)}
     return result
 
 def register(app,db,features,panel_path):
@@ -66,7 +70,12 @@ def register(app,db,features,panel_path):
         try:return clean(json.loads(features.get_setting('appearance_v1','null')))
         except (ValueError,TypeError):return copy.deepcopy(DEFAULT)
     @app.context_processor
-    def theme_context():return dict(theme_config=load(),theme_nav_items=NAV_ITEMS)
+    def theme_context():
+        profile=None
+        auth=session.get('customer_auth',{})
+        if (request.view_args or {}).get('token') and request.endpoint!='customer_login' and isinstance(auth,dict) and auth.get('user'):
+            profile=db.session.get(features.CustomerProfile,auth['user'])
+        return dict(theme_config=load(),theme_nav_items=NAV_ITEMS,theme_avatar_choice=(profile.avatar_choice or 1) if profile else 1,theme_custom_avatar=bool(profile and profile.avatar))
     @app.route(panel_path.rstrip('/')+'/settings/theme',methods=['GET','POST'])
     @login_required
     def theme_page():

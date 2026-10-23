@@ -38,10 +38,10 @@ for attempt in range(10):
     try:
         response=session.get('http://127.0.0.1:6201/api/node/stats',headers={'Authorization':'Bearer '+token},timeout=3)
         body=response.json()
-        if response.status_code==200 and body.get('agent_version')=='3.7.16' and 'speed-policy' in body.get('capabilities',[]):break
+        if response.status_code==200 and body.get('agent_version')=='3.7.17' and 'speed-policy' in body.get('capabilities',[]):break
     except (requests.RequestException,ValueError):pass
     time.sleep(.3)
 else:raise SystemExit('Updated node API health verification failed; restoring previous bridge.')
 HEALTH
 trap - ERR
-printf 'Node bridge 3.7.16 updated. VPN was not restarted. Backup: %s\n' "$backup"
+printf 'Node bridge 3.7.17 updated. VPN was not restarted. Backup: %s\n' "$backup"

@@ -1,3 +1,5 @@
+/* Customer views are replaced without replacing the dock; initialize each DOM root once. */
+(()=>{'use strict';const roots=new WeakSet();function mount(){const view=document.querySelector('.workspace,.customer-shell');if(view){if(roots.has(view))return;roots.add(view);}else if(document.querySelector('.account-dock'))return;
 (()=>{'use strict';
  document.querySelectorAll('[data-shell-theme]').forEach(button=>button.addEventListener('click',()=>{const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;try{localStorage.setItem('beeny-customer-theme',theme)}catch(_){}button.setAttribute('aria-pressed',String(theme==='dark'))}));
  const form=document.querySelector('[data-wallet-topup]');
@@ -11,3 +13,5 @@
  const purchase=document.querySelector('[data-wallet-purchase]');if(purchase){const select=purchase.querySelector('[data-wallet-plan]'),coupon=purchase.querySelector('[name=coupon]');function update(){const option=select.selectedOptions[0],price=Number(option.dataset.price);purchase.querySelector('[data-plan-price]').textContent=new Intl.NumberFormat(document.documentElement.lang==='en'?'en-US':'fa-IR').format(price)+(document.documentElement.lang==='en'?" Toman":' تومان');purchase.querySelector('[data-plan-details]').textContent=document.documentElement.lang==='en'?`${option.dataset.days} days · ${option.dataset.quota} GB · ${option.dataset.devices} devices`:`${option.dataset.days} روز · ${option.dataset.quota} گیگابایت · ${option.dataset.devices} دستگاه`;purchase.querySelector('[data-wallet-insufficient]').hidden=Number(purchase.dataset.balance)>=price||Boolean(coupon?.value.trim());}select.addEventListener('change',update);coupon?.addEventListener('input',update);update();}
  document.querySelectorAll('[data-safe-submit]').forEach(f=>f.addEventListener('submit',()=>{const b=f.querySelector('button[type=submit]');if(b){b.disabled=true;b.setAttribute('aria-busy','true')}}));
 })();
+
+}mount();document.addEventListener('customer:content-ready',mount);})();

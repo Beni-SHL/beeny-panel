@@ -7,7 +7,7 @@ class Element{
 }
 const keys=['notification-bell','notification-popover','notification-items','notification-badge','notification-unread','notification-feedback','notification-close','notification-read','notification-clear'];
 const nodes=Object.fromEntries(keys.map(k=>[k,new Element()])),center=new Element();center.dataset={notifications:'/panel/notifications',csrf:'test-csrf',locale:'en'};center.querySelector=s=>nodes[s.slice(1)];center.querySelectorAll=()=>[nodes['notification-read'],nodes['notification-clear']];nodes['notification-popover'].hidden=true;
-const handlers={},document={hidden:false,querySelectorAll:()=>[center],addEventListener:(k,fn)=>handlers[k]=fn,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>new Element(tag),createDocumentFragment:()=>new Element('fragment')};
+const handlers={},document={documentElement:{lang:'en'},hidden:false,querySelectorAll:()=>[center],addEventListener:(k,fn)=>handlers[k]=fn,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>new Element(tag),createDocumentFragment:()=>new Element('fragment')};
 let read=false,cleared=false,failed=false,pending,posts=[];const states=[];
 const response=data=>({ok:true,redirected:false,headers:{get:()=> 'application/json'},json:async()=>data});
 const context={window:{BeenyActionButton:{set:(b,state)=>states.push(state)}},document,Intl,Date,Set,Number,Math,String,Boolean,Error,URLSearchParams,setInterval:()=>1,clearInterval(){},fetch:async(url,options)=>{
@@ -22,5 +22,6 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
  failed=true;await nodes['notification-clear'].listeners.click({currentTarget:nodes['notification-clear']});assert.equal(items.children.length,1);assert.equal(states.at(-1),'error');assert.ok(nodes['notification-feedback'].textContent);assert.equal(nodes['notification-clear'].disabled,false);
  failed=false;const clearing=nodes['notification-clear'].listeners.click({currentTarget:nodes['notification-clear']});await tick();pending();await clearing;assert.equal(items.children[0].className,'notification-empty');
  center.listeners.keydown({key:'Escape'});assert.equal(nodes['notification-popover'].hidden,true);assert.equal(nodes['notification-bell'].focused,true);
+ cleared=false;document.documentElement.lang='fa';nodes['notification-bell'].listeners.click();await tick();const remove=items.children[0].children[2];assert.equal(remove.attrs['aria-label'],'حذف اعلان');const deleting=remove.listeners.click();await tick();assert.equal(posts.at(-1)[0],'/panel/notifications/42/delete');pending();await deleting;assert.equal(items.children[0].className,'notification-empty');
  console.log('PASS: live notification data, safe text rendering, real pending/success/error states, CSRF/high-water mark, durable clear, empty state and Escape focus.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

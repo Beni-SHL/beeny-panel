@@ -49,7 +49,7 @@ class ThemeSettingsTests(unittest.TestCase):
    self.assertEqual({o['value'] for o in doc.select('[data-theme-mode] option')},{'light','dark'})
    self.assertEqual(len(doc.select('[data-theme-preset]')),5)
    self.assertTrue(doc.select_one('[data-theme-preview]'))
-   self.assertIn('/settings/theme',self.client.get('/panel/settings').get_data(as_text=True))
+   self.assertIn('/settings/theme',self.client.get('/panel/settings/general').get_data(as_text=True))
  def test_profile_form_has_one_inside_eye_and_wallet_payment_after_card_transfer(self):
   self.admin()
   for path in ('/panel/users/add','/panel/users/view/'+str(self.user.id)):
